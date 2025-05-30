@@ -149,3 +149,27 @@ class MongoDBService(AbstractDBService):
         if self.client:
             self.client.close()
             logger.info("Соединение с MongoDB закрыто.")
+
+    async def delete_session_and_history(self, session_id: str) -> bool:
+        try:
+            # Удаляем метаданные сессии
+            delete_meta_result = await self.sessions_collection.delete_one({"_id": session_id})
+            
+            # Удаляем все сообщения, связанные с этой сессией
+            delete_history_result = await self.history_collection.delete_many({"session_id": session_id})
+            
+            deleted_meta_count = delete_meta_result.deleted_count
+            deleted_history_count = delete_history_result.deleted_count
+
+            if deleted_meta_count > 0:
+                logger.info(f"Метаданные для сессии {session_id} удалены (удалено: {deleted_meta_count}). Сообщений удалено: {deleted_history_count}.")
+                return True
+            elif deleted_history_count > 0 : # Если метаданных не было, но история была (маловероятно при правильной логике)
+                logger.info(f"Метаданные для сессии {session_id} не найдены, но история сообщений удалена (удалено: {deleted_history_count}).")
+                return True
+            else:
+                logger.warning(f"Сессия {session_id} не найдена для удаления (ни метаданные, ни история).")
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка при удалении сессии {session_id}: {e}", exc_info=True)
+            return False

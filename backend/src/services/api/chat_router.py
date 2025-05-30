@@ -1,7 +1,7 @@
 # src/services/api/chat_router.py
 import logging
 import uuid
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from typing import List, Optional # Добавим Optional
 from datetime import datetime, timezone # Добавим timezone
 
@@ -118,3 +118,14 @@ async def get_session_history_route(
     if not history and not await db_service.get_session_metadata(session_id):
         raise HTTPException(status_code=404, detail="Сессия не найдена")
     return history
+
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_session_route(
+    session_id: str,
+    db_service: AbstractDBService = Depends(get_db_service_dependency),
+):
+    logger.info(f"Запрос на удаление сессии: {session_id}")
+    success = await db_service.delete_session_and_history(session_id)
+    if not success:
+        pass
+    return

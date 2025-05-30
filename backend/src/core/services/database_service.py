@@ -29,7 +29,9 @@ class AbstractDBService(ABC):
     async def list_sessions_metadata(self, user_id: Optional[str] = None, limit: int = 50, skip: int = 0) -> List[SessionMetadata]:
         # user_id пока опционален, в будущем для мульти-пользовательской системы
         pass
+
+    @abstractmethod
+    async def delete_session_and_history(self, session_id: str) -> bool:
+        """Удаляет метаданные сессии и всю историю сообщений для этой сессии."""
+        pass
     
-    # @abstractmethod # Опционально
-    # async def delete_session_and_history(self, session_id: str) -> bool:
-    #     pass

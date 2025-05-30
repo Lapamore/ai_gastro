@@ -287,6 +287,8 @@ body {
     display: flex;
     flex-direction: column; /* Название и дата друг под другом */
     gap: 4px; /* Расстояние между названием и датой */
+    position: relative; /* Для позиционирования кнопки удаления */
+    align-items: flex-start; /* Если title и meta в столбик */
 }
 
 .session-item:hover {
@@ -315,6 +317,8 @@ body {
     overflow: hidden;
     text-overflow: ellipsis; /* Многоточие для длинных названий */
     font-weight: 500;
+    flex-grow: 1; /* Позволить названию занимать доступное место */
+    margin-right: 10px; /* Отступ от кнопки удаления, если они в ряд */
 }
 
 .session-timestamp {
@@ -328,4 +332,33 @@ body {
     color: var(--text-color-light);
     padding: 20px;
     font-style: italic;
+}
+
+.session-meta {
+    display: flex;
+    justify-content: space-between; /* Разнести дату и кнопку */
+    align-items: center;
+    width: 100%; /* Занять всю ширину session-item */
+    margin-top: 4px; /* Небольшой отступ сверху */
+}
+
+.delete-session-button {
+    background: none;
+    border: none;
+    color: var(--text-color-light);
+    cursor: pointer;
+    font-size: 1.1em; /* Размер иконки корзины */
+    padding: 4px; /* Небольшие паддинги для кликабельности */
+    opacity: 0.6;
+    transition: opacity 0.2s, color 0.2s, transform 0.2s;
+    line-height: 1; /* Для лучшего выравнивания эмодзи */
+}
+
+.session-item:hover .delete-session-button {
+    opacity: 1; /* Показать кнопку при наведении на элемент списка */
+}
+
+.delete-session-button:hover {
+    color: var(--primary-color); /* Цвет при наведении на саму кнопку */
+    transform: scale(1.2);
 }

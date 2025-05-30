@@ -20,13 +20,11 @@ export interface FrontendMessage {
     timestamp: Date; 
 }
 
-// Тип для сообщений, отправляемых на бэкенд в составе истории
-
 // Тип ответа от бэкенда для списка сессий
 interface BackendSessionMetadata { 
     id: string;
     title: string;
-    updated_at: string; 
+    updated_at: string; // Бэкенд вернет строку ISO
 }
 
 // Для отображения в списке на фронте
@@ -35,7 +33,6 @@ interface SessionDisplayInfo {
     title: string;
     updated_at: Date; // Храним как Date для сортировки/форматирования
 }
-
 
 const API_BASE_URL = 'http://localhost:8000/api'; // Базовый URL для API
 
@@ -63,7 +60,6 @@ function App() {
         }
     }, [activeSessionId]);
 
-
     const addMessage = useCallback((text: string, sender: 'user' | 'bot', suggestions: string[] = [], id?: string) => {
         const displayId = id || uuidv4();
         const newMessage: FrontendMessage = { 
@@ -76,7 +72,7 @@ function App() {
         setMessages(prev => [...prev, newMessage]);
     }, []);
 
-    const fetchSessions = useCallback(async (newlyCreatedSessionId?: string) => {
+    const fetchSessions = useCallback(async (newlyCreatedSessionIdToSelect?: string) => {
         console.log("Frontend: Fetching sessions list...");
         try {
             const response = await axios.get<BackendSessionMetadata[]>(`${API_BASE_URL}/sessions`);
@@ -85,27 +81,37 @@ function App() {
                 updated_at: new Date(s.updated_at) 
             })).sort((a,b) => b.updated_at.getTime() - a.updated_at.getTime()); 
             setSessionsList(fetchedSessions);
-            console.log("Frontend: Sessions list fetched:", fetchedSessions);
+            console.log("Frontend: Sessions list fetched:", fetchedSessions.length, "sessions");
 
-            // Если была только что создана новая сессия, и ее еще нет в списке (из-за кэша или задержки),
-            // и она еще не активна, то можно ее сделать активной.
-            // Но setActiveSessionId(returnedSessionId) в handleSendMessage уже это делает.
-            // Этот fetchSessions вызывается после, чтобы обновить список.
-            if (newlyCreatedSessionId && !fetchedSessions.find(s => s.id === newlyCreatedSessionId)) {
-                 console.warn(`Frontend: Newly created session ${newlyCreatedSessionId} not immediately in fetched list. List might be stale or it's the very first one.`);
+            // Если был передан ID только что созданной сессии, и ее еще нет в activeSessionId,
+            // и список сессий не пуст, можно сделать ее активной.
+            // Однако, setActiveSessionId(returnedSessionId) в handleSendMessage уже должен это сделать.
+            if (newlyCreatedSessionIdToSelect && activeSessionId !== newlyCreatedSessionIdToSelect) {
+                const newSessionExists = fetchedSessions.some(s => s.id === newlyCreatedSessionIdToSelect);
+                if (newSessionExists) {
+                    console.log("Frontend: Newly created session found in list, ensuring it's active:", newlyCreatedSessionIdToSelect);
+                    // setActiveSessionId(newlyCreatedSessionIdToSelect); // Это может вызвать лишний ререндер, если уже установлено
+                } else {
+                    console.warn(`Frontend: Newly created session ${newlyCreatedSessionIdToSelect} not in fetched list. Might be a race condition or list is stale.`);
+                }
+            } else if (!activeSessionId && fetchedSessions.length > 0 && !newlyCreatedSessionIdToSelect) {
+                // Если нет активной сессии, но есть сессии в списке, можно выбрать самую последнюю
+                // console.log("Frontend: No active session, selecting most recent from list:", fetchedSessions[0].id);
+                // setActiveSessionId(fetchedSessions[0].id); // Опционально: автоматически выбирать последнюю
             }
+
 
         } catch (error) {
             console.error("Frontend: Error fetching sessions list:", error);
         }
-    }, []);
+    }, [activeSessionId]); // Добавляем activeSessionId в зависимости, чтобы правильно обработать случай с newlyCreatedSessionIdToSelect
 
     // Загрузка списка сессий при первом монтировании
     useEffect(() => {
         fetchSessions();
     }, [fetchSessions]);
 
-    // Загрузка истории сообщений для активной сессии или приветствие для новой
+    // Загрузка истории сообщений для активной сессии или приветствие для нового чата
     useEffect(() => {
         const loadActiveSessionOrGreet = async () => {
             if (activeSessionId) {
@@ -126,8 +132,9 @@ function App() {
                     console.log(`Frontend (Effect): History for session ${activeSessionId} loaded:`, historyMessages.length, "messages");
                 } catch (error) {
                     console.error(`Frontend (Effect): Error fetching history for session ${activeSessionId}:`, error);
-                    addMessage("Не удалось загрузить историю этого чата. Пожалуйста, попробуйте начать новый чат.", 'bot');
-                    setActiveSessionId(null); // Сбрасываем сессию, если история не загрузилась
+                    addMessage("Не удалось загрузить историю этого чата. Возможно, сессия была удалена или произошла ошибка.", 'bot');
+                    // Сбрасываем на новый чат, если активная сессия не загрузилась
+                    setActiveSessionId(null); 
                 } finally {
                     setIsBotTyping(false);
                 }
@@ -142,46 +149,37 @@ function App() {
         };
         loadActiveSessionOrGreet();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeSessionId]); // Зависимость только от activeSessionId (addMessage мемоизирован)
+    }, [activeSessionId]); // Зависимость только от activeSessionId 
 
     const handleSendMessage = async (textFromInputOrSuggestion: string) => {
         if (!textFromInputOrSuggestion.trim()) return;
 
         const userText = textFromInputOrSuggestion;
-        // Добавляем сообщение пользователя на фронт СРАЗУ
-        const userMessageId = uuidv4(); // Генерируем ID здесь, чтобы передать в addMessage
-        addMessage(userText, 'user', [], userMessageId); 
+        addMessage(userText, 'user');
         setUserInput('');
         setIsBotTyping(true);
         
-        const currentSessionIdForRequest = activeSessionId; // Сохраняем ID на момент запроса
+        const currentSessionIdForRequest = activeSessionId; 
 
-        // ЯВНАЯ ТИПИЗАЦИЯ clientSideHistoryForContext
-        // Добавляем текущее сообщение пользователя в историю, которую отправляем (если оно еще не в messages)
-        // Но так как мы вызываем addMessage ПЕРЕД этим, оно уже будет в messages при следующем рендере,
-        // но не в текущем значении messages здесь. Поэтому лучше его добавить явно.
-        // Однако, бэкенд все равно грузит историю из БД, так что clientSideHistoryForContext больше для "свежести".
-        // Если бэкенд полагается ТОЛЬКО на историю из БД, то clientSideHistoryForContext можно отправлять пустой.
-        // Мы решили отправлять пустую, т.к. бэкенд грузит по sessionId.
-        
         console.log("Frontend: Sending to backend. Session ID:", currentSessionIdForRequest, "Prompt:", userText);
 
         try {
             const response = await axios.post(`${API_BASE_URL}/chat`, {
                 prompt: userText,
-                conversation_history: [], // Отправляем пустую, бэкенд сам загрузит по sessionId
+                conversation_history: [], 
                 session_id: currentSessionIdForRequest 
             });
 
             const botReply: string = response.data.reply;
-            const returnedSessionId: string = response.data.session_id; // Бэкенд всегда возвращает session_id
+            const returnedSessionId: string = response.data.session_id;
 
-            if (!currentSessionIdForRequest && returnedSessionId) { // Это был новый чат
+            if (!currentSessionIdForRequest && returnedSessionId) { 
                 console.log("Frontend: New session created by backend, ID:", returnedSessionId);
-                setActiveSessionId(returnedSessionId); // Устанавливаем как активную
+                setActiveSessionId(returnedSessionId); 
                 await fetchSessions(returnedSessionId); // Обновляем список сессий, передаем ID новой сессии
             } else if (currentSessionIdForRequest && returnedSessionId === currentSessionIdForRequest) {
                 // Сессия продолжилась, обновим дату в списке сессий для корректной сортировки
+                // Это полезно, если fetchSessions не вызывается сразу или не содержит самую свежую дату
                 setSessionsList(prevSessions => 
                     prevSessions.map(s => 
                         s.id === currentSessionIdForRequest ? {...s, updated_at: new Date()} : s
@@ -228,17 +226,50 @@ function App() {
         setIsSidebarOpen(false);
     };
 
-    const handleNewChat = () => {
-        console.log("Frontend: Initiating new chat.");
-        setActiveSessionId(null); 
-        setMessages([]); // Очищаем сообщения, чтобы useEffect [activeSessionId] показал приветствие
-        setIsSidebarOpen(false);
+    const handleNewChat = () => { // Эта функция теперь для кнопки "+ Новый чат"
+        console.log("Frontend: Initiating new chat (clearing active session).");
+        if (activeSessionId !== null) { // Только если была активная сессия
+            setActiveSessionId(null); 
+        }
+        setMessages([]); // Очищаем текущие сообщения на фронте
+                          // useEffect [activeSessionId] покажет приветствие для нового чата
+        setIsSidebarOpen(false); 
     };
     
+    const handleDeleteSession = async (sessionIdToDelete: string | null) => {
+        if (!sessionIdToDelete) {
+            // Если нет активной сессии, то кнопка "удалить" в хедере должна просто начать новый чат
+            handleNewChat();
+            return;
+        }
+
+        console.log("Frontend: Attempting to delete session:", sessionIdToDelete);
+        try {
+            await axios.delete(`${API_BASE_URL}/sessions/${sessionIdToDelete}`);
+            console.log("Frontend: Session deleted successfully on backend:", sessionIdToDelete);
+            
+            setSessionsList(prevSessions => prevSessions.filter(s => s.id !== sessionIdToDelete));
+            
+            if (activeSessionId === sessionIdToDelete) {
+                // Если удалили активную сессию, переключаемся на "новый чат"
+                handleNewChat(); 
+            }
+            // Если удалили неактивную сессию, активная сессия не меняется
+            // и список сессий обновился.
+
+        } catch (error) {
+            console.error("Frontend: Error deleting session:", sessionIdToDelete, error);
+            addMessage(`Не удалось удалить диалог.`, 'bot');
+        }
+        // После удаления сессии из списка, сайдбар может остаться открытым,
+        // если пользователь захочет выбрать другую сессию или создать новую.
+        // setIsSidebarOpen(false); // Опционально
+    };
+
     const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
 
     const formatDateForDisplay = (date: Date): string => {
-        if (!(date instanceof Date) || isNaN(date.getTime())) { // Проверка на валидность даты
+        if (!(date instanceof Date) || isNaN(date.getTime())) { 
             return "недавно";
         }
         return date.toLocaleString('ru-RU', {
@@ -268,17 +299,34 @@ function App() {
                                 title={session.title}
                             >
                                 <span className="session-title">{session.title}</span>
-                                <span className="session-timestamp">{formatDateForDisplay(session.updated_at)}</span>
+                                <div className="session-meta">
+                                    <span className="session-timestamp">{formatDateForDisplay(session.updated_at)}</span>
+                                    <button 
+                                        className="delete-session-button" 
+                                        title={`Удалить диалог "${session.title}"`}
+                                        onClick={(e) => {
+                                            e.stopPropagation(); 
+                                            if (window.confirm(`Удалить диалог "${session.title}"? Это действие необратимо.`)) {
+                                                handleDeleteSession(session.id);
+                                            }
+                                        }}
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
                             </div>
                         ))
                     ) : (
                         <p className="no-sessions-message">Пока нет сохраненных диалогов.</p>
                     )}
                 </div>
+                {/* Кнопка "Закрыть панель" убрана, как ты просил */}
             </div>
 
             <div className={`chat-app-container ${isSidebarOpen ? 'shifted' : ''}`}>
-                <ChatHeader onClearChat={handleNewChat} /> {/* Кнопка "Очистить чат" теперь начинает новый чат */}
+                <ChatHeader 
+                    onClearChat={() => handleDeleteSession(activeSessionId)} // Кнопка в хедере УДАЛЯЕТ ТЕКУЩУЮ АКТИВНУЮ сессию
+                />
                 <MessageList 
                     messages={messages} 
                     isBotTyping={isBotTyping} 
