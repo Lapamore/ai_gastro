@@ -31,7 +31,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ sender, text, timestamp, sugg
         <div className={`message-wrapper ${sender}`}>
             <div className={`message ${sender}`}>
                 <div className="avatar">
-                    {sender === 'bot' ? '🤖' : '🧑‍🍳'}
+                    {sender === 'bot' ? '🤖' : '🧑'}
                 </div>
                 <div className="message-content">
                     <div className="sender-name">

@@ -107,7 +107,7 @@ body {
     font-family: var(--font-display);
     color: var(--primary-color);
     font-size: 1.7em; /* Размер заголовка */
-    margin-top: 50px; /* Отступ от верха, если кнопка toggle fixed */
+    margin-top: 60px; /* Отступ от верха, если кнопка toggle fixed */
     margin-bottom: 15px;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border-color);
@@ -296,8 +296,7 @@ body {
 
 /* Предполагаемые стили для .chat-app-container, если их нет */
 .chat-app-container {
-    width: 100%;
-    max-width: 700px; /* или 750px как было в "красивом" варианте */
+    width: 700px; /* или 750px как было в "красивом" варианте */
     height: 95vh;
     max-height: 800px; /* или 850px */
     background-color: var(--container-bg);
