@@ -112,7 +112,7 @@
 .settings-group select {
     width: 100%;
     padding: 12px 15px;
-    border: 1px solid var(--border-color);
+    border: 1.5px solid var(--border-color);
     border-radius: var(--border-radius-sm); /* Стандартное скругление для полей */
     font-size: 0.95rem;
     font-family: var(--font-main);
@@ -123,8 +123,7 @@
 .settings-group input[type="text"]:focus,
 .settings-group select:focus {
     outline: none;
-    border-color: var(--accent-color); /* Акцентный цвет при фокусе */
-    box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.25); /* var(--accent-color) с прозрачностью */
+    border-color: var(--primary-color); /* Акцентный цвет при фокусе */
 }
 .settings-group input[type="text"]::placeholder {
     color: var(--text-color-light);
@@ -242,11 +241,11 @@ label:has(input[type="checkbox"]:checked) span {
 }
 
 .save-settings-button {
-    background: linear-gradient(135deg, var(--accent-color), #22867a); /* Градиент для основной кнопки */
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)); /* Градиент для основной кнопки */
     color: white;
 }
 .save-settings-button:hover {
-    background: linear-gradient(135deg, #25a264, var(--accent-color));
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
 }
 
 .cancel-settings-button {
