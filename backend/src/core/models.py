@@ -51,3 +51,12 @@ class SessionMetadataListResponse(BaseModel):
     id: str
     title: str
     updated_at: datetime
+
+
+class PersonalizedSuggestionsRequest(BaseModel):
+    session_id: Optional[str] = None # Чтобы загрузить историю для этого пользователя/сессии
+    preferences: Optional[UserPreferencesData] = None # Текущие настройки пользователя
+
+class PersonalizedSuggestionsResponse(BaseModel):
+    suggestions: List[str] # Список текстовых предложений
+    # Можно добавить более структурированные предложения, например, [{title: "Паста", reason: "Вы любите итальянское"}, ...]

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional # Добавим Optional
-from ..models import ChatMessage, AIProviderResponse
+from ..models import ChatMessage, AIProviderResponse, UserPreferencesData
 
 class AbstractAIService(ABC):
     @abstractmethod
@@ -22,4 +22,13 @@ class AbstractAIService(ABC):
         Загружает системный промпт из файла.
         (Может быть не нужен, если грузим в __init__ реализации)
         """
+        pass
+    
+    @abstractmethod
+    async def get_personalized_suggestions(
+        self,
+        conversation_history: List[ChatMessage], # История предыдущих диалогов
+        preferences: Optional[UserPreferencesData], # Явные предпочтения пользователя
+        system_prompt: str # Базовый системный промпт
+    ) -> List[str]: # Возвращает список текстовых предложений
         pass

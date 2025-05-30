@@ -4,13 +4,12 @@ import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import './App.css'; 
 
-// Импорт компонентов
 import ChatHeader from './components/ChatHeader/ChatHeader';
 import MessageList from './components/MessageList/MessageList';
 import ChatInput from './components/ChatInput/ChatInput';
-import SidebarToggle from './components/SidebarToggle/SidebarToggle'; // Предполагаем, что он стилизуется и позиционируется сам
+import SidebarToggle from './components/SidebarToggle/SidebarToggle';
 import QuickActions from './components/QuickActions/QuickActions';
-import SettingsModal from './components/SettingsModal/SettingsModal'; // Импортируем модальное окно
+import SettingsModal from './components/SettingsModal/SettingsModal';
 
 // Типы для фронтенда
 export interface FrontendMessage {
@@ -33,7 +32,7 @@ interface SessionDisplayInfo {
     updated_at: Date; 
 }
 
-export interface UserPreferences { // Экспортируем для использования в SettingsModal
+export interface UserPreferences {
     allergies: string[];
     dietaryRestrictions: string[];
     favoriteCuisines: string[];
@@ -55,6 +54,10 @@ const initialUserPreferences: UserPreferences = {
     availableTime: null,
 };
 
+interface BackendPersonalizedSuggestions {
+    suggestions: string[];
+}
+
 const API_BASE_URL = 'http://localhost:8000/api';
 
 function App() {
@@ -75,20 +78,8 @@ function App() {
         }
         return initialUserPreferences;
     });
-
-    const initialGreetingSentRef = useRef(false);
-
-    // Эффект для блокировки скролла body
-    useEffect(() => {
-        if (isSettingsModalOpen || isSidebarOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'auto';
-        }
-        return () => { // Очистка при размонтировании компонента
-            document.body.style.overflow = 'auto';
-        };
-    }, [isSettingsModalOpen, isSidebarOpen]);
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<boolean>(false);
+    const isInitialMountRef = useRef(true); // Для отслеживания первого монтирования/запуска приложения
 
     useEffect(() => {
         if (activeSessionId) localStorage.setItem('activeChatSessionId', activeSessionId);
@@ -101,7 +92,14 @@ function App() {
 
     const addMessage = useCallback((text: string, sender: 'user' | 'bot', suggestions: string[] = [], id?: string) => {
         const displayId = id || uuidv4();
-        setMessages(prev => [...prev, { id: displayId, text, sender, suggestions, timestamp: new Date() }]);
+        const newMessage: FrontendMessage = { 
+            id: displayId, 
+            text, 
+            sender, 
+            suggestions, 
+            timestamp: new Date() 
+        };
+        setMessages(prev => [...prev, newMessage]);
     }, []);
 
     const fetchSessions = useCallback(async (newlyCreatedSessionIdToSelect?: string) => {
@@ -115,11 +113,12 @@ function App() {
 
     useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
+    // Загрузка истории для активной сессии ИЛИ начальное приветствие/предложения
     useEffect(() => {
-        const loadActiveSessionOrGreet = async () => {
-            if (activeSessionId) {
-                initialGreetingSentRef.current = true; 
-                setIsBotTyping(true); setMessages([]); 
+        const loadInitialData = async () => {
+            if (activeSessionId) { // Есть активная сессия - грузим историю
+                setIsBotTyping(true); 
+                setMessages([]); 
                 try {
                     const response = await axios.get<Array<{sender: string, text: string, timestamp: string}>>(
                         `${API_BASE_URL}/sessions/${activeSessionId}/history`);
@@ -128,23 +127,54 @@ function App() {
                         timestamp: new Date(msg.timestamp)
                     })));
                 } catch (error) {
-                    addMessage("Не удалось загрузить историю чата.", 'bot');
-                    setActiveSessionId(null); 
-                } finally { setIsBotTyping(false); }
-            } else {
-                if (!initialGreetingSentRef.current && messages.length === 0) { 
-                    addMessage("Привет! Я Гастро-Помощник с AI! 🍽️ Чем могу помочь?", 'bot', ["Что на ужин?", "Легкий десерт"]);
-                    initialGreetingSentRef.current = true; 
+                    addMessage("Не удалось загрузить историю этого чата.", 'bot');
+                    setActiveSessionId(null); // Сбрасываем, если ошибка
+                } finally { 
+                    setIsBotTyping(false); 
+                }
+            } else { // Нет активной сессии (новый чат ИЛИ самый первый запуск)
+                if (messages.length === 0) { // Показываем что-то, только если чат реально пуст
+                    setIsBotTyping(true);
+                    if (isInitialMountRef.current) { // Это самый первый рендер приложения (или после полного обновления)
+                        const hasPreviousDataForSuggestions = sessionsList.length > 0 || Object.values(userPreferences).some(val => Array.isArray(val) ? val.length > 0 : val !== null);
+                        if (hasPreviousDataForSuggestions) {
+                            console.log("Frontend (Initial App Load with Data): Fetching personalized suggestions.");
+                            try {
+                                const response = await axios.post<BackendPersonalizedSuggestions>(`${API_BASE_URL}/suggestions`, {
+                                    session_id: null, preferences: userPreferences
+                                });
+                                if (response.data.suggestions?.length) {
+                                    addMessage("Привет! 👋 С возвращением! У меня есть несколько идей для тебя:", 'bot');
+                                    response.data.suggestions.forEach(suggestion => addMessage(suggestion, 'bot'));
+                                } else {
+                                    addMessage("Привет! Я Гастро-Помощник! Чем могу помочь сегодня?", 'bot', ["Что на ужин?"]);
+                                }
+                            } catch (error) {
+                                addMessage("Привет! Гастро-Помощник к твоим услугам!", 'bot');
+                            }
+                        } else { // Первый запуск, но нет данных для персонализации
+                            console.log("Frontend (Initial App Load without Data): Showing standard greeting.");
+                            addMessage("Привет! Я Гастро-Помощник с AI! 🍽️ Чем могу помочь?", 'bot', ["Что на ужин?", "Легкий десерт"]);
+                        }
+                    } else { // Не первый рендер, и activeSessionId === null (значит, это результат handleNewChat)
+                        console.log("Frontend (New Chat Initialized): Showing standard greeting.");
+                        addMessage("Привет! Я Гастро-Помощник с AI! 🍽️ Чем могу помочь?", 'bot', ["Что на ужин?", "Легкий десерт"]);
+                    }
+                    setIsBotTyping(false);
                 }
             }
         };
-        loadActiveSessionOrGreet();
+        
+        loadInitialData();
+        // Устанавливаем isInitialMountRef в false ПОСЛЕ первого выполнения этого эффекта,
+        // чтобы при последующих сбросах activeSessionId (через handleNewChat) он уже был false.
+        // Но делаем это только один раз.
+        if (isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeSessionId]); 
+    }, [activeSessionId]); // Основная зависимость - activeSessionId. sessionsList и userPreferences используются только на initialMount.
 
-    useEffect(() => {
-        if (!activeSessionId && messages.length === 0) initialGreetingSentRef.current = false;
-    }, [activeSessionId, messages.length]);
 
     const handleSendMessage = async (textFromInputOrSuggestion: string) => {
         if (!textFromInputOrSuggestion.trim()) return;
@@ -170,7 +200,13 @@ function App() {
                     .sort((a,b) => b.updated_at.getTime() - a.updated_at.getTime()));
             }
             
-            let suggestionsForBotReply: string[] = []; /* ... логика suggestions ... */
+            let suggestionsForBotReply: string[] = [];
+            const lowerBotReply = botReply.toLowerCase();
+            if (lowerBotReply.includes("рецепт") || lowerBotReply.includes("предлагаю") || lowerBotReply.includes("вариант")) {
+                suggestionsForBotReply = ["Это интересно!", "Другой рецепт?", "Спасибо!"];
+            } else if (lowerBotReply.includes("какие у тебя предпочтения") || lowerBotReply.includes("что бы ты хотел")) {
+                suggestionsForBotReply = ["Сладкое 🍰", "Основное блюдо 🍲", "Острое 🌶️", "Что-то легкое 🥗"];
+            }
             addMessage(botReply, 'bot', suggestionsForBotReply);
         } catch (error: unknown) { 
             let errMsg = "Ошибка AI."; 
@@ -184,9 +220,41 @@ function App() {
             addMessage(errMsg, 'bot');
         } finally { setIsBotTyping(false); }
     };
+    
+    const fetchPersonalizedSuggestions = async () => {
+        if (isLoadingSuggestions) return;
+        setIsLoadingSuggestions(true);
+        addMessage("Подбираю персональные идеи для тебя...", 'bot');
+        try {
+            const response = await axios.post<BackendPersonalizedSuggestions>(`${API_BASE_URL}/suggestions`, {
+                session_id: activeSessionId, preferences: userPreferences
+            });
+            if (response.data.suggestions && response.data.suggestions.length > 0) {
+                let combinedSuggestionsText = "Вот несколько идей, которые могут тебе понравиться:\n\n";
+                // Предполагаем, что AI уже вернул строки в формате "1. Предложение..." или "- Предложение..."
+                combinedSuggestionsText += response.data.suggestions.join('\n'); 
+                addMessage(combinedSuggestionsText, 'bot'); // Все предложения в одном сообщении
+            } else {
+                addMessage("Хм, пока не могу придумать ничего особенного...", 'bot');
+            }
+        } catch (error) { addMessage("Не удалось подобрать персональные рекомендации.", 'bot');} 
+        finally { setIsLoadingSuggestions(false); }
+    };
 
     const handleSelectSession = (id: string) => { if (id !== activeSessionId) setActiveSessionId(id); setIsSidebarOpen(false); };
-    const handleNewChat = () => { if (activeSessionId || messages.length > 0) { setActiveSessionId(null); setMessages([]); initialGreetingSentRef.current = false; } setIsSidebarOpen(false); };
+    
+    const handleNewChat = () => { 
+        console.log("Frontend: Initiating new chat explicitly.");
+        // isInitialMountRef.current остается false, так как это не первый монтирование компонента App
+        // но мы хотим, чтобы useEffect [activeSessionId] показал стандартное приветствие.
+        // Он это сделает, так как activeSessionId станет null, а messages очистятся.
+        if (activeSessionId !== null || messages.length > 0) {
+            setActiveSessionId(null); 
+            setMessages([]); 
+        }
+        setIsSidebarOpen(false); 
+    };
+    
     const handleDeleteSession = async (id: string | null) => {
         if (!id) { handleNewChat(); return; }
         try {
@@ -201,7 +269,6 @@ function App() {
 
     return (
         <div className="chat-app-wrapper">
-            {/* Кнопки управления интерфейсом */}
             <SidebarToggle onClick={toggleSidebar} isOpen={isSidebarOpen} />
             <button 
                 className="settings-toggle-button top-right-button" 
@@ -214,6 +281,13 @@ function App() {
             <div className={`sidebar-panel ${isSidebarOpen ? 'open' : ''}`}>
                 <h2>Диалоги</h2>
                 <button onClick={handleNewChat} className="sidebar-action-button new-chat-button"> + Новый чат </button>
+                <button 
+                    onClick={fetchPersonalizedSuggestions} 
+                    disabled={isLoadingSuggestions}
+                    className="sidebar-action-button suggestions-button"
+                >
+                    {isLoadingSuggestions ? "Думаю..." : "💡 Идеи для меня"}
+                </button>
                 <div className="sessions-list">
                     {sessionsList.map(s => (
                         <div key={s.id} className={`session-item ${s.id===activeSessionId?'active':''}`} onClick={()=>handleSelectSession(s.id)} title={s.title}>
@@ -229,7 +303,7 @@ function App() {
                 </div>
             </div>
 
-            <div className={`chat-app-container`}> {/* Класс shifted может быть не нужен, если кнопки fixed */}
+            <div className={`chat-app-container`}>
                 <ChatHeader onClearChat={() => handleDeleteSession(activeSessionId)} />
                 <MessageList messages={messages} isBotTyping={isBotTyping} onSuggestionClick={handleSendMessage} />
                 <ChatInput userInput={userInput} setUserInput={setUserInput} onSendMessage={handleSendMessage} isBotTyping={isBotTyping} />
@@ -242,13 +316,6 @@ function App() {
                 preferences={userPreferences}
                 onPreferencesChange={handlePreferencesChange}
             />
-            <button 
-                className="settings-toggle-button top-right-button" // <--- Добавлен класс
-                onClick={() => setIsSettingsModalOpen(true)}
-                title="Настройки пользователя"
-            >
-                ⚙️
-            </button>
         </div>
     );
 }

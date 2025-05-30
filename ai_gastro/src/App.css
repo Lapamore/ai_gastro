@@ -399,3 +399,20 @@ body {
         font-size: 1.6em;
     }
 }
+
+.suggestions-button {
+    background: linear-gradient(135deg, var(--accent-color), #22867a); /* Акцентный цвет */
+    box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
+    margin-top: 10px; /* Отступ от кнопки "Новый чат" */
+}
+.suggestions-button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #22867a, var(--accent-color));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(42, 157, 143, 0.4);
+}
+.suggestions-button:disabled {
+    background: #b0bec5; /* Нейтральный серый для disabled */
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}

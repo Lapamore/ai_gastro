@@ -7,7 +7,8 @@ from datetime import datetime, timezone
 
 from src.core.models import (
     UserChatRequest, APIChatResponse, ChatMessage, 
-    SessionMetadata, SessionMetadataListResponse, UserPreferencesData # Импортируем UserPreferencesData
+    SessionMetadata, SessionMetadataListResponse, UserPreferencesData,
+    PersonalizedSuggestionsRequest, PersonalizedSuggestionsResponse
 )
 from src.core.services.ai_service import AbstractAIService
 from src.core.services.database_service import AbstractDBService
@@ -146,3 +147,37 @@ async def delete_session_route(
         logger.error(f"Не удалось удалить сессию {session_id} после подтверждения ее существования.")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Не удалось удалить сессию")
     return # Возвращаем 204 No Content
+
+@router.post("/suggestions", response_model=PersonalizedSuggestionsResponse, tags=["Suggestions"])
+async def get_personalized_suggestions_route(
+    request_data: PersonalizedSuggestionsRequest, # Принимаем sessionId и preferences
+    ai_service: AbstractAIService = Depends(get_ai_service_dependency),
+    db_service: AbstractDBService = Depends(get_db_service_dependency),
+):
+    logger.info(f"Запрос персонализированных предложений. Сессия: {request_data.session_id}, Преф: {'Есть' if request_data.preferences else 'Нет'}")
+
+    history_for_suggestions: List[ChatMessage] = []
+    if request_data.session_id:
+        # Загружаем более полную историю для анализа предпочтений
+        history_for_suggestions = await db_service.get_history(request_data.session_id, limit=50) 
+    
+    # Используем системный промпт, загруженный AI сервисом
+    # Для get_personalized_suggestions мы передаем его явно, так как он не часть "диалога"
+    # а скорее инструкция для генерации предложений.
+    # Но наш AI сервис уже имеет base_system_prompt, передадим его.
+    # Либо можно создать отдельный системный промпт для генерации рекомендаций.
+    system_prompt_for_suggestions = "" # AI сервис использует свой базовый + промпт из метода
+
+    try:
+        suggestions_list = await ai_service.get_personalized_suggestions(
+            conversation_history=history_for_suggestions,
+            preferences=request_data.preferences,
+            system_prompt=system_prompt_for_suggestions 
+        )
+        return PersonalizedSuggestionsResponse(suggestions=suggestions_list)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Ошибка в suggestions_router: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Внутренняя ошибка сервера при генерации предложений.")
