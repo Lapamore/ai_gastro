@@ -1,0 +1,45 @@
+/* src/components/SidebarToggle/SidebarToggle.css */
+.sidebar-toggle-button {
+    position: fixed;
+    top: 25px; /* Чуть ниже */
+    left: 25px;
+    background: var(--container-bg); /* Белый фон */
+    /* Убираем явную границу, тень будет ее заменять */
+    /* border: 1px solid var(--primary-color); */
+    border: none;
+    color: var(--primary-color);
+    width: 50px; /* Крупнее */
+    height: 50px;
+    border-radius: 50%;
+    font-size: 1.8em;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 3px 10px rgba(38, 70, 83, 0.15), 0 1px 3px rgba(38,70,83,0.1); /* Красивая тень */
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* "Выпрыгивающая" анимация */
+    z-index: 1001;
+    line-height: 1;
+}
+
+.sidebar-toggle-button:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1) rotate(180deg); /* Более выраженная анимация */
+    box-shadow: 0 5px 15px rgba(215, 38, 61, 0.3);
+}
+
+.sidebar-toggle-button:focus-visible { /* Улучшенный фокус */
+    outline: 3px solid var(--secondary-color);
+    outline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+    .sidebar-toggle-button {
+        top: 20px;
+        left: 20px;
+        width: 45px;
+        height: 45px;
+        font-size: 1.6em;
+    }
+}

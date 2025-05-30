@@ -1,0 +1,24 @@
+.suggestion-button {
+    background-color: var(--secondary-color);
+    color: var(--text-color); /* Текст более контрастный на желтом */
+    font-weight: 500;
+    border: none;
+    padding: 9px 15px;
+    border-radius: 25px; /* Pill shape */
+    font-size: 0.9em;
+    font-family: var(--font-main);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 5px var(--shadow-light);
+    white-space: nowrap; /* Предотвратить перенос текста на кнопке */
+}
+.suggestion-button:hover {
+    background-color: #dab10d; /* Darker secondary */
+    color: white;
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 4px 8px var(--shadow-medium);
+}
+.suggestion-button:active {
+    transform: translateY(0px) scale(1);
+    background-color: #c49d0b; /* Even darker for active state */
+}

@@ -1,0 +1,184 @@
+/* src/components/MessageItem/MessageItem.css */
+.message-wrapper {
+    opacity: 0;
+    /* Анимация появления сообщения: чуть сложнее */
+    animation: messageArrive 0.5s cubic-bezier(0.215, 0.610, 0.355, 1.000) forwards;
+    display: flex;
+    flex-direction: column;
+}
+.message-wrapper.user {
+    align-items: flex-end;
+}
+.message-wrapper.bot {
+    align-items: flex-start;
+}
+
+@keyframes messageArrive { /* Новая анимация */
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    70% {
+        transform: translateY(-5px) scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0px) scale(1);
+    }
+}
+
+.message {
+    padding: 14px 20px; /* Увеличиваем паддинги */
+    border-radius: var(--border-radius-lg); /* Более круглые сообщения */
+    max-width: 78%; 
+    line-height: 1.65; /* Чуть больше межстрочный интервал */
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    /* Более мягкая и объемная тень */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 5px 15px rgba(38,70,83,0.08);
+    word-break: break-word;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+/* .message:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.06), 0 8px 20px rgba(38,70,83,0.1);
+} */ /* Эффект при наведении, если нужен */
+
+
+.message .avatar {
+    width: 42px; /* Чуть больше аватар */
+    height: 42px;
+    border-radius: 50%;
+    margin-right: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.6em;
+    flex-shrink: 0;
+    color: white;
+    /* Объемная тень для аватара */
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+.message:hover .avatar {
+    transform: scale(1.1) rotate(5deg); /* Анимация аватара при наведении на сообщение */
+}
+
+.message-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.message .sender-name {
+    font-size: 0.9em; /* Немного крупнее имя */
+    font-weight: 600; /* Жирнее */
+    margin-bottom: 6px;
+    font-family: var(--font-main); /* Убедимся что основной шрифт */
+}
+
+.message .text {
+    font-size: 0.95rem; /* Размер текста сообщения */
+}
+.message .text strong {
+    color: var(--primary-color); /* Выделение текста */
+    font-weight: 600;
+}
+.message .text a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 1px dashed var(--accent-color);
+    transition: color 0.2s, border-color 0.2s;
+}
+.message .text a:hover {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.message .timestamp {
+    font-size: 0.75em; /* Чуть крупнее время */
+    color: var(--text-color-light);
+    margin-top: 8px;
+    opacity: 0.8;
+}
+
+/* --- User Message Styles --- */
+.message.user {
+    background-color: var(--user-message-bg);
+    border-top-right-radius: var(--border-radius-sm);
+    color: var(--text-color);
+}
+.message.user .avatar {
+    order: 1;
+    margin-right: 0;
+    margin-left: 15px;
+    background: linear-gradient(135deg, var(--accent-color), #25a264); /* Градиент для аватара пользователя */
+}
+.message.user .message-content {
+    align-items: flex-end;
+}
+.message.user .sender-name {
+    color: var(--accent-color);
+}
+.message.user .timestamp {
+    text-align: right;
+}
+
+/* --- Bot Message Styles --- */
+.message.bot {
+    background-color: var(--bot-message-bg);
+    border-top-left-radius: var(--border-radius-sm);
+}
+.message.bot .avatar {
+    background: linear-gradient(135deg, var(--primary-color), #b82035); /* Градиент для аватара бота */
+}
+.message.bot .sender-name {
+     color: var(--primary-color);
+}
+.message.bot .timestamp {
+    text-align: left;
+}
+
+
+.suggestion-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px; /* Больше отступ */
+}
+
+.suggestion-buttons-container.bot-suggestions {
+    padding-left: 57px; /* (42px avatar + 15px margin) */
+    max-width: calc(78% - 57px);
+}
+
+.message-wrapper.user .suggestion-buttons-container {
+    justify-content: flex-end;
+    padding-right: 57px;
+    max-width: calc(78% - 57px);
+}
+
+@media (max-width: 768px) {
+    .message {
+        max-width: 88%;
+        padding: 12px 16px;
+    }
+    .message .avatar {
+        width: 38px;
+        height: 38px;
+        font-size: 1.4em;
+        margin-right: 12px;
+    }
+    .message.user .avatar { margin-left: 12px; }
+
+    .suggestion-buttons-container.bot-suggestions {
+        padding-left: 50px; 
+        max-width: calc(88% - 50px);
+    }
+     .message-wrapper.user .suggestion-buttons-container {
+        padding-right: 50px;
+        max-width: calc(88% - 50px);
+    }
+}

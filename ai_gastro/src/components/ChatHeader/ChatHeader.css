@@ -1,0 +1,67 @@
+/* src/components/ChatHeader/ChatHeader.css */
+.chat-header {
+    /* Градиент и текстура (тонкая, почти незаметная) */
+    background: linear-gradient(135deg, var(--primary-color) 0%, #a64d2f 100%); /* Более насыщенный красный */
+    /* background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), 
+                      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 20px 20px; */ /* Пример текстуры, можно раскомментировать */
+    color: white;
+    padding: 22px 30px; /* Немного больше паддинг */
+    text-align: center;
+    font-family: var(--font-display); /* Используем Playfair Display */
+    font-size: 2.3em; /* Чуть меньше, но Playfair Display выглядит крупнее */
+    letter-spacing: 1px; /* Уменьшаем для Playfair */
+    box-shadow: 0 6px 18px rgba(167, 29, 47, 0.3); /* Тень под цвет хедера */
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-bottom: 3px solid var(--secondary-color); /* Акцентная полоска внизу */
+}
+
+.chat-header-icon {
+    font-size: 1.2em; /* Иконка чуть меньше относительно текста */
+    margin-right: 12px;
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    animation: spinAndPulse 6s infinite ease-in-out; /* Замедляем анимацию */
+    display: inline-block;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Тень для иконки */
+}
+
+@keyframes spinAndPulse { /* Немного изменим анимацию */
+    0%, 100% { transform: rotate(-3deg) scale(1); }
+    50% { transform: rotate(3deg) scale(1.05); }
+}
+
+.clear-chat-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.3em; /* Иконка корзины крупнее */
+    cursor: pointer;
+    margin-left: auto;
+    padding: 8px 12px;
+    opacity: 0.8;
+    transition: opacity 0.2s, transform 0.2s, color 0.2s;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.clear-chat-button:hover {
+    opacity: 1;
+    transform: scale(1.2) rotate(10deg); /* Эффект при наведении */
+    color: var(--secondary-color); /* Меняем цвет при наведении */
+}
+
+@media (max-width: 768px) {
+    .chat-header {
+        font-size: 1.9em;
+        padding: 18px 20px;
+    }
+    .clear-chat-button {
+        font-size: 1.2em;
+        padding: 5px 8px;
+    }
+}

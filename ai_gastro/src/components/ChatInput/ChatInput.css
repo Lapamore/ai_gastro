@@ -1,0 +1,97 @@
+/* src/components/ChatInput/ChatInput.css */
+.chat-input-area {
+    display: flex;
+    align-items: center; /* Выравниваем инпут и кнопку по центру */
+    padding: 18px 25px;
+    background-color: var(--container-bg); /* Фон такой же, как у чата */
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 15px rgba(38,70,83,0.05); /* Тень вверх */
+    flex-shrink: 0;
+}
+
+.chat-input-area input[type="text"] {
+    flex-grow: 1;
+    padding: 15px 20px; /* Увеличиваем паддинги */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg); /* Более круглый инпут */
+    font-size: 1rem; /* Размер шрифта в инпуте */
+    font-family: var(--font-main);
+    margin-right: 15px; /* Больше отступ */
+    transition: border-color 0.3s, box-shadow 0.3s;
+    color: var(--text-color);
+    background-color: #fdfdfd; /* Чуть отличный от белого фон инпута */
+}
+
+.chat-input-area input[type="text"]:focus {
+    outline: none;
+    border-color: var(--secondary-color); /* Цвет при фокусе */
+    box-shadow: 0 0 0 3px rgba(244, 162, 97, 0.3); /* Тень при фокусе */
+    background-color: #fff;
+}
+.chat-input-area input[type="text"]::placeholder {
+    color: var(--text-color-light);
+    opacity: 0.8;
+}
+.chat-input-area input[type="text"]:disabled {
+    background-color: #f0f2f5; /* Более нейтральный для disabled */
+    cursor: not-allowed;
+}
+
+
+.chat-input-area button {
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)); /* Градиент на кнопке */
+    color: white;
+    border: none;
+    width: 50px; /* Квадратная кнопка */
+    height: 50px;
+    border-radius: var(--border-radius-md); /* Скругление */
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Пружинистый переход */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 3px 8px rgba(215, 38, 61, 0.3); /* Тень под цвет кнопки */
+}
+
+.chat-input-area button svg {
+    width: 24px;
+    height: 24px;
+    fill: white;
+    transition: transform 0.2s ease-in-out;
+}
+
+.chat-input-area button:hover:not(:disabled) {
+    /* background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); /* Инверсия градиента при ховере */
+    transform: scale(1.1); /* Увеличение */
+    box-shadow: 0 5px 12px rgba(215, 38, 61, 0.4);
+}
+.chat-input-area button:hover:not(:disabled) svg {
+    transform: translateX(2px); /* Движение иконки */
+}
+
+.chat-input-area button:active:not(:disabled) {
+    transform: scale(0.95);
+    box-shadow: 0 2px 5px rgba(215, 38, 61, 0.2);
+}
+.chat-input-area button:disabled {
+    background: #d0d6db; /* Более светлый серый для disabled */
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+@media (max-width: 768px) {
+    .chat-input-area {
+        padding: 15px;
+    }
+    .chat-input-area input[type="text"] {
+        padding: 12px 18px;
+        font-size: 0.95rem;
+    }
+    .chat-input-area button {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3em;
+    }
+}
