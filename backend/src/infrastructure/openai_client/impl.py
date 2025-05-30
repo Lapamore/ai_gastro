@@ -84,7 +84,7 @@ class OpenAIAITunnelService(AbstractAIService):
                 model=self.model_name,
                 max_tokens=4096,
                 temperature=0.7, 
-                # stream=False, # Пока без стриминга
+                stream=False, # Пока без стриминга
             )
 
             ai_reply = ""
