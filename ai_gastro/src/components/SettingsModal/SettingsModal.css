@@ -1,38 +1,40 @@
 /* src/components/SettingsModal/SettingsModal.css */
+
 .settings-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(38, 70, 83, 0.65);
+    background-color: rgba(38, 70, 83, 0.75); /* var(--text-color) с большей прозрачностью */
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1050;
     opacity: 0;
     animation: fadeInOverlay 0.3s ease-out forwards;
-    padding: 20px;
+    padding: 20px; /* Отступы для маленьких экранов */
 }
 
 @keyframes fadeInOverlay { to { opacity: 1; } }
 
 .settings-modal-content {
-    background-color: var(--container-bg);
-    padding: 25px 30px;
-    border-radius: var(--border-radius-lg);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    background-color: var(--container-bg); /* Чистый белый */
+    padding: 0; /* Убираем общий padding, будем задавать для секций */
+    border-radius: var(--border-radius-lg); /* 24px, как у основного контейнера */
+    box-shadow: 0 10px 40px rgba(38, 70, 83, 0.25), 0 0 0 1px rgba(0,0,0,0.05); /* Глубокая, но мягкая тень */
     width: 100%;
-    max-width: 600px;
+    max-width: 650px; /* Чуть шире для комфорта */
     max-height: 90vh;
     display: flex;
     flex-direction: column;
     opacity: 0;
-    transform: scale(0.95) translateY(-15px);
-    animation: popInModal 0.35s 0.05s cubic-bezier(0.175, 0.885, 0.320, 1.275) forwards;
+    transform: scale(0.92) translateY(-20px);
+    animation: popInModalStyled 0.45s 0.1s cubic-bezier(0.175, 0.885, 0.320, 1.275) forwards;
+    overflow: hidden; /* Чтобы скругление работало с внутренними элементами */
 }
 
-@keyframes popInModal {
+@keyframes popInModalStyled {
     to { 
         opacity: 1; 
         transform: scale(1) translateY(0);
@@ -43,71 +45,86 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 15px;
-    margin-bottom: 20px;
+    background: linear-gradient(135deg, var(--primary-color), #c0392b); /* Градиент как у хедера чата */
+    color: white;
+    padding: 20px 30px; /* Паддинги хедера */
+    border-top-left-radius: var(--border-radius-lg); /* Скругление только верхних углов */
+    border-top-right-radius: var(--border-radius-lg);
     flex-shrink: 0;
 }
 
 .settings-modal-header h2 {
     font-family: var(--font-display);
-    color: var(--primary-color);
-    font-size: 1.6em;
+    font-size: 1.8em;
     margin: 0;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
 .close-settings-button {
     background: none;
     border: none;
-    font-size: 2.2em; /* Крупнее крестик */
-    color: var(--text-color-light);
+    font-size: 2.2em;
+    color: rgba(255, 255, 255, 0.8); /* Белый с прозрачностью */
     cursor: pointer;
-    padding: 0 5px;
-    line-height: 0.8; /* Поправить вертикальное выравнивание крестика */
-    transition: color 0.2s, transform 0.2s;
+    padding: 0;
+    line-height: 0.8;
+    transition: color 0.2s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .close-settings-button:hover {
-    color: var(--primary-color);
-    transform: rotate(90deg);
+    color: white;
+    transform: rotate(180deg) scale(1.1);
 }
 
 .settings-modal-body {
     overflow-y: auto;
     flex-grow: 1;
-    padding-right: 15px; /* Отступ для скроллбара */
-    margin-right: -15px; /* Компенсация этого отступа */
+    padding: 25px 30px; /* Внутренние отступы для контента */
+    background-color: var(--bg-color); /* Легкий фон для тела модалки */
 }
+/* Кастомный скроллбар для тела модалки */
 .settings-modal-body::-webkit-scrollbar { width: 8px; }
 .settings-modal-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px;}
-.settings-modal-body::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 4px;}
-.settings-modal-body::-webkit-scrollbar-thumb:hover { background-color: var(--text-color-light); }
+.settings-modal-body::-webkit-scrollbar-thumb { background-color: var(--secondary-color); border-radius: 4px;}
+.settings-modal-body::-webkit-scrollbar-thumb:hover { background-color: var(--primary-color); }
 
 .settings-group {
-    margin-bottom: 22px; /* Чуть больше отступ */
+    margin-bottom: 25px; /* Больше отступ между группами */
+    padding-bottom: 20px;
+    border-bottom: 1px dashed var(--border-color); /* Разделитель между группами */
 }
-.settings-group label { /* Стиль для заголовка группы настроек */
+.settings-group:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.settings-group > label { /* Стиль для заголовка группы настроек (не для чекбоксов) */
     display: block;
-    font-weight: 600; /* Жирнее */
-    margin-bottom: 10px; /* Больше отступ */
+    font-weight: 600;
+    margin-bottom: 12px;
     color: var(--text-color);
-    font-size: 1rem;
+    font-size: 1.05rem; /* Чуть крупнее */
+    font-family: var(--font-main);
 }
+
 .settings-group input[type="text"],
 .settings-group select {
     width: 100%;
-    padding: 12px 15px; /* Больше паддинги */
+    padding: 12px 15px;
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
+    border-radius: var(--border-radius-sm); /* Стандартное скругление для полей */
     font-size: 0.95rem;
     font-family: var(--font-main);
     transition: border-color 0.2s, box-shadow 0.2s;
-    background-color: #fdfdfd; /* Слегка отличный фон для инпутов */
+    background-color: var(--container-bg); /* Белый фон для полей ввода */
+    color: var(--text-color);
 }
 .settings-group input[type="text"]:focus,
 .settings-group select:focus {
     outline: none;
-    border-color: var(--secondary-color);
-    box-shadow: 0 0 0 3px rgba(244, 162, 97, 0.35); /* Ярче тень фокуса */
+    border-color: var(--accent-color); /* Акцентный цвет при фокусе */
+    box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.25); /* var(--accent-color) с прозрачностью */
 }
 .settings-group input[type="text"]::placeholder {
     color: var(--text-color-light);
@@ -115,83 +132,100 @@
 }
 
 .checkbox-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px; /* Больше расстояние */
+    display: grid; /* Используем grid для лучшего выравнивания */
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Адаптивные колонки */
+    gap: 12px;
 }
 .checkbox-label {
     display: flex;
     align-items: center;
-    padding: 8px 12px; /* Увеличим паддинги */
-    border: 1.5px solid var(--border-color); /* Немного толще граница */
-    border-radius: var(--border-radius-md);
+    padding: 10px 12px;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--border-radius-md); /* Более круглые */
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    transition: all 0.2s ease-in-out;
     font-size: 0.9rem;
-    background-color: var(--container-bg); /* Белый фон по умолчанию */
+    background-color: var(--container-bg);
+    color: var(--text-color-light); /* По умолчанию текст приглушен */
 }
 .checkbox-label input[type="checkbox"] {
-    margin-right: 8px;
-    width: 17px; /* Чуть крупнее чекбокс */
-    height: 17px;
+    margin-right: 10px; /* Больше отступ */
+    width: 18px; 
+    height: 18px;
     accent-color: var(--accent-color); 
     cursor: pointer;
+    transform: scale(1.1); /* Чуть крупнее сам чекбокс */
+    transition: transform 0.2s;
 }
 .checkbox-label:hover {
     border-color: var(--secondary-color);
+    transform: translateY(-2px); /* Легкий подъем при наведении */
+    box-shadow: 0 3px 8px rgba(0,0,0,0.05);
 }
-/* Стиль для выбранного чекбокса */
-.checkbox-label.checked { /* Добавляем класс .checked через JS или используем :has() если поддержка браузеров позволяет */
-    background-color: var(--user-message-bg);
-    border-color: var(--secondary-color);
-    color: var(--text-color); 
+/* Стиль для выбранного чекбокса (используем CSS :has если возможно, или класс .checked из JS) */
+.checkbox-label.checked, /* Если добавляется класс через JS */
+label:has(input[type="checkbox"]:checked) { /* Современный CSS селектор */
+    background-color: var(--accent-color); /* Яркий фон */
+    border-color: var(--accent-color);
+    color: white; /* Белый текст */
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(42, 157, 143, 0.3);
 }
-.checkbox-label.checked span {
-    font-weight: 500; /* Выделить текст выбранного */
+.checkbox-label.checked span,
+label:has(input[type="checkbox"]:checked) span {
+    /* font-weight: 500; */ /* Уже установлено для всего лейбла */
 }
 
 
 .settings-modal-footer {
+    background-color: var(--bg-color); /* Такой же фон, как у тела модалки */
     border-top: 1px solid var(--border-color);
-    padding-top: 20px;
-    margin-top: 10px; /* Уменьшить отступ, если тело короткое */
+    padding: 20px 30px;
+    margin-top: 0; /* Убираем отступ, если тело короткое, т.к. body имеет padding */
     display: flex;
     justify-content: flex-end;
     gap: 15px;
     flex-shrink: 0;
+    border-bottom-left-radius: var(--border-radius-lg); /* Скругление нижних углов */
+    border-bottom-right-radius: var(--border-radius-lg);
 }
 
 .settings-modal-footer button {
-    padding: 12px 28px; /* Больше кнопки */
+    padding: 12px 30px;
     border-radius: var(--border-radius-md);
-    font-weight: 500;
+    font-weight: 600; /* Жирнее текст на кнопках */
     font-size: 0.95rem;
     cursor: pointer;
-    transition: all 0.2s ease-out;
+    transition: all 0.25s ease-out;
     border: none;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px; /* Больше межбуквенное расстояние */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+.settings-modal-footer button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.settings-modal-footer button:active {
+    transform: translateY(0px) scale(0.98);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
 .save-settings-button {
-    background: linear-gradient(135deg, var(--accent-color), #25a264);
+    background: linear-gradient(135deg, var(--accent-color), #22867a); /* Градиент для основной кнопки */
     color: white;
-    box-shadow: 0 3px 8px rgba(42, 157, 143, 0.3);
 }
 .save-settings-button:hover {
     background: linear-gradient(135deg, #25a264, var(--accent-color));
-    box-shadow: 0 5px 12px rgba(42, 157, 143, 0.4);
-    transform: translateY(-2px);
-}
-.save-settings-button:active {
-    transform: translateY(0px) scale(0.98);
 }
 
 .cancel-settings-button {
-    background-color: #e9edf0; /* Более светлый серый */
+    background-color: transparent; 
     color: var(--text-color-light);
-    border: 1px solid var(--border-color);
+    border: 1.5px solid var(--border-color); /* Обводка для кнопки отмены */
 }
 .cancel-settings-button:hover {
-    background-color: #dde1e6;
+    background-color: var(--user-message-bg); /* Легкий фон при наведении */
+    border-color: var(--secondary-color);
     color: var(--text-color);
 }
