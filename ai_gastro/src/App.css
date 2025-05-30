@@ -112,6 +112,7 @@ body {
     font-family: var(--font-display);
     color: var(--primary-color);
     font-size: 1.8em;
+    margin-top:60px;
     margin-bottom: 25px;
     border-bottom: 2px solid var(--secondary-color);
     padding-bottom: 15px;
@@ -172,19 +173,6 @@ body {
     box-shadow: 0 2px 8px rgba(42, 157, 143, 0.3);
 }
 
-.close-sidebar-button {
-    background: linear-gradient(135deg, #7f8c8d, #95a5a6); /* Нейтральный серый градиент */
-    box-shadow: 0 4px 12px rgba(127, 140, 141, 0.25);
-}
-.close-sidebar-button:hover {
-    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(127, 140, 141, 0.35);
-}
-.close-sidebar-button:active {
-    transform: translateY(0px) scale(0.98);
-    box-shadow: 0 2px 8px rgba(127, 140, 141, 0.2);
-}
 
 
 .chat-app-container {

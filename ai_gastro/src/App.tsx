@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import './App.css'; // Основные стили приложения
@@ -21,11 +21,6 @@ export interface FrontendMessage {
 }
 
 // Тип для сообщений, отправляемых на бэкенд в составе истории
-interface BackendHistoryMessage { // Этот тип теперь будет использоваться
-    sender: 'user' | 'assistant'; 
-    text: string;
-    timestamp: string; // Временная метка в формате ISO для бэкенда
-}
 
 // Тип ответа от бэкенда для списка сессий
 interface BackendSessionMetadata { 
@@ -162,14 +157,6 @@ function App() {
         const currentSessionIdForRequest = activeSessionId; // Сохраняем ID на момент запроса
 
         // ЯВНАЯ ТИПИЗАЦИЯ clientSideHistoryForContext
-        const clientSideHistoryForContext: BackendHistoryMessage[] = messages
-            .filter(msg => msg.sender !== 'bot' || !msg.text.startsWith("Ой, что-то пошло не так")) 
-            .slice(-6) 
-            .map(msg => ({ 
-                sender: msg.sender === 'bot' ? 'assistant' : 'user',
-                text: msg.text,
-                timestamp: msg.timestamp.toISOString() 
-            }));
         // Добавляем текущее сообщение пользователя в историю, которую отправляем (если оно еще не в messages)
         // Но так как мы вызываем addMessage ПЕРЕД этим, оно уже будет в messages при следующем рендере,
         // но не в текущем значении messages здесь. Поэтому лучше его добавить явно.
@@ -288,9 +275,6 @@ function App() {
                         <p className="no-sessions-message">Пока нет сохраненных диалогов.</p>
                     )}
                 </div>
-                <button onClick={toggleSidebar} className="sidebar-action-button close-sidebar-button">
-                    Закрыть панель
-                </button>
             </div>
 
             <div className={`chat-app-container ${isSidebarOpen ? 'shifted' : ''}`}>
