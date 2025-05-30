@@ -149,28 +149,58 @@
     color: var(--text-color-light); /* По умолчанию текст приглушен */
 }
 .checkbox-label input[type="checkbox"] {
-    margin-right: 10px; /* Больше отступ */
+    margin-right: 10px;
     width: 18px; 
     height: 18px;
-    accent-color: var(--accent-color); 
     cursor: pointer;
-    transform: scale(1.1); /* Чуть крупнее сам чекбокс */
+    transform: scale(1.1);
     transition: transform 0.2s;
+    /* Убираем стандартный стиль чекбокса */
+    appearance: none;
+    -webkit-appearance: none;
+    /* Настраиваем кастомный вид */
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--container-bg); /* Стандартный фон */
+    position: relative;
 }
-.checkbox-label:hover {
-    border-color: var(--secondary-color);
-    transform: translateY(-2px); /* Легкий подъем при наведении */
-    box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+
+/* Стиль для выбранного чекбокса */
+.checkbox-label.checked input[type="checkbox"],
+label:has(input[type="checkbox"]:checked) input[type="checkbox"] {
+    background-color: white; /* Белый фон для галочки */
+    border-color: white;
 }
+
+/* Галочка внутри чекбокса */
+.checkbox-label input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    border: solid var(--primary-color);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-label.checked input[type="checkbox"]::after,
+label:has(input[type="checkbox"]:checked) input[type="checkbox"]::after {
+    display: block;
+}
+
 /* Стиль для выбранного чекбокса (используем CSS :has если возможно, или класс .checked из JS) */
 .checkbox-label.checked, /* Если добавляется класс через JS */
 label:has(input[type="checkbox"]:checked) { /* Современный CSS селектор */
-    background-color: var(--accent-color); /* Яркий фон */
-    border-color: var(--accent-color);
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)); /* Яркий фон */
     color: white; /* Белый текст */
     font-weight: 500;
     box-shadow: 0 2px 5px rgba(42, 157, 143, 0.3);
+    border-color: var(--primary-color); /* Цвет границы как у фона */
 }
+
 .checkbox-label.checked span,
 label:has(input[type="checkbox"]:checked) span {
     /* font-weight: 500; */ /* Уже установлено для всего лейбла */

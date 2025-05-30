@@ -376,7 +376,9 @@ body {
     right: 25px; 
     /* Остальные стили .settings-toggle-button применяются */
 }
-
+.settings-toggle-button.top-right-button:hover { /* Добавляем .top-right-button в App.tsx */
+    background: var(--secondary-color);
+}
 .sidebar-toggle-button { /* Предполагаем, что этот класс есть у компонента SidebarToggle */
     position: fixed;
     top: 25px;

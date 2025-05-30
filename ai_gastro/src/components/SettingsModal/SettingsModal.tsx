@@ -65,7 +65,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, preferen
                             checked={(currentPrefs[field] as string[]).includes(option)}
                             onChange={() => handleMultiSelectChange(field, option)}
                         />
-                        <span>{option.charAt(0).toUpperCase() + option.slice(1)}</span>
+                        <span onChange={() => handleMultiSelectChange(field, option)}>{option.charAt(0).toUpperCase() + option.slice(1)}</span>
                     </label>
                 ))}
             </div>
