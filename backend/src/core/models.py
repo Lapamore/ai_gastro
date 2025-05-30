@@ -11,20 +11,34 @@ class ChatMessage(BaseModel):
 
 class SessionMetadata(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
-    user_id: Optional[str] = None 
-    title: str # Название чата
+    user_id: Optional[str] = None
+    title: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
-        populate_by_name = True 
-        json_encoders = {datetime: lambda dt: dt.isoformat()} 
+        populate_by_name = True
+        json_encoders = {datetime: lambda dt: dt.isoformat()}
+
+# --- Модель для предпочтений пользователя ---
+class UserPreferencesData(BaseModel):
+    allergies: List[str] = Field(default_factory=list)
+    dietary_restrictions: List[str] = Field(default_factory=list, alias="dietaryRestrictions")
+    favorite_cuisines: List[str] = Field(default_factory=list, alias="favoriteCuisines")
+    disliked_cuisines: List[str] = Field(default_factory=list, alias="dislikedCuisines")
+    favorite_ingredients: List[str] = Field(default_factory=list, alias="favoriteIngredients")
+    disliked_ingredients: List[str] = Field(default_factory=list, alias="dislikedIngredients")
+    preferred_difficulty: Optional[str] = Field(default=None, alias="preferredDifficulty")
+    available_time: Optional[str] = Field(default=None, alias="availableTime")
+
+    class Config:
+        populate_by_name = True # Для корректной работы с camelCase alias с фронтенда
 
 
 class UserChatRequest(BaseModel):
     prompt: str
-    conversation_history: List[ChatMessage] = []
     session_id: Optional[str] = None
+    preferences: Optional[UserPreferencesData] = None # <--- ДОБАВЛЕНО
 
 class AIProviderResponse(BaseModel):
     reply: str
@@ -33,7 +47,6 @@ class APIChatResponse(BaseModel):
     reply: str
     session_id: str
 
-# Новая модель для ответа со списком сессий
 class SessionMetadataListResponse(BaseModel):
     id: str
     title: str

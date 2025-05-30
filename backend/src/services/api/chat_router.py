@@ -2,27 +2,27 @@
 import logging
 import uuid
 from fastapi import APIRouter, HTTPException, Depends, status
-from typing import List, Optional # Добавим Optional
-from datetime import datetime, timezone # Добавим timezone
+from typing import List, Optional
+from datetime import datetime, timezone
 
-from src.core.models import UserChatRequest, APIChatResponse, ChatMessage, SessionMetadata, SessionMetadataListResponse
+from src.core.models import (
+    UserChatRequest, APIChatResponse, ChatMessage, 
+    SessionMetadata, SessionMetadataListResponse, UserPreferencesData # Импортируем UserPreferencesData
+)
 from src.core.services.ai_service import AbstractAIService
 from src.core.services.database_service import AbstractDBService
 from src.infrastructure.dependencies import get_ai_service_dependency, get_db_service_dependency
 
 logger = logging.getLogger(__name__)
-
-router = APIRouter(prefix="/api", tags=["Chat & Sessions"]) # Обновим тег
+router = APIRouter(prefix="/api", tags=["Chat & Sessions"])
 
 def generate_session_title(prompt: str) -> str:
-    """Генерирует простое название для сессии из первого промпта."""
     words = prompt.split()
     return " ".join(words[:5]) + ("..." if len(words) > 5 else "")
 
-
 @router.post("/chat", response_model=APIChatResponse)
 async def handle_chat_request(
-    chat_request: UserChatRequest,
+    chat_request: UserChatRequest, # Модель теперь включает optional preferences
     ai_service: AbstractAIService = Depends(get_ai_service_dependency),
     db_service: AbstractDBService = Depends(get_db_service_dependency),
 ):
@@ -32,53 +32,64 @@ async def handle_chat_request(
     is_new_session = False
     if chat_request.session_id:
         current_session_id = chat_request.session_id
-        logger.info(f"Используется существующая сессия: {current_session_id}")
-        # Проверим, существует ли такая сессия в метаданных
         session_meta = await db_service.get_session_metadata(current_session_id)
         if not session_meta:
-            logger.warning(f"Метаданные для сессии {current_session_id} не найдены. Будут созданы.")
-            # Это странная ситуация: есть ID, но нет метаданных. Создадим их.
             title = generate_session_title(chat_request.prompt)
-            new_meta = SessionMetadata(id=current_session_id, title=title)
-            await db_service.create_or_update_session_metadata(new_meta)
+            new_meta = SessionMetadata(id=current_session_id, title=title) # created_at и updated_at по умолчанию
+            session_meta = await db_service.create_or_update_session_metadata(new_meta)
+            logger.warning(f"Метаданные для сессии {current_session_id} не найдены и были созданы.")
     else:
         current_session_id = str(uuid.uuid4())
         is_new_session = True
-        logger.info(f"Создана новая сессия: {current_session_id}")
-        # Создаем метаданные для новой сессии
         title = generate_session_title(chat_request.prompt)
         session_meta = SessionMetadata(id=current_session_id, title=title)
-        await db_service.create_or_update_session_metadata(session_meta)
+        session_meta = await db_service.create_or_update_session_metadata(session_meta)
+        logger.info(f"Создана новая сессия: {current_session_id}")
     
     logger.info(f"Промпт для сессии {current_session_id}: '{chat_request.prompt[:50]}...'")
 
     conversation_history_from_db: List[ChatMessage] = await db_service.get_history(current_session_id, limit=10)
-    logger.info(f"Загружено {len(conversation_history_from_db)} сообщений из БД для сессии {current_session_id}.")
-
     user_message = ChatMessage(sender="user", text=chat_request.prompt)
+
+    # Формируем текст с предпочтениями пользователя
+    preferences_prompt_text = ""
+    if chat_request.preferences:
+        prefs = chat_request.preferences
+        pref_parts = []
+        if prefs.allergies: pref_parts.append(f"- Аллергии: {', '.join(prefs.allergies)}.")
+        if prefs.dietary_restrictions: pref_parts.append(f"- Диетические ограничения: {', '.join(prefs.dietary_restrictions)}.")
+        if prefs.favorite_cuisines: pref_parts.append(f"- Любимые кухни: {', '.join(prefs.favorite_cuisines)}.")
+        if prefs.disliked_cuisines: pref_parts.append(f"- Нелюбимые кухни: {', '.join(prefs.disliked_cuisines)}.")
+        if prefs.favorite_ingredients: pref_parts.append(f"- Любимые ингредиенты: {', '.join(prefs.favorite_ingredients)}.")
+        if prefs.disliked_ingredients: pref_parts.append(f"- Нелюбимые ингредиенты: {', '.join(prefs.disliked_ingredients)}.")
+        if prefs.preferred_difficulty: pref_parts.append(f"- Сложность: {prefs.preferred_difficulty}.")
+        if prefs.available_time: pref_parts.append(f"- Время на готовку: {prefs.available_time}.")
+        
+        if pref_parts:
+            preferences_prompt_text = "Учти следующие мои предпочтения и ограничения:\n" + "\n".join(pref_parts)
+            logger.info(f"Сессия {current_session_id}: Применяются предпочтения: {pref_parts}")
 
     try:
         ai_response_obj = await ai_service.get_ai_response(
             user_prompt=user_message.text,
-            conversation_history=conversation_history_from_db, 
-            system_prompt=""
+            conversation_history=conversation_history_from_db,
+            system_prompt="", # Основной системный промпт из сервиса AI
+            preferences_text=preferences_prompt_text # Передаем текст с предпочтениями
         )
         
-        if "Извините, произошла ошибка" in ai_response_obj.reply:
+        if "Извините, сервис AI временно недоступен" in ai_response_obj.reply or \
+           "Извините, произошла ошибка" in ai_response_obj.reply: # Проверка на ошибки от AI сервиса
+             logger.warning(f"AI сервис вернул сообщение об ошибке для сессии {current_session_id}: {ai_response_obj.reply}")
              raise HTTPException(status_code=503, detail=ai_response_obj.reply)
 
         bot_message = ChatMessage(sender="assistant", text=ai_response_obj.reply)
-
         await db_service.save_messages(current_session_id, [user_message, bot_message])
         
-        # Обновляем updated_at в метаданных сессии, если она не новая (для новой already set)
-        if not is_new_session and session_meta: # session_meta должно быть определено
+        if session_meta: # session_meta должно быть определено
             session_meta.updated_at = datetime.now(timezone.utc)
-            # Если хотим обновить title на основе последнего промпта (опционально)
+            # Опционально: обновлять title, если он генерируется не только из первого сообщения
             # session_meta.title = generate_session_title(chat_request.prompt) 
             await db_service.create_or_update_session_metadata(session_meta)
-        elif is_new_session and session_meta: # Для новой сессии updated_at = created_at
-             pass # Уже установлено при создании
 
         return APIChatResponse(reply=bot_message.text, session_id=current_session_id)
 
@@ -89,34 +100,32 @@ async def handle_chat_request(
         logger.error(f"Ошибка в chat_router ({current_session_id}): {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
 
-# Новый эндпоинт для получения списка сессий
+# Эндпоинт GET /api/sessions и GET /api/sessions/{session_id}/history остаются без изменений
+
 @router.get("/sessions", response_model=List[SessionMetadataListResponse])
 async def list_user_sessions(
     db_service: AbstractDBService = Depends(get_db_service_dependency),
-    # user_id: Optional[str] = Query(None) # Для будущей аутентификации
     limit: int = 50,
     skip: int = 0
 ):
-    # Пока user_id не используется, получаем все сессии
     sessions_metadata = await db_service.list_sessions_metadata(user_id=None, limit=limit, skip=skip)
-    
-    # Преобразуем в формат ответа, если нужно (SessionMetadataListResponse)
     response_list = [
         SessionMetadataListResponse(id=meta.id, title=meta.title, updated_at=meta.updated_at)
         for meta in sessions_metadata
     ]
     return response_list
 
-# Эндпоинт для получения истории конкретной сессии (если нужен отдельно от /chat)
 @router.get("/sessions/{session_id}/history", response_model=List[ChatMessage])
 async def get_session_history_route(
     session_id: str,
     db_service: AbstractDBService = Depends(get_db_service_dependency),
-    limit: int = 100 # Можно больше для полной истории
+    limit: int = 100 
 ):
     history = await db_service.get_history(session_id, limit=limit)
-    if not history and not await db_service.get_session_metadata(session_id):
-        raise HTTPException(status_code=404, detail="Сессия не найдена")
+    if not history: # Если истории нет, проверим, существует ли сессия вообще
+        session_meta = await db_service.get_session_metadata(session_id)
+        if not session_meta:
+            raise HTTPException(status_code=404, detail="Сессия не найдена")
     return history
 
 @router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -125,7 +134,15 @@ async def delete_session_route(
     db_service: AbstractDBService = Depends(get_db_service_dependency),
 ):
     logger.info(f"Запрос на удаление сессии: {session_id}")
+    # Сначала проверим, существует ли сессия, чтобы вернуть 404, если нет
+    session_meta = await db_service.get_session_metadata(session_id)
+    if not session_meta:
+        logger.warning(f"Попытка удалить несуществующую сессию: {session_id}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Сессия не найдена для удаления")
+    
     success = await db_service.delete_session_and_history(session_id)
     if not success:
-        pass
-    return
+        # Эта ситуация маловероятна, если сессия существовала, но может быть ошибка при удалении
+        logger.error(f"Не удалось удалить сессию {session_id} после подтверждения ее существования.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Не удалось удалить сессию")
+    return # Возвращаем 204 No Content
