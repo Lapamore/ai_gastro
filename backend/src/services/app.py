@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="Гастрономический Помощник AI (Python Backend + MongoDB)",
+        title="Гастрономический Помощник AI",
         description="Бэкенд для чат-бота с AITunnel, FastAPI Depends и MongoDB.",
-        version="1.3.0",
+        version="1.0.0",
     )
 
     origins = [
