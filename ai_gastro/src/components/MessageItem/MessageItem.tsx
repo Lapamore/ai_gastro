@@ -51,7 +51,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             <div className={`message ${sender}`}>
                 <div className="avatar">
                     {/* Используем эмодзи повара для пользователя, как было ранее задумано */}
-                    {sender === 'bot' ? '🤖' : '🧑‍🍳'} 
+                    {sender === 'bot' ? '🤖' : '🧑'} 
                 </div>
                 <div className="message-content">
                     <div className="sender-name">
