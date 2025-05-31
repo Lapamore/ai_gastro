@@ -8,6 +8,6 @@ from src.core.models.settings.UserPreferencesDataModel import (
 
 class PersonalizedSuggestionsRequest(BaseModel):
     session_id: Optional[str] = (
-        None  # Чтобы загрузить историю для этого пользователя/сессии
+        None  
     )
-    preferences: Optional[UserPreferencesData] = None  # Текущие настройки пользователя
+    preferences: Optional[UserPreferencesData] = None  
