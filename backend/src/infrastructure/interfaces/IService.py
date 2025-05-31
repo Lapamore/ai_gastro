@@ -1,7 +1,10 @@
-# src/core/services/ai_service.py
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from ..models import ChatMessage, AIProviderResponse, UserPreferencesData # Добавляем UserPreferencesData
+
+from src.core.models.settings.UserPreferencesDataModel import UserPreferencesData
+from src.core.models.youtube.AIProviderResponseModel import AIProviderResponse
+from src.core.models.chatting.ChatMessageModel import ChatMessage
+
 
 class AbstractAIService(ABC):
     @abstractmethod
@@ -10,8 +13,8 @@ class AbstractAIService(ABC):
         user_prompt: str,
         conversation_history: List[ChatMessage],
         system_prompt: str,
-        preferences_text: Optional[str] = None 
-    ) -> AIProviderResponse: # Возвращаемый тип изменен
+        preferences_text: Optional[str] = None,
+    ) -> AIProviderResponse:
         """
         Получает ответ от AI модели, может содержать запрос на поиск видео.
         """
@@ -26,6 +29,6 @@ class AbstractAIService(ABC):
         self,
         conversation_history: List[ChatMessage],
         preferences: Optional[UserPreferencesData],
-        system_prompt: str 
+        system_prompt: str,
     ) -> List[str]:
         pass

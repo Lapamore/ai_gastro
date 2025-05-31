@@ -1,12 +1,10 @@
-# src/services/app.py
-import os
 import logging
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware # Убедись, что импортировано
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from src.services.api.chat_router import router as chat_api_router
-from src.infrastructure.dependencies import get_app_config, get_db_service_dependency, close_db_connection
+from src.services.api.ChatRouter import router as chat_api_router
+from src.infrastructure.dependencies.Dependencies import get_app_config, get_db_service_dependency, close_db_connection
 
 load_dotenv()
 
@@ -27,10 +25,10 @@ def create_app() -> FastAPI:
     ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins, # Теперь включает твой порт
+        allow_origins=origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], # Явно перечислим методы, включая OPTIONS
-        allow_headers=["*"], # Или перечислить конкретные: ["Content-Type", "Authorization", "X-Session-ID"]
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"], 
     )
 
     app.include_router(chat_api_router)
@@ -38,7 +36,6 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def startup_event():
-        # ... (код startup как раньше) ...
         logger.info("Приложение запускается...")
         try:
             app_config = get_app_config()
