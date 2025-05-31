@@ -182,3 +182,76 @@
         max-width: calc(88% - 50px);
     }
 }
+
+.videos-container {
+    margin-top: 15px; /* Отступ от основного текста сообщения */
+    display: flex;
+    flex-direction: column; /* Видео идут друг под другом */
+    gap: 12px; /* Расстояние между блоками видео */
+}
+
+.video-item {
+    background-color: rgba(0,0,0,0.03); /* Очень легкий фон для отделения */
+    border-radius: var(--border-radius-sm); /* Используем наши переменные */
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+.video-item:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+.video-link {
+    display: flex;
+    align-items: flex-start; 
+    text-decoration: none;
+    color: inherit; /* Наследуем цвет текста */
+    gap: 12px; /* Расстояние между превью и текстом */
+}
+
+.video-thumbnail {
+    width: 120px; 
+    height: 68px; /* Соотношение 16:9 для превью YouTube */
+    object-fit: cover;
+    border-radius: var(--border-radius-sm);
+    flex-shrink: 0; /* Чтобы картинка не сжималась */
+    border: 1px solid rgba(0,0,0,0.05); /* Легкая рамка для превью */
+}
+
+.video-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px; /* Меньший отступ между заголовком и каналом */
+    flex-grow: 1; /* Чтобы текстовая информация занимала оставшееся место */
+}
+
+.video-title {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    line-height: 1.3;
+    /* Ограничение текста в несколько строк с многоточием (опционально) */
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Показать 2 строки */
+    -webkit-box-orient: vertical;  
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.video-link:hover .video-title {
+    color: var(--primary-color); 
+}
+
+.video-channel {
+    font-size: 0.75rem; /* Меньше шрифт для канала */
+    color: var(--text-color-light);
+    opacity: 0.9;
+}
+
+.video-embed { /* Если будешь использовать iframe */
+    width: 100%;
+    min-height: 220px; /* Или другая подходящая высота */
+    border-radius: var(--border-radius-sm);
+    margin-top: 8px;
+    border: 1px solid var(--border-color); /* Рамка для iframe */
+}

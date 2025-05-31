@@ -1,24 +1,22 @@
 # src/infrastructure/dependencies.py
 import os
-import logging # Добавим импорт logging
+import logging
 from functools import lru_cache
 from dotenv import load_dotenv
 from fastapi import Depends
-from typing import Optional # Для _db_service_instance
+from typing import Optional
 
 from src.core.services.ai_service import AbstractAIService
-from src.infrastructure.openai_client.impl import OpenAIAITunnelService # Предполагаем, что это твой AI сервис
+from src.infrastructure.openai_client.impl import OpenAIAITunnelService
 from src.core.services.database_service import AbstractDBService
 from src.infrastructure.mongodb_client.impl import MongoDBService
+from src.infrastructure.youtube_service import YouTubeService # <--- Новый импорт
 
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__) # Убедись, что logging импортирован
-
 class AppConfig:
     def __init__(self):
-        # ... (aitunnel переменные) ...
         self.aitunnel_api_key: str = os.getenv("AITUNNEL_API_KEY", "")
         self.aitunnel_base_url: str = os.getenv("AITUNNEL_BASE_URL", "https://api.aitunnel.ru/v1/")
         self.aitunnel_model_name: str = os.getenv("AITUNNEL_CHAT_MODEL", "gemini-1.5-flash-latest")
@@ -26,20 +24,19 @@ class AppConfig:
         
         self.mongodb_connection_string: str = os.getenv("MONGODB_CONNECTION_STRING", "mongodb://localhost:27017/")
         self.mongodb_database_name: str = os.getenv("MONGODB_DATABASE_NAME", "gastronomic_chat_ai")
-        # Обновляем имена коллекций
         self.mongodb_chat_history_collection_name: str = os.getenv("MONGODB_CHAT_HISTORY_COLLECTION_NAME", "chat_histories")
         self.mongodb_sessions_metadata_collection_name: str = os.getenv("MONGODB_SESSIONS_METADATA_COLLECTION_NAME", "sessions_metadata")
+        
+        self.youtube_api_key: str = os.getenv("YOUTUBE_API_KEY", "")
 
 @lru_cache()
 def get_app_config() -> AppConfig:
     config = AppConfig()
-    if not config.aitunnel_api_key:
-        logger.warning("AITUNNEL_API_KEY не установлен в .env файле!")
+    if not config.aitunnel_api_key: logger.warning("AITUNNEL_API_KEY не установлен!")
+    if not config.youtube_api_key: logger.warning("YOUTUBE_API_KEY не установлен! Поиск видео не будет работать.")
     return config
 
-async def get_ai_service_dependency(
-    config: AppConfig = Depends(get_app_config)
-) -> AbstractAIService:
+async def get_ai_service_dependency(config: AppConfig = Depends(get_app_config)) -> AbstractAIService:
     return OpenAIAITunnelService(
         api_key=config.aitunnel_api_key,
         base_url=config.aitunnel_base_url,
@@ -47,23 +44,19 @@ async def get_ai_service_dependency(
         system_prompt_file=config.system_prompt_file
     )
 
-_db_service_instance: Optional[MongoDBService] = None 
-
-async def get_db_service_dependency(
-    config: AppConfig = Depends(get_app_config)
-) -> AbstractDBService:
+_db_service_instance: Optional[MongoDBService] = None
+async def get_db_service_dependency(config: AppConfig = Depends(get_app_config)) -> AbstractDBService:
     global _db_service_instance
     if _db_service_instance is None:
         try:
-            _db_service_instance = MongoDBService( 
+            _db_service_instance = MongoDBService(
                 connection_string=config.mongodb_connection_string,
                 database_name=config.mongodb_database_name,
                 chat_history_collection_name=config.mongodb_chat_history_collection_name,
                 sessions_metadata_collection_name=config.mongodb_sessions_metadata_collection_name
             )
-            logger.info("Экземпляр MongoDBService создан и подключен.")
         except ConnectionError as e:
-            logger.error(f"КРИТИЧЕСКАЯ ОШИБКА MongoDB: Не удалось создать экземпляр MongoDBService. {e}")
+            logger.error(f"КРИТИЧЕСКАЯ ОШИБКА MongoDB: {e}")
             raise
     return _db_service_instance
 
@@ -72,3 +65,8 @@ async def close_db_connection():
     if _db_service_instance:
         await _db_service_instance.close_connection()
         _db_service_instance = None
+
+# Зависимость для YouTube сервиса
+@lru_cache() # YouTubeService можно сделать синглтоном
+def get_youtube_service(config: AppConfig = Depends(get_app_config)) -> YouTubeService:
+    return YouTubeService(api_key=config.youtube_api_key)

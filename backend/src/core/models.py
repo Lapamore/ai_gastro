@@ -42,6 +42,7 @@ class UserChatRequest(BaseModel):
 
 class AIProviderResponse(BaseModel):
     reply: str
+    trigger_video_search_query: Optional[str] = None 
 
 class APIChatResponse(BaseModel):
     reply: str
@@ -60,3 +61,9 @@ class PersonalizedSuggestionsRequest(BaseModel):
 class PersonalizedSuggestionsResponse(BaseModel):
     suggestions: List[str] # Список текстовых предложений
     # Можно добавить более структурированные предложения, например, [{title: "Паста", reason: "Вы любите итальянское"}, ...]
+
+class VideoSearchResult(BaseModel):
+    title: str
+    video_id: str
+    thumbnail_url: Optional[str] = None
+    channel_title: Optional[str] = None

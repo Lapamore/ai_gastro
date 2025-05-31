@@ -1,6 +1,7 @@
+# src/core/services/ai_service.py
 from abc import ABC, abstractmethod
-from typing import List, Optional # Добавим Optional
-from ..models import ChatMessage, AIProviderResponse, UserPreferencesData
+from typing import List, Optional
+from ..models import ChatMessage, AIProviderResponse, UserPreferencesData # Добавляем UserPreferencesData
 
 class AbstractAIService(ABC):
     @abstractmethod
@@ -8,27 +9,23 @@ class AbstractAIService(ABC):
         self,
         user_prompt: str,
         conversation_history: List[ChatMessage],
-        system_prompt: str, # Основной системный промпт (загруженный из файла)
-        preferences_text: Optional[str] = None # <--- Текст с предпочтениями пользователя
-    ) -> AIProviderResponse:
+        system_prompt: str,
+        preferences_text: Optional[str] = None 
+    ) -> AIProviderResponse: # Возвращаемый тип изменен
         """
-        Получает ответ от AI модели.
+        Получает ответ от AI модели, может содержать запрос на поиск видео.
         """
         pass
 
     @abstractmethod
     async def load_system_prompt(self, file_path: str) -> str:
-        """
-        Загружает системный промпт из файла.
-        (Может быть не нужен, если грузим в __init__ реализации)
-        """
         pass
-    
+
     @abstractmethod
     async def get_personalized_suggestions(
         self,
-        conversation_history: List[ChatMessage], # История предыдущих диалогов
-        preferences: Optional[UserPreferencesData], # Явные предпочтения пользователя
-        system_prompt: str # Базовый системный промпт
-    ) -> List[str]: # Возвращает список текстовых предложений
+        conversation_history: List[ChatMessage],
+        preferences: Optional[UserPreferencesData],
+        system_prompt: str 
+    ) -> List[str]:
         pass
