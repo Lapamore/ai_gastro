@@ -4,7 +4,7 @@ import axios from 'axios';
 import './App.css'; 
 
 import ChatHeader from './components/ChatHeader/ChatHeader';
-import MessageList from './components/MessageList/MessageList'; // Убедись, что MessageList принимает videos
+import MessageList from './components/MessageList/MessageList';
 import ChatInput from './components/ChatInput/ChatInput';
 import SidebarToggle from './components/SidebarToggle/SidebarToggle';
 import QuickActions from './components/QuickActions/QuickActions';
@@ -88,7 +88,7 @@ function App() {
     const [userPreferences, setUserPreferences] = useState<UserPreferences>(() => {
         const storedPrefs = localStorage.getItem('userGastronomicPreferences');
         if (storedPrefs) {
-            try { return JSON.parse(storedPrefs); } catch (e) { return initialUserPreferences; }
+            try { return JSON.parse(storedPrefs); } catch { return initialUserPreferences; }
         }
         return initialUserPreferences;
     });
@@ -104,52 +104,37 @@ function App() {
         localStorage.setItem('userGastronomicPreferences', JSON.stringify(userPreferences));
     }, [userPreferences]);
 
-    // Обновляем addMessage, чтобы он принимал videos и передавал их в newMessage
-    const addMessage = useCallback((
-        text: string, 
-        sender: 'user' | 'bot', 
-        suggestions: string[] = [], 
-        id?: string, // id стал опциональным и последним не-обязательным параметром
-        videos?: BackendVideoResult[] // Добавляем videos сюда
-    ) => {
-        const displayId = id || uuidv4();
-        const newMessage: FrontendMessage = { 
-            id: displayId, 
-            text, 
-            sender, 
-            suggestions, 
-            videos, // <--- СОХРАНЯЕМ VIDEOS В СООБЩЕНИИ
-            timestamp: new Date() 
-        };
-        setMessages(prev => [...prev, newMessage]);
-    }, []);
-
-    const fetchSessions = useCallback(async (newlyCreatedSessionIdToSelect?: string) => {
+    const fetchSessions = useCallback(async () => {
         try {
             const response = await axios.get<BackendSessionMetadata[]>(`${API_BASE_URL}/sessions`);
             const fetchedSessions = response.data.map(s => ({...s, updated_at: new Date(s.updated_at)}))
                 .sort((a,b) => b.updated_at.getTime() - a.updated_at.getTime()); 
             setSessionsList(fetchedSessions);
-        } catch (error) { console.error("Error fetching sessions:", error); }
+        } catch {}
     }, []);
 
     useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
+    // При старте/смене сессии — если нет истории, показываем приветствие
     useEffect(() => {
         const loadInitialData = async () => {
             if (activeSessionId) { 
                 setIsBotTyping(true); 
                 setMessages([]); 
                 try {
-                    const response = await axios.get<Array<Omit<FrontendMessage, 'id'|'videos'|'suggestions'|'timestamp'> & {timestamp: string}>>( // Тип для истории
-                        `${API_BASE_URL}/sessions/${activeSessionId}/history`);
+                    const response = await axios.get<Array<Omit<FrontendMessage, 'id'|'videos'|'suggestions'|'timestamp'> & {timestamp: string}>>(`${API_BASE_URL}/sessions/${activeSessionId}/history`);
                     setMessages(response.data.map(msg => ({
-                        ...msg, id: uuidv4(), sender: msg.sender as 'user' | 'bot', // Приводим тип sender
+                        ...msg, id: uuidv4(), sender: msg.sender as 'user' | 'bot',
                         timestamp: new Date(msg.timestamp)
-                        // videos и suggestions будут undefined для исторических сообщений, если их там нет
                     })));
-                } catch (error) {
-                    addMessage("Не удалось загрузить историю этого чата.", 'bot');
+                } catch {
+                    setMessages([{
+                        id: uuidv4(),
+                        text: "Не удалось загрузить историю этого чата.",
+                        sender: 'bot',
+                        suggestions: [],
+                        timestamp: new Date(),
+                    }]);
                     setActiveSessionId(null); 
                 } finally { 
                     setIsBotTyping(false); 
@@ -157,29 +142,13 @@ function App() {
             } else { 
                 if (messages.length === 0) { 
                     setIsBotTyping(true);
-                    if (isInitialMountRef.current) { 
-                        const hasPreviousDataForSuggestions = sessionsList.length > 0 || Object.values(userPreferences).some(val => Array.isArray(val) ? val.length > 0 : val !== null);
-                        if (hasPreviousDataForSuggestions) {
-                            try {
-                                const response = await axios.post<BackendPersonalizedSuggestions>(`${API_BASE_URL}/suggestions`, {
-                                    session_id: null, preferences: userPreferences
-                                });
-                                if (response.data.suggestions?.length) {
-                                    addMessage("Привет! 👋 С возвращением! У меня есть несколько идей для тебя:", 'bot');
-                                    // Для персонализированных предложений мы не передаем videos в addMessage
-                                    response.data.suggestions.forEach(suggestion => addMessage(suggestion, 'bot', [], undefined));
-                                } else {
-                                    addMessage("Привет! Я Гастро-Помощник! Чем могу помочь сегодня?", 'bot', ["Что на ужин?"]);
-                                }
-                            } catch (error) {
-                                addMessage("Привет! Гастро-Помощник к твоим услугам!", 'bot');
-                            }
-                        } else { 
-                            addMessage("Привет! Я Гастро-Помощник с AI! 🍽️ Чем могу помочь?", 'bot', ["Что на ужин?", "Легкий десерт"]);
-                        }
-                    } else { 
-                        addMessage("Привет! Я Гастро-Помощник с AI! 🍽️ Чем могу помочь?", 'bot', ["Что на ужин?", "Легкий десерт"]);
-                    }
+                    setMessages([{
+                        id: uuidv4(),
+                        text: "Привет! Я Гастро-Помощник с AI! 🍽️ Чем могу помочь?",
+                        sender: 'bot',
+                        suggestions: ["Что на ужин?", "Легкий десерт"],
+                        timestamp: new Date(),
+                    }]);
                     setIsBotTyping(false);
                 }
             }
@@ -191,35 +160,43 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeSessionId]);
 
-
+    // Главное: всегда добавляем сообщения через setMessages(prev => [...prev, ...])
     const handleSendMessage = async (textFromInputOrSuggestion: string) => {
         if (!textFromInputOrSuggestion.trim()) return;
         const userText = textFromInputOrSuggestion;
-        // Добавляем сообщение пользователя БЕЗ видео
-        addMessage(userText, 'user', [], uuidv4(), undefined); // id передаем, videos - undefined
-        setUserInput(''); 
+        setMessages(prevMsgs => [
+            ...prevMsgs,
+            {
+                id: uuidv4(),
+                text: userText,
+                sender: 'user',
+                suggestions: [],
+                timestamp: new Date(),
+            }
+        ]);
+        setUserInput('');
         setIsBotTyping(true);
-        const currentSessionIdForRequest = activeSessionId; 
+        const currentSessionIdForRequest = activeSessionId;
 
         try {
-            const response = await axios.post<BackendChatResponse>(`${API_BASE_URL}/chat`, { // Ожидаем BackendChatResponse
+            const response = await axios.post<BackendChatResponse>(`${API_BASE_URL}/chat`, {
                 prompt: userText,
                 session_id: currentSessionIdForRequest,
-                preferences: userPreferences 
+                preferences: userPreferences
             });
 
             const botReply: string = response.data.reply;
             const returnedSessionId: string = response.data.session_id;
-            const foundVideos: BackendVideoResult[] | undefined = response.data.videos; // <--- Получаем видео
+            const foundVideos: BackendVideoResult[] | undefined = response.data.videos;
 
-            if (!currentSessionIdForRequest && returnedSessionId) { 
-                setActiveSessionId(returnedSessionId); 
-                await fetchSessions(returnedSessionId); 
+            if (!currentSessionIdForRequest && returnedSessionId) {
+                setActiveSessionId(returnedSessionId);
+                await fetchSessions();
             } else if (currentSessionIdForRequest && returnedSessionId === currentSessionIdForRequest) {
                 setSessionsList(prev => prev.map(s => s.id === currentSessionIdForRequest ? {...s, updated_at: new Date()} : s)
                     .sort((a,b) => b.updated_at.getTime() - a.updated_at.getTime()));
             }
-            
+
             let suggestionsForBotReply: string[] = [];
             const lowerBotReply = botReply.toLowerCase();
             if (lowerBotReply.includes("рецепт") || lowerBotReply.includes("предлагаю") || lowerBotReply.includes("вариант")) {
@@ -227,51 +204,109 @@ function App() {
             } else if (lowerBotReply.includes("какие у тебя предпочтения") || lowerBotReply.includes("что бы ты хотел")) {
                 suggestionsForBotReply = ["Сладкое 🍰", "Основное блюдо 🍲", "Острое 🌶️", "Что-то легкое 🥗"];
             }
-            // Добавляем основной ответ бота, ПЕРЕДАВАЯ видео, если они есть
-            addMessage(botReply, 'bot', suggestionsForBotReply, undefined, foundVideos); // id не передаем, videos передаем
+            setMessages(prevMsgs => [
+                ...prevMsgs,
+                {
+                    id: uuidv4(),
+                    text: botReply,
+                    sender: 'bot',
+                    suggestions: suggestionsForBotReply,
+                    timestamp: new Date(),
+                    videos: foundVideos
+                }
+            ]);
 
-        } catch (error: unknown) { 
-            let errMsg = "Ошибка AI."; 
+        } catch (error: unknown) {
+            let errMsg = "Ошибка AI.";
             if (axios.isAxiosError(error)) {
                 if (error.response) {
-                    const responseData = error.response.data as any; 
+                    const responseData = error.response.data as { detail?: string; error?: string };
                     errMsg = responseData?.detail || responseData?.error || `Ошибка сервера: ${error.response.status}`;
-                } else if (error.request) { errMsg = "Не удалось связаться с сервером."; } 
+                } else if (error.request) { errMsg = "Не удалось связаться с сервером."; }
                 else { errMsg = "Ошибка при отправке запроса."; }
             } else if (error instanceof Error) { errMsg = error.message; }
-            addMessage(errMsg, 'bot');
+            setMessages(prevMsgs => [
+                ...prevMsgs,
+                {
+                    id: uuidv4(),
+                    text: errMsg,
+                    sender: 'bot',
+                    suggestions: [],
+                    timestamp: new Date(),
+                }
+            ]);
         } finally { setIsBotTyping(false); }
     };
-    
+
     const fetchPersonalizedSuggestions = async () => {
         if (isLoadingSuggestions) return;
         setIsLoadingSuggestions(true);
-        addMessage("Подбираю персональные идеи для тебя...", 'bot');
+        setMessages(prevMsgs => [
+            ...prevMsgs,
+            {
+                id: uuidv4(),
+                text: "Подбираю персональные идеи для тебя...",
+                sender: 'bot',
+                suggestions: [],
+                timestamp: new Date(),
+            }
+        ]);
         try {
             const response = await axios.post<BackendPersonalizedSuggestions>(`${API_BASE_URL}/suggestions`, {
                 session_id: activeSessionId, preferences: userPreferences
             });
             if (response.data.suggestions && response.data.suggestions.length > 0) {
-                let combinedSuggestionsText = "Вот несколько идей, которые могут тебе понравиться:\n"; // Убрал \n\n для компактности
+                let combinedSuggestionsText = "Вот несколько идей, которые могут тебе понравиться:\n";
                 combinedSuggestionsText += response.data.suggestions
-                                            .map(s => s.startsWith('- ') || s.startsWith('* ') || /^\d+\.\s/.test(s) ? s : `- ${s}`) // Добавляем маркер, если нет
+                                            .map(s => s.startsWith('- ') || s.startsWith('* ') || /^\d+\.\s/.test(s) ? s : `- ${s}`)
                                             .join('\n'); 
-                addMessage(combinedSuggestionsText, 'bot');
+                setMessages(prevMsgs => [
+                    ...prevMsgs,
+                    {
+                        id: uuidv4(),
+                        text: combinedSuggestionsText,
+                        sender: 'bot',
+                        suggestions: [],
+                        timestamp: new Date(),
+                    }
+                ]);
             } else {
-                addMessage("Хм, пока не могу придумать ничего особенного...", 'bot');
+                setMessages(prevMsgs => [
+                    ...prevMsgs,
+                    {
+                        id: uuidv4(),
+                        text: "Хм, пока не могу придумать ничего особенного...",
+                        sender: 'bot',
+                        suggestions: [],
+                        timestamp: new Date(),
+                    }
+                ]);
             }
-        } catch (error) { addMessage("Не удалось подобрать персональные рекомендации.", 'bot');} 
-        finally { setIsLoadingSuggestions(false); }
+        } catch {
+            setMessages(prevMsgs => [
+                ...prevMsgs,
+                {
+                    id: uuidv4(),
+                    text: "Не удалось подобрать персональные рекомендации.",
+                    sender: 'bot',
+                    suggestions: [],
+                    timestamp: new Date(),
+                }
+            ]);
+        } finally { setIsLoadingSuggestions(false); }
     };
 
     const handleSelectSession = (id: string) => { if (id !== activeSessionId) setActiveSessionId(id); setIsSidebarOpen(false); };
     
     const handleNewChat = () => { 
-        if (activeSessionId !== null || messages.length > 0) {
-            setActiveSessionId(null); 
-            setMessages([]); 
-        }
-        // isInitialMountRef здесь не сбрасываем, он только для самого первого монтирования App
+        setActiveSessionId(null); 
+        setMessages([{
+            id: uuidv4(),
+            text: "Привет! Я Гастро-Помощник с AI! 🍽️ Чем могу помочь?",
+            sender: 'bot',
+            suggestions: ["Что на ужин?", "Легкий десерт"],
+            timestamp: new Date(),
+        }]);
         setIsSidebarOpen(false); 
     };
     
@@ -281,7 +316,18 @@ function App() {
             await axios.delete(`${API_BASE_URL}/sessions/${id}`);
             setSessionsList(prev => prev.filter(s => s.id !== id));
             if (activeSessionId === id) handleNewChat();
-        } catch (error) { addMessage(`Не удалось удалить диалог.`, 'bot'); }
+        } catch {
+            setMessages(prevMsgs => [
+                ...prevMsgs,
+                {
+                    id: uuidv4(),
+                    text: `Не удалось удалить диалог.`,
+                    sender: 'bot',
+                    suggestions: [],
+                    timestamp: new Date(),
+                }
+            ]);
+        }
     };
     const toggleSidebar = () => setIsSidebarOpen(p => !p);
     const handlePreferencesChange = (newPrefs: UserPreferences) => setUserPreferences(newPrefs);
@@ -326,7 +372,7 @@ function App() {
             <div className={`chat-app-container`}>
                 <ChatHeader onClearChat={() => handleDeleteSession(activeSessionId)} />
                 <MessageList 
-                    messages={messages} // messages теперь содержат поле videos
+                    messages={messages}
                     isBotTyping={isBotTyping} 
                     onSuggestionClick={handleSendMessage} 
                 />
