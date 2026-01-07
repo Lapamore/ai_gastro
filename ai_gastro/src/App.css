@@ -1,418 +1,71 @@
-/* Твой существующий CSS (который ты прислал как src/index.css, но я предполагаю, что это App.css или его часть) */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@300;400;500;600&family=Dancing+Script:wght@700&display=swap');
+/* App.css */
 
-:root {
-    /* ... твои переменные ... */
-    --primary-color: #D7263D; 
-    --secondary-color: #F4A261; 
-    --accent-color: #2A9D8F; 
-    --text-color: #264653; 
-    --text-color-light: #5E6E78; 
-    --bg-color: #f8f5f0; 
-    --container-bg: #FFFFFF; 
-    --bot-message-bg: #E9F5F4; 
-    --user-message-bg: #FEF5EC; 
-    --input-bg: #FFFFFF;
-    --shadow-light: rgba(42, 157, 143, 0.1); 
-    --shadow-medium: rgba(38, 70, 83, 0.15); 
-    --border-color: #e0e7ef; 
-    --border-radius-sm: 8px;
-    --border-radius-md: 16px;
-    --border-radius-lg: 24px; 
-    --font-main: 'Poppins', sans-serif; 
-    --font-display: 'Playfair Display', serif; 
-    --font-script: 'Dancing Script', cursive; 
-    --sidebar-width: 300px;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-    font-family: var(--font-main);
-    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-    background-attachment: fixed; 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    color: var(--text-color);
-    overflow-x: hidden;
-}
-
-#root {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px; 
-}
-
-::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-}
-::-webkit-scrollbar-thumb {
-    background-color: var(--secondary-color);
-    border-radius: 10px;
-    border: 2px solid transparent; 
-    background-clip: content-box; 
-}
-::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color);
-}
-
-/* ------------------------------------------- */
-/* --- ДОБАВЛЕННЫЕ СТИЛИ ДЛЯ САЙДБАРА И СЕССИЙ --- */
-/* ------------------------------------------- */
-
-/* Предполагается, что у тебя уже есть стили для .chat-app-wrapper, .sidebar-panel, .chat-app-container */
-/* Если их нет, то сайдбар и основная структура могут выглядеть не так. */
-/* Я добавлю минимальные стили для .sidebar-panel, если их не было. */
-
-.sidebar-panel {
-    /* Если у тебя уже есть эти стили, НЕ ДУБЛИРУЙ, а дополни */
-    position: fixed; /* Или absolute, в зависимости от твоего layout */
-    left: 0;
-    top: 0;
-    width: var(--sidebar-width);
+/* Обертка всего приложения */
+.chat-app-wrapper {
+    width: 100vw;
     height: 100vh;
-    background-color: #fff; 
-    border-right: 1px solid var(--border-color);
-    padding: 20px; /* Базовый padding */
-    box-shadow: 3px 0 15px rgba(0,0,0,0.08);
-    z-index: 1000;
-    transform: translateX(calc(-1 * var(--sidebar-width)));
-    transition: transform 0.3s ease-in-out;
-    overflow-y: auto;
-    display: flex; /* Для выравнивания контента и кнопки "Закрыть" */
-    flex-direction: column; /* Контент в столбик */
-}
-
-.sidebar-panel.open {
-    transform: translateX(0);
-}
-
-.sidebar-panel h2 {
-    font-family: var(--font-display);
-    color: var(--primary-color);
-    font-size: 1.7em; /* Размер заголовка */
-    margin-top: 60px; /* Отступ от верха, если кнопка toggle fixed */
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.session-id-code {
-    display: block;
-    background-color: var(--bg-color);
-    padding: 5px 8px;
-    border-radius: var(--border-radius-sm);
-    font-size: 0.8em;
-    font-family: 'Courier New', Courier, monospace;
-    word-break: break-all;
-    margin-top: 5px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-    color: var(--text-color-light);
-}
-
-.sidebar-action-button {
-    display: block;
-    width: 100%; 
-    margin-top: 10px; /* Уменьшенный отступ */
-    padding: 10px 15px; /* Уменьшенные паддинги */
-    color: white;
-    border: none;
-    border-radius: var(--border-radius-sm); /* Меньше скругление */
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 0.9rem;
-    text-align: center;
-    transition: background-color 0.2s, transform 0.1s;
-}
-
-.new-chat-button {
-    background-color: var(--secondary-color); 
-    margin-bottom: 15px; 
-}
-.new-chat-button:hover {
-    background-color: #e88f4a; /* Чуть темнее */
-}
-
-/* Кнопка "Закрыть панель" была убрана по твоему запросу, стили для нее не нужны */
-
-.sessions-list {
-    margin-top: 10px; 
-    flex-grow: 1; /* Занимает оставшееся место в сайдбаре */
-    overflow-y: auto; /* Скролл, если список длинный */
-    padding-right: 3px; /* Небольшой отступ для скроллбара */
-}
-.sessions-list::-webkit-scrollbar { /* Стили для скроллбара внутри списка */
-    width: 5px;
-}
-.sessions-list::-webkit-scrollbar-track {
-    background: transparent; /* Прозрачный трек */
-}
-.sessions-list::-webkit-scrollbar-thumb {
-    background-color: var(--border-color);
-    border-radius: 3px;
-}
-.sessions-list::-webkit-scrollbar-thumb:hover {
-    background-color: var(--text-color-light);
-}
-
-.session-item {
-    padding: 10px 12px;
-    margin-bottom: 6px;
-    border-radius: var(--border-radius-sm);
-    background-color: var(--bg-color);
-    border: 1px solid transparent; 
-    cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
-    display: flex; /* Для выравнивания title и meta */
-    justify-content: space-between; /* Разнести title и meta по краям */
-    align-items: center; /* Выровнять по центру вертикально */
-    position: relative; /* Для кнопки удаления */
-}
-
-.session-item:hover {
-    background-color: var(--user-message-bg); 
-    border-color: var(--secondary-color);
-}
-
-.session-item.active {
-    background-color: var(--secondary-color);
-    color: white;
-    border-color: var(--primary-color); 
-}
-.session-item.active .session-title {
-    color: white; 
-    font-weight: 500;
-}
-.session-item.active .session-timestamp {
-    color: rgba(255, 255, 255, 0.75); 
-}
-.session-item.active .delete-session-button {
-    color: rgba(255, 255, 255, 0.6);
-}
-.session-item.active .delete-session-button:hover {
-    color: white;
-}
-
-
-.session-title {
-    font-size: 0.9rem;
-    color: var(--text-color);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; 
-    flex-grow: 1; /* Позволяет названию занимать место */
-    margin-right: 10px; /* Отступ от мета-информации */
-}
-
-.session-meta { /* Контейнер для даты и кнопки удаления */
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 8px; /* Расстояние между датой и кнопкой */
-    flex-shrink: 0; /* Чтобы не сжимался */
+    position: relative;
 }
 
-.session-timestamp {
-    font-size: 0.7rem;
-    color: var(--text-color-light);
-    white-space: nowrap; /* Чтобы дата не переносилась */
-}
-
-.delete-session-button {
-    background: none;
-    border: none;
-    color: var(--text-color-light);
-    cursor: pointer;
-    font-size: 1em; /* Размер корзины */
-    padding: 2px 4px; 
-    opacity: 0; /* Скрыта по умолчанию */
-    transition: opacity 0.15s, color 0.15s, transform 0.15s;
-    line-height: 1; 
-}
-.session-item:hover .delete-session-button { /* Показать кнопку при наведении */
-    opacity: 0.5; 
-}
-.delete-session-button:hover {
-    opacity: 1;
-    color: var(--primary-color); 
-    transform: scale(1.1);
-}
-
-.no-sessions-message {
-    text-align: center;
-    color: var(--text-color-light);
-    padding: 15px;
-    font-size: 0.9em;
-    font-style: italic;
-}
-
-/* Стили для Markdown (если ты решил их оставить в App.css) */
-.text.markdown-content { 
-    line-height: 1.6; 
-    word-wrap: break-word;
-    font-size: 0.95rem;
-}
-.markdown-content p { margin-bottom: 0.7em; }
-.markdown-content p:last-child { margin-bottom: 0; }
-.markdown-content h1, .markdown-content h2, .markdown-content h3 {
-    font-family: var(--font-display); 
-    color: var(--primary-color); 
-    margin-top: 1em; margin-bottom: 0.5em; line-height: 1.2; font-weight: 600;
-}
-.markdown-content h1 { font-size: 1.5em; } 
-.markdown-content h2 { font-size: 1.3em; }
-.markdown-content h3 { font-size: 1.15em; }
-.markdown-content ul, .markdown-content ol { margin-left: 20px; margin-bottom: 0.7em; padding-left: 5px; }
-.markdown-content li { margin-bottom: 0.25em; }
-.markdown-content ul li::marker { color: var(--secondary-color); }
-.markdown-content ol { list-style-type: decimal; }
-.markdown-content blockquote { border-left: 3px solid var(--secondary-color); padding-left: 10px; margin: 0.8em 0; color: var(--text-color-light); font-style: italic; }
-.markdown-content code { background-color: rgba(38, 70, 83, 0.07); padding: 0.15em 0.4em; margin: 0 0.1em; font-size: 88%; border-radius: var(--border-radius-sm); font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; color: var(--accent-color); }
-.markdown-content pre { background-color: #282c34; color: #abb2bf; padding: 0.8em 1em; border-radius: var(--border-radius-sm); overflow-x: auto; margin: 0.8em 0; }
-.markdown-content pre code { background-color: transparent; padding: 0; margin: 0; font-size: inherit; color: inherit; border-radius: 0; white-space: pre-wrap; word-break: break-all; }
-.markdown-content table { width: auto; max-width: 100%; border-collapse: collapse; margin-bottom: 0.8em; border: 1px solid var(--border-color); }
-.markdown-content th, .markdown-content td { border: 1px solid var(--border-color); padding: 6px 10px; text-align: left; }
-.markdown-content th { background-color: var(--user-message-bg); font-weight: 600; color: var(--text-color); }
-.markdown-content hr { border: none; border-top: 1px dashed var(--border-color); margin: 1em 0; }
-.markdown-content a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
-.markdown-content a:hover { text-decoration: underline; color: var(--primary-color); }
-
-
-/* Предполагаемые стили для .chat-app-container, если их нет */
+/* Главный контейнер чата */
 .chat-app-container {
-    width: 700px; /* или 750px как было в "красивом" варианте */
-    height: 95vh;
-    max-height: 800px; /* или 850px */
+    width: 100%;
+    max-width: 750px;
+    height: 90vh;
+    max-height: 850px;
     background-color: var(--container-bg);
-    border-radius: var(--border-radius-md); /* или lg */
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: margin-left 0.3s ease-in-out;
+    position: relative;
+    z-index: 10;
 }
 
-.chat-app-container.shifted {
-    margin-left: var(--sidebar-width);
-}
-
-@media (max-width: 1024px) {
-    .chat-app-container.shifted {
-        margin-left: 0; 
-    }
-}
-@media (max-width: 768px) {
-    .chat-app-container {
-        height: 100vh;
-        max-height: none;
-        border-radius: 0;
-        box-shadow: none;
-        width: 100vw !important; /* Для мобильных всегда на всю ширину */
-        margin-left: 0 !important;
-    }
-    .sidebar-panel {
-        width: clamp(260px, 80vw, 320px); /* Ширина сайдбара на мобильных */
-    }
-    .sidebar-panel h2 {
-        margin-top: 40px; /* Отступ для кнопки toggle */
-        font-size: 1.5em;
-    }
-}
-.app-global-actions {
-    position: fixed; /* Или absolute, если wrapper имеет context */
+/* Кнопка настроек в углу */
+.settings-toggle-button.top-right-button {
+    position: fixed;
     top: 25px;
-    left: 25px;
-    display: flex;
-    gap: 15px; /* Расстояние между кнопкой сайдбара и настройками */
-    z-index: 1001; /* Выше сайдбара, чтобы не перекрывались */
-}
-
-.settings-toggle-button {
+    right: 25px;
     background: var(--container-bg);
     border: none;
     color: var(--primary-color);
     width: 50px; 
     height: 50px;
     border-radius: 50%;
-    font-size: 1.8em; /* Размер иконки */
+    font-size: 1.8em;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 3px 10px rgba(38, 70, 83, 0.15), 0 1px 3px rgba(38,70,83,0.1);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    z-index: 1001;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    line-height: 1;
 }
-.settings-toggle-button:hover {
+
+.settings-toggle-button.top-right-button:hover {
     background: var(--primary-color);
     color: white;
-    transform: scale(1.1) rotate(-90deg); /* Анимация вращения */
-    box-shadow: 0 5px 15px rgba(215, 38, 61, 0.3);
-}
-.settings-toggle-button:focus-visible {
-    outline: 3px solid var(--secondary-color);
-    outline-offset: 3px;
+    transform: scale(1.1) rotate(-90deg);
 }
 
-.settings-toggle-button.top-right-button { /* Добавляем .top-right-button в App.tsx */
-    position: fixed;
-    top: 25px;
-    right: 25px; 
-    /* Остальные стили .settings-toggle-button применяются */
-}
-.settings-toggle-button.top-right-button:hover { /* Добавляем .top-right-button в App.tsx */
-    background: var(--secondary-color);
-}
-.sidebar-toggle-button { /* Предполагаем, что этот класс есть у компонента SidebarToggle */
-    position: fixed;
-    top: 25px;
-    left: 25px;
-    z-index: 1002;
-    /* ... остальные стили для этой кнопки, если они не в ее собственном CSS ... */
-}
-
+/* Мобильная адаптация */
 @media (max-width: 768px) {
-    .app-global-actions {
-        top: 15px;
-        left: 15px;
-        gap: 10px;
+    .chat-app-container {
+        height: 100vh;
+        max-height: none;
+        border-radius: 0;
+        width: 100vw;
     }
-    .settings-toggle-button {
+    
+    .settings-toggle-button.top-right-button {
+        top: 15px;
+        right: 15px;
         width: 45px;
         height: 45px;
-        font-size: 1.6em;
     }
-}
-
-.suggestions-button {
-    background: linear-gradient(135deg, var(--accent-color), #22867a); /* Акцентный цвет */
-    box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
-    margin-top: 10px; /* Отступ от кнопки "Новый чат" */
-}
-.suggestions-button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #22867a, var(--accent-color));
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(42, 157, 143, 0.4);
-}
-.suggestions-button:disabled {
-    background: #b0bec5; /* Нейтральный серый для disabled */
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
 }

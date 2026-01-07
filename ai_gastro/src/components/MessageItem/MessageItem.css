@@ -1,19 +1,21 @@
-/* src/components/MessageItem/MessageItem.css */
+/* --- Контейнер сообщения (обертка) --- */
 .message-wrapper {
     opacity: 0;
-    /* Анимация появления сообщения: чуть сложнее */
+    /* Анимация появления сообщения */
     animation: messageArrive 0.5s cubic-bezier(0.215, 0.610, 0.355, 1.000) forwards;
     display: flex;
     flex-direction: column;
 }
+
 .message-wrapper.user {
     align-items: flex-end;
 }
+
 .message-wrapper.bot {
     align-items: flex-start;
 }
 
-@keyframes messageArrive { /* Новая анимация */
+@keyframes messageArrive {
     0% {
         opacity: 0;
         transform: translateY(20px) scale(0.95);
@@ -27,28 +29,23 @@
     }
 }
 
+/* --- Само облачко сообщения --- */
 .message {
-    padding: 14px 20px; /* Увеличиваем паддинги */
-    border-radius: var(--border-radius-lg); /* Более круглые сообщения */
+    padding: 14px 20px;
+    border-radius: var(--border-radius-lg);
     max-width: 78%; 
-    line-height: 1.65; /* Чуть больше межстрочный интервал */
+    line-height: 1.65;
     position: relative;
     display: flex;
     align-items: flex-start;
-    /* Более мягкая и объемная тень */
     box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 5px 15px rgba(38,70,83,0.08);
     word-break: break-word;
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 
-/* .message:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.06), 0 8px 20px rgba(38,70,83,0.1);
-} */ /* Эффект при наведении, если нужен */
-
-
+/* --- Аватары --- */
 .message .avatar {
-    width: 42px; /* Чуть больше аватар */
+    width: 42px;
     height: 42px;
     border-radius: 50%;
     margin-right: 15px;
@@ -58,12 +55,12 @@
     font-size: 1.6em;
     flex-shrink: 0;
     color: white;
-    /* Объемная тень для аватара */
     box-shadow: 0 3px 6px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1);
     transition: transform 0.3s ease;
 }
+
 .message:hover .avatar {
-    transform: scale(1.1) rotate(5deg); /* Анимация аватара при наведении на сообщение */
+    transform: scale(1.1) rotate(5deg);
 }
 
 .message-content {
@@ -72,85 +69,225 @@
 }
 
 .message .sender-name {
-    font-size: 0.9em; /* Немного крупнее имя */
-    font-weight: 600; /* Жирнее */
+    font-size: 0.9em;
+    font-weight: 600;
     margin-bottom: 6px;
-    font-family: var(--font-main); /* Убедимся что основной шрифт */
+    font-family: var(--font-main);
 }
 
 .message .text {
-    font-size: 0.95rem; /* Размер текста сообщения */
-}
-.message .text strong {
-    color: var(--primary-color); /* Выделение текста */
-    font-weight: 600;
-}
-.message .text a {
-    color: var(--accent-color);
-    text-decoration: none;
-    font-weight: 500;
-    border-bottom: 1px dashed var(--accent-color);
-    transition: color 0.2s, border-color 0.2s;
-}
-.message .text a:hover {
-    color: var(--primary-color);
-    border-bottom-color: var(--primary-color);
+    font-size: 0.95rem;
 }
 
 .message .timestamp {
-    font-size: 0.75em; /* Чуть крупнее время */
+    font-size: 0.75em;
     color: var(--text-color-light);
     margin-top: 8px;
     opacity: 0.8;
 }
 
-/* --- User Message Styles --- */
+/* --- Стили пользователя --- */
 .message.user {
     background-color: var(--user-message-bg);
     border-top-right-radius: var(--border-radius-sm);
     color: var(--text-color);
 }
+
 .message.user .avatar {
     order: 1;
     margin-right: 0;
     margin-left: 15px;
-    background: linear-gradient(135deg, var(--accent-color), #25a264); /* Градиент для аватара пользователя */
+    background: linear-gradient(135deg, var(--accent-color), #25a264);
 }
+
 .message.user .message-content {
     align-items: flex-end;
 }
+
 .message.user .sender-name {
     color: var(--accent-color);
 }
+
 .message.user .timestamp {
     text-align: right;
 }
 
-/* --- Bot Message Styles --- */
+/* --- Стили бота --- */
 .message.bot {
     background-color: var(--bot-message-bg);
     border-top-left-radius: var(--border-radius-sm);
 }
+
 .message.bot .avatar {
-    background: linear-gradient(135deg, var(--primary-color), #b82035); /* Градиент для аватара бота */
+    background: linear-gradient(135deg, var(--primary-color), #b82035);
 }
+
 .message.bot .sender-name {
      color: var(--primary-color);
 }
-.message.bot .timestamp {
-    text-align: left;
+
+/* --- СТИЛИ ДЛЯ MARKDOWN (Перенесены из App.css) --- */
+.text.markdown-content { 
+    line-height: 1.6; 
+    word-wrap: break-word;
+    font-size: 0.95rem;
 }
 
+.markdown-content p { 
+    margin-bottom: 0.7em; 
+}
 
+.markdown-content p:last-child { 
+    margin-bottom: 0; 
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+    font-family: var(--font-display); 
+    color: var(--primary-color); 
+    margin-top: 1em; 
+    margin-bottom: 0.5em; 
+    line-height: 1.2; 
+    font-weight: 600;
+}
+
+.markdown-content h1 { font-size: 1.5em; } 
+.markdown-content h2 { font-size: 1.3em; }
+.markdown-content h3 { font-size: 1.15em; }
+
+.markdown-content ul, .markdown-content ol { 
+    margin-left: 20px; 
+    margin-bottom: 0.7em; 
+    padding-left: 5px; 
+}
+
+.markdown-content li { 
+    margin-bottom: 0.25em; 
+}
+
+.markdown-content ul li::marker { 
+    color: var(--secondary-color); 
+}
+
+.markdown-content blockquote { 
+    border-left: 3px solid var(--secondary-color); 
+    padding-left: 10px; 
+    margin: 0.8em 0; 
+    color: var(--text-color-light); 
+    font-style: italic; 
+}
+
+.markdown-content code { 
+    background-color: rgba(38, 70, 83, 0.07); 
+    padding: 0.15em 0.4em; 
+    margin: 0 0.1em; 
+    font-size: 88%; 
+    border-radius: var(--border-radius-sm); 
+    font-family: 'SFMono-Regular', Consolas, monospace; 
+    color: var(--accent-color); 
+}
+
+.markdown-content pre { 
+    background-color: #282c34; 
+    color: #abb2bf; 
+    padding: 0.8em 1em; 
+    border-radius: var(--border-radius-sm); 
+    overflow-x: auto; 
+    margin: 0.8em 0; 
+}
+
+.markdown-content pre code { 
+    background-color: transparent; 
+    padding: 0; 
+    margin: 0; 
+    font-size: inherit; 
+    color: inherit; 
+    white-space: pre-wrap; 
+}
+
+.markdown-content a { 
+    color: var(--accent-color); 
+    text-decoration: none; 
+    font-weight: 500; 
+}
+
+.markdown-content a:hover { 
+    text-decoration: underline; 
+    color: var(--primary-color); 
+}
+
+/* --- КОНТЕЙНЕР ДЛЯ ВИДЕО --- */
+.videos-container {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.video-item {
+    background-color: rgba(0,0,0,0.03);
+    border-radius: var(--border-radius-sm);
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.video-item:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+.video-link {
+    display: flex;
+    align-items: flex-start; 
+    text-decoration: none;
+    color: inherit;
+    gap: 12px;
+}
+
+.video-thumbnail {
+    width: 120px; 
+    height: 68px;
+    object-fit: cover;
+    border-radius: var(--border-radius-sm);
+    flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.video-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex-grow: 1;
+}
+
+.video-title {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;  
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.video-channel {
+    font-size: 0.75rem;
+    color: var(--text-color-light);
+    opacity: 0.9;
+}
+
+/* --- КНОПКИ-ПОДСКАЗКИ (SUGGESTIONS) --- */
 .suggestion-buttons-container {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 15px; /* Больше отступ */
+    margin-top: 15px;
 }
 
 .suggestion-buttons-container.bot-suggestions {
-    padding-left: 57px; /* (42px avatar + 15px margin) */
+    padding-left: 57px; /* Сдвиг, чтобы быть под текстом бота (42px аватар + 15px отступ) */
     max-width: calc(78% - 57px);
 }
 
@@ -160,6 +297,7 @@
     max-width: calc(78% - 57px);
 }
 
+/* --- Адаптивность --- */
 @media (max-width: 768px) {
     .message {
         max-width: 88%;
@@ -181,77 +319,4 @@
         padding-right: 50px;
         max-width: calc(88% - 50px);
     }
-}
-
-.videos-container {
-    margin-top: 15px; /* Отступ от основного текста сообщения */
-    display: flex;
-    flex-direction: column; /* Видео идут друг под другом */
-    gap: 12px; /* Расстояние между блоками видео */
-}
-
-.video-item {
-    background-color: rgba(0,0,0,0.03); /* Очень легкий фон для отделения */
-    border-radius: var(--border-radius-sm); /* Используем наши переменные */
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
-}
-.video-item:hover {
-    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-    transform: translateY(-2px);
-}
-
-.video-link {
-    display: flex;
-    align-items: flex-start; 
-    text-decoration: none;
-    color: inherit; /* Наследуем цвет текста */
-    gap: 12px; /* Расстояние между превью и текстом */
-}
-
-.video-thumbnail {
-    width: 120px; 
-    height: 68px; /* Соотношение 16:9 для превью YouTube */
-    object-fit: cover;
-    border-radius: var(--border-radius-sm);
-    flex-shrink: 0; /* Чтобы картинка не сжималась */
-    border: 1px solid rgba(0,0,0,0.05); /* Легкая рамка для превью */
-}
-
-.video-info {
-    display: flex;
-    flex-direction: column;
-    gap: 3px; /* Меньший отступ между заголовком и каналом */
-    flex-grow: 1; /* Чтобы текстовая информация занимала оставшееся место */
-}
-
-.video-title {
-    font-weight: 500;
-    color: var(--text-color);
-    font-size: 0.9rem;
-    line-height: 1.3;
-    /* Ограничение текста в несколько строк с многоточием (опционально) */
-    display: -webkit-box;
-    -webkit-line-clamp: 2; /* Показать 2 строки */
-    -webkit-box-orient: vertical;  
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.video-link:hover .video-title {
-    color: var(--primary-color); 
-}
-
-.video-channel {
-    font-size: 0.75rem; /* Меньше шрифт для канала */
-    color: var(--text-color-light);
-    opacity: 0.9;
-}
-
-.video-embed { /* Если будешь использовать iframe */
-    width: 100%;
-    min-height: 220px; /* Или другая подходящая высота */
-    border-radius: var(--border-radius-sm);
-    margin-top: 8px;
-    border: 1px solid var(--border-color); /* Рамка для iframe */
 }

@@ -1,33 +1,25 @@
-/* src/index.css */
+/* index.css */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@300;400;500;600&family=Dancing+Script:wght@700&display=swap');
 
 :root {
-    /* Новая цветовая палитра - более теплая и "дорогая" */
-    --primary-color: #D7263D; /* Глубокий красный, как красное вино */
-    --secondary-color: #F4A261; /* Теплый оранжево-персиковый, как абрикос */
-    --accent-color: #2A9D8F; /* Приглушенный бирюзовый, для свежести */
-    --text-color: #264653; /* Темный серо-синий, почти черный */
-    --text-color-light: #5E6E78; /* Более светлый для второстепенного текста */
-    --bg-color: #f8f5f0; /* Очень светлый, теплый бежевый, как пергамент */
-    --container-bg: #FFFFFF; /* Чистый белый для контраста */
-    
-    --bot-message-bg: #E9F5F4; /* Светлый, почти белый с оттенком акцента */
-    --user-message-bg: #FEF5EC; /* Светлый, почти белый с оттенком вторичного цвета */
-    
+    --primary-color: #D7263D; 
+    --secondary-color: #F4A261; 
+    --accent-color: #2A9D8F; 
+    --text-color: #264653; 
+    --text-color-light: #5E6E78; 
+    --bg-color: #f8f5f0; 
+    --container-bg: #FFFFFF; 
+    --bot-message-bg: #E9F5F4; 
+    --user-message-bg: #FEF5EC; 
     --input-bg: #FFFFFF;
-    --shadow-light: rgba(42, 157, 143, 0.1); /* Тень с оттенком акцента */
-    --shadow-medium: rgba(38, 70, 83, 0.15); /* Тень с оттенком текста */
-    --border-color: #e0e7ef; /* Мягкий серый для границ */
-
+    --shadow-light: rgba(42, 157, 143, 0.1); 
+    --shadow-medium: rgba(38, 70, 83, 0.15); 
+    --border-color: #e0e7ef; 
     --border-radius-sm: 8px;
     --border-radius-md: 16px;
-    --border-radius-lg: 24px; /* Для более округлых форм */
-
-    /* Новые шрифты */
-    --font-main: 'Poppins', sans-serif; /* Современный и чистый */
-    --font-display: 'Playfair Display', serif; /* Элегантный для заголовков и акцентов */
-    --font-script: 'Dancing Script', cursive; /* Игривый для особых элементов, если нужно */
-
+    --border-radius-lg: 24px; 
+    --font-main: 'Poppins', sans-serif; 
+    --font-display: 'Playfair Display', serif; 
     --sidebar-width: 300px;
 }
 
@@ -35,21 +27,19 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    -webkit-font-smoothing: antialiased; /* Улучшенное сглаживание шрифтов */
-    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
 }
 
 body {
     font-family: var(--font-main);
-    /* Более сложный и мягкий градиентный фон */
     background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-    background-attachment: fixed; /* Фон не скроллится */
+    background-attachment: fixed; 
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     color: var(--text-color);
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 #root {
@@ -58,24 +48,12 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px; 
 }
 
-/* Кастомный скроллбар для всего приложения (Webkit) */
-::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-}
+/* Скроллбар */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
     background-color: var(--secondary-color);
     border-radius: 10px;
-    border: 2px solid transparent; /* Можно убрать, если --bg-color здесь не нужен */
-    background-clip: content-box; /* Важно для корректного отображения border */
-}
-::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color);
 }

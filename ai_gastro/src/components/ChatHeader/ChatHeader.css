@@ -1,4 +1,3 @@
-/* src/components/ChatHeader/ChatHeader.css */
 .chat-header {
     /* Градиент и текстура (тонкая, почти незаметная) */
     background: linear-gradient(135deg, var(--primary-color) 0%, #a64d2f 100%); /* Более насыщенный красный */

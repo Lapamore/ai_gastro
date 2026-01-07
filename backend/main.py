@@ -7,7 +7,7 @@ if __name__ == "__main__":
     port = int(os.getenv("BACKEND_PORT", 8000))
 
     uvicorn.run(
-        "src.services.App:app",
+        "src.services.app:app",
         host="localhost",
         port=port,
         reload=True,

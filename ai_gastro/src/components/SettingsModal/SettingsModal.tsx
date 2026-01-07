@@ -1,6 +1,6 @@
 // src/components/SettingsModal/SettingsModal.tsx
 import React, { useState, useEffect } from 'react';
-import type { UserPreferences } from '../../App'; // Импортируем тип из App.tsx
+import type { UserPreferences } from '../../types'; // Импортируем тип из App.tsx
 import './SettingsModal.css';
 
 interface SettingsModalProps {

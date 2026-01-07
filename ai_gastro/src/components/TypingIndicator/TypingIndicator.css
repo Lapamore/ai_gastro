@@ -1,5 +1,3 @@
-/* src/components/TypingIndicator/TypingIndicator.css */
-/* .message-wrapper.bot уже есть в MessageItem.css, анимация будет применена */
 
 .message.typing-indicator {
     padding: 12px 0;

@@ -1,0 +1,2918 @@
+Project Structure:
+project_contents.txt
+__init__.py
+core/__init__.py
+core/models/chatting/APIChatResponseModel.py
+core/models/chatting/ChatMessageModel.py
+core/models/chatting/UserChatRequestModel.py
+core/models/chatting/__init__.py
+core/models/chatting/__pycache__/APIChatResponseModel.cpython-313.pyc
+core/models/chatting/__pycache__/ChatMessageModel.cpython-313.pyc
+core/models/chatting/__pycache__/UserChatRequestModel.cpython-313.pyc
+core/models/chatting/__pycache__/__init__.cpython-313.pyc
+core/models/personalize/PersonalizedSuggestionsRequestModel.py
+core/models/personalize/PersonalizedSuggestionsResponseModel.py
+core/models/personalize/__init__.py
+core/models/personalize/__pycache__/PersonalizedSuggestionsRequestModel.cpython-313.pyc
+core/models/personalize/__pycache__/PersonalizedSuggestionsResponseModel.cpython-313.pyc
+core/models/personalize/__pycache__/__init__.cpython-313.pyc
+core/models/sessions/SessionMetadataListResponseModel.py
+core/models/sessions/SessionMetadataModel.py
+core/models/sessions/__init__.py
+core/models/sessions/__pycache__/SessionMetadataListResponseModel.cpython-313.pyc
+core/models/sessions/__pycache__/SessionMetadataModel.cpython-313.pyc
+core/models/sessions/__pycache__/__init__.cpython-313.pyc
+core/models/settings/UserPreferencesDataModel.py
+core/models/settings/__init__.py
+core/models/settings/__pycache__/UserPreferencesDataModel.cpython-313.pyc
+core/models/settings/__pycache__/__init__.cpython-313.pyc
+core/models/youtube/AIProviderResponseModel.py
+core/models/youtube/VideoSearchResultModel.py
+core/models/youtube/__init__.py
+core/models/youtube/__pycache__/AIProviderResponseModel.cpython-313.pyc
+core/models/youtube/__pycache__/VideoSearchResultModel.cpython-313.pyc
+core/models/youtube/__pycache__/__init__.cpython-313.pyc
+core/prompts/system_prompt_gastronomy.txt
+core/__pycache__/__init__.cpython-313.pyc
+infrastructure/__init__.py
+infrastructure/dependencies/Config.py
+infrastructure/dependencies/Dependencies.py
+infrastructure/dependencies/__init__.py
+infrastructure/dependencies/__pycache__/Config.cpython-313.pyc
+infrastructure/dependencies/__pycache__/Dependencies.cpython-313.pyc
+infrastructure/dependencies/__pycache__/__init__.cpython-313.pyc
+infrastructure/impl/mongodb_client/MongoDbImpl.py
+infrastructure/impl/mongodb_client/__init__.py
+infrastructure/impl/mongodb_client/__pycache__/MongoDbImpl.cpython-313.pyc
+infrastructure/impl/mongodb_client/__pycache__/__init__.cpython-313.pyc
+infrastructure/impl/openai_client/OpenAIClient.py
+infrastructure/impl/openai_client/__init__.py
+infrastructure/impl/openai_client/__pycache__/OpenAIClient.cpython-313.pyc
+infrastructure/impl/openai_client/__pycache__/__init__.cpython-313.pyc
+infrastructure/impl/youtube/YoutubeService.py
+infrastructure/impl/youtube/__init__.py
+infrastructure/impl/youtube/__pycache__/YoutubeService.cpython-313.pyc
+infrastructure/impl/youtube/__pycache__/__init__.cpython-313.pyc
+infrastructure/interfaces/IDataBase.py
+infrastructure/interfaces/IService.py
+infrastructure/interfaces/__init__.py
+infrastructure/interfaces/__pycache__/IDataBase.cpython-313.pyc
+infrastructure/interfaces/__pycache__/IService.cpython-313.pyc
+infrastructure/interfaces/__pycache__/__init__.cpython-313.pyc
+infrastructure/__pycache__/__init__.cpython-313.pyc
+services/app.py
+services/__init__.py
+services/api/ChatRouter.py
+services/api/__init__.py
+services/api/__pycache__/ChatRouter.cpython-313.pyc
+services/api/__pycache__/__init__.cpython-313.pyc
+services/__pycache__/app.cpython-313.pyc
+services/__pycache__/__init__.cpython-313.pyc
+__pycache__/__init__.cpython-313.pyc
+
+File Contents:
+project_contents.txt:
+```
+Project Structure:
+__init__.py
+core/__init__.py
+core/models/chatting/APIChatResponseModel.py
+core/models/chatting/ChatMessageModel.py
+core/models/chatting/UserChatRequestModel.py
+core/models/chatting/__init__.py
+core/models/personalize/PersonalizedSuggestionsRequestModel.py
+core/models/personalize/PersonalizedSuggestionsResponseModel.py
+core/models/personalize/__init__.py
+core/models/sessions/SessionMetadataListResponseModel.py
+core/models/sessions/SessionMetadataModel.py
+core/models/sessions/__init__.py
+core/models/settings/UserPreferencesDataModel.py
+core/models/settings/__init__.py
+core/models/youtube/AIProviderResponseModel.py
+core/models/youtube/VideoSearchResultModel.py
+core/models/youtube/__init__.py
+core/prompts/system_prompt_gastronomy.txt
+infrastructure/__init__.py
+infrastructure/dependencies/Config.py
+infrastructure/dependencies/Dependencies.py
+infrastructure/dependencies/__init__.py
+infrastructure/impl/mongodb_client/MongoDbImpl.py
+infrastructure/impl/mongodb_client/__init__.py
+infrastructure/impl/openai_client/OpenAIClient.py
+infrastructure/impl/openai_client/__init__.py
+infrastructure/impl/youtube/YoutubeService.py
+infrastructure/impl/youtube/__init__.py
+infrastructure/interfaces/IDataBase.py
+infrastructure/interfaces/IService.py
+infrastructure/interfaces/__init__.py
+services/app.py
+services/__init__.py
+services/api/ChatRouter.py
+services/api/__init__.py
+
+File Contents:
+__init__.py:
+```
+
+```
+
+__init__.py:
+```
+
+```
+
+APIChatResponseModel.py:
+```
+from pydantic import BaseModel
+
+
+class APIChatResponse(BaseModel):
+    reply: str
+    session_id: str
+
+```
+
+ChatMessageModel.py:
+```
+from datetime import datetime
+from pydantic import BaseModel, Field
+
+
+class ChatMessage(BaseModel):
+    sender: str
+    text: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+```
+
+UserChatRequestModel.py:
+```
+from typing import Optional
+from pydantic import BaseModel
+from src.core.models.settings.UserPreferencesDataModel import (
+    UserPreferencesData,
+)
+
+
+class UserChatRequest(BaseModel):
+    prompt: str
+    session_id: Optional[str] = None
+    preferences: Optional[UserPreferencesData] = None
+
+```
+
+__init__.py:
+```
+
+```
+
+PersonalizedSuggestionsRequestModel.py:
+```
+from typing import Optional
+from pydantic import BaseModel
+
+from src.core.models.settings.UserPreferencesDataModel import (
+    UserPreferencesData,
+)
+
+
+class PersonalizedSuggestionsRequest(BaseModel):
+    session_id: Optional[str] = (
+        None  
+    )
+    preferences: Optional[UserPreferencesData] = None  
+
+```
+
+PersonalizedSuggestionsResponseModel.py:
+```
+from typing import List
+from pydantic import BaseModel
+
+
+class PersonalizedSuggestionsResponse(BaseModel):
+    suggestions: List[str]
+
+```
+
+__init__.py:
+```
+
+```
+
+SessionMetadataListResponseModel.py:
+```
+from datetime import datetime
+from pydantic import BaseModel
+
+
+class SessionMetadataListResponse(BaseModel):
+    id: str
+    title: str
+    updated_at: datetime
+
+```
+
+SessionMetadataModel.py:
+```
+from datetime import datetime
+from typing import Optional
+import uuid
+from pydantic import BaseModel, Field
+
+
+class SessionMetadata(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
+    user_id: Optional[str] = None
+    title: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        populate_by_name = True
+        json_encoders = {datetime: lambda dt: dt.isoformat()}
+
+```
+
+__init__.py:
+```
+
+```
+
+UserPreferencesDataModel.py:
+```
+from typing import List, Optional
+from pydantic import BaseModel, Field
+
+
+class UserPreferencesData(BaseModel):
+    allergies: List[str] = Field(default_factory=list)
+    dietary_restrictions: List[str] = Field(
+        default_factory=list, alias="dietaryRestrictions"
+    )
+    favorite_cuisines: List[str] = Field(default_factory=list, alias="favoriteCuisines")
+    disliked_cuisines: List[str] = Field(default_factory=list, alias="dislikedCuisines")
+    favorite_ingredients: List[str] = Field(
+        default_factory=list, alias="favoriteIngredients"
+    )
+    disliked_ingredients: List[str] = Field(
+        default_factory=list, alias="dislikedIngredients"
+    )
+    preferred_difficulty: Optional[str] = Field(
+        default=None, alias="preferredDifficulty"
+    )
+    available_time: Optional[str] = Field(default=None, alias="availableTime")
+
+    class Config:
+        populate_by_name = True
+
+```
+
+__init__.py:
+```
+
+```
+
+AIProviderResponseModel.py:
+```
+from typing import Optional
+from pydantic import BaseModel
+
+
+class AIProviderResponse(BaseModel):
+    reply: str
+    trigger_video_search_query: Optional[str] = None
+
+```
+
+VideoSearchResultModel.py:
+```
+from typing import Optional
+
+from pydantic import BaseModel
+
+
+class VideoSearchResult(BaseModel):
+    title: str
+    video_id: str
+    thumbnail_url: Optional[str] = None
+    channel_title: Optional[str] = None
+
+```
+
+__init__.py:
+```
+
+```
+
+system_prompt_gastronomy.txt:
+```
+Ты — "Шеф ГастроБот", виртуозный кулинарный ИИ-ассистент.
+Твоя миссия — вдохновлять пользователей на кулинарные подвиги, помогать им с выбором блюд, поиском рецептов и давать полезные советы по приготовлению пищи.
+Общайся дружелюбно, с энтузиазмом и ноткой юмора, как настоящий шеф-повар, который рад поделиться своими секретами.
+
+Ключевые аспекты твоей работы:
+1.  **Понимание предпочтений:** Внимательно анализируй запросы пользователя, уточняй детали (любимые ингредиенты, тип кухни, ограничения в диете, доступное время, уровень сложности).
+2.  **Креативные предложения:** Не ограничивайся стандартными ответами. Предлагай интересные сочетания, необычные блюда или вариации классических рецептов.
+3.  **Подробные рецепты (по запросу):** Если пользователь просит рецепт, предоставь его в четком и понятном формате: список ингредиентов с точными количествами и пошаговую инструкцию приготовления. Указывай время приготовления и уровень сложности, если это уместно.
+4.  **Советы и хитрости:** Делись кулинарными лайфхаками, техниками приготовления, советами по выбору продуктов или замене ингредиентов.
+5.  **Поддержание диалога:** Старайся делать диалог живым. Задавай уточняющие вопросы, чтобы лучше понять пользователя.
+6.  **Формат ответа:**
+    *   Если это просто совет или ответ на вопрос - будь краток и по делу.
+    *   Если это рецепт - структурируй его (Ингредиенты, Инструкция).
+    *   Избегай возвращения просто списка блюд без контекста, если только пользователь явно этого не попросил. Лучше предложи одно-два наиболее подходящих блюда с кратким описанием.
+7.  **Безопасность и диета:** Если пользователь упоминает аллергии или строгие диетические ограничения, отнесись к этому серьезно и предлагай только безопасные варианты.
+8.  **Видео-рецепты с YouTube (по необходимости):**
+    Если ты считаешь, что видео-рецепт с YouTube будет очень полезен для пользователя в ответ на его текущий запрос (например, он **явно просит "видео"** или ищет рецепт блюда, которое лучше показать визуально, как сложная выпечка или техника нарезки), ты можешь инициировать поиск видео.
+    Для этого в своем текстовом ответе, после основного ответа пользователю, добавь специальный тег в точно таком формате:
+    `[YOUTUBE_SEARCH: "точный поисковый запрос для YouTube"]`
+    Замени "точный поисковый запрос для YouTube" на наиболее релевантные ключевые слова для поиска видео по теме запроса пользователя (например, "пицца маргарита рецепт видео", "как приготовить соус бешамель видео", "техника шинковки лука видео").
+    Твой основной текстовый ответ должен предшествовать этому тегу. Система затем выполнит поиск на YouTube и добавит найденные видео к твоему ответу.
+    **Используй этот тег только тогда, когда это действительно уместно и значительно улучшит помощь пользователю. Не нужно предлагать видео на каждый запрос рецепта, если пользователь об этом не просил или если текстового описания достаточно.**
+
+    *Пример твоего ответа, если нужен поиск видео:*
+    Пользователь: "Хочу посмотреть видео, как готовят настоящую пасту карбонара."
+    Ты (Помощник): "Отличная идея! Настоящая карбонара – это песня! Я как раз поищу для тебя хорошее видео, чтобы ты увидел все нюансы. [YOUTUBE_SEARCH: \"паста карбонара аутентичный рецепт видео\"]"
+
+    *Пример твоего ответа, если видео НЕ нужно (обычный запрос рецепта):*
+    Пользователь: "Какой-нибудь простой салат на ужин?"
+    Ты (Помощник): "Конечно! Как насчет легкого греческого салата? Свежие овощи, фета, оливки... ммм! Могу рассказать подробнее или предложить другой вариант." (Здесь тег [YOUTUBE_SEARCH:] НЕ НУЖЕН)
+
+Твоя цель — сделать кулинарный опыт пользователя приятным и успешным! Приступай, Шеф!
+
+
+```
+
+__init__.py:
+```
+
+```
+
+Config.py:
+```
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+class AppConfig:
+    def __init__(self):
+        self.aitunnel_api_key: str = os.getenv("AITUNNEL_API_KEY", "")
+        self.aitunnel_base_url: str = os.getenv(
+            "AITUNNEL_BASE_URL", "https://api.aitunnel.ru/v1/"
+        )
+        self.aitunnel_model_name: str = os.getenv(
+            "AITUNNEL_CHAT_MODEL", "gemini-1.5-flash-latest"
+        )
+        self.system_prompt_file: str = os.getenv(
+            "SYSTEM_PROMPT_FILE", "./src/core/prompts/system_prompt_gastronomy.txt"
+        )
+
+        self.mongodb_connection_string: str = os.getenv(
+            "MONGODB_CONNECTION_STRING", "mongodb://localhost:27017/"
+        )
+        self.mongodb_database_name: str = os.getenv(
+            "MONGODB_DATABASE_NAME", "gastronomic_chat_ai"
+        )
+        self.mongodb_chat_history_collection_name: str = os.getenv(
+            "MONGODB_CHAT_HISTORY_COLLECTION_NAME", "chat_histories"
+        )
+        self.mongodb_sessions_metadata_collection_name: str = os.getenv(
+            "MONGODB_SESSIONS_METADATA_COLLECTION_NAME", "sessions_metadata"
+        )
+
+        self.youtube_api_key: str = os.getenv("YOUTUBE_API_KEY", "")
+
+```
+
+Dependencies.py:
+```
+import os
+import logging
+from functools import lru_cache
+from fastapi import Depends
+from typing import Optional
+
+from src.infrastructure.dependencies.Config import AppConfig
+from src.infrastructure.interfaces.IDataBase import AbstractDBService
+from src.infrastructure.interfaces.IService import AbstractAIService
+from src.infrastructure.impl.mongodb_client.MongoDbImpl import MongoDBService
+from src.infrastructure.impl.openai_client.OpenAIClient import OpenAIAITunnelService
+from src.infrastructure.impl.youtube.YoutubeService import YouTubeService
+
+
+logger = logging.getLogger(__name__)
+
+
+@lru_cache()
+def get_app_config() -> AppConfig:
+    config = AppConfig()
+    if not config.aitunnel_api_key:
+        logger.warning("AITUNNEL_API_KEY не установлен!")
+    if not config.youtube_api_key:
+        logger.warning("YOUTUBE_API_KEY не установлен! Поиск видео не будет работать.")
+    return config
+
+
+async def get_ai_service_dependency(
+    config: AppConfig = Depends(get_app_config),
+) -> AbstractAIService:
+    return OpenAIAITunnelService(
+        api_key=config.aitunnel_api_key,
+        base_url=config.aitunnel_base_url,
+        model_name=config.aitunnel_model_name,
+        system_prompt_file=config.system_prompt_file,
+    )
+
+
+_db_service_instance: Optional[MongoDBService] = None
+
+
+async def get_db_service_dependency(
+    config: AppConfig = Depends(get_app_config),
+) -> AbstractDBService:
+    global _db_service_instance
+    if _db_service_instance is None:
+        try:
+            _db_service_instance = MongoDBService(
+                connection_string=config.mongodb_connection_string,
+                database_name=config.mongodb_database_name,
+                chat_history_collection_name=config.mongodb_chat_history_collection_name,
+                sessions_metadata_collection_name=config.mongodb_sessions_metadata_collection_name,
+            )
+        except ConnectionError as e:
+            logger.error(f"КРИТИЧЕСКАЯ ОШИБКА MongoDB: {e}")
+            raise
+    return _db_service_instance
+
+
+async def close_db_connection():
+    global _db_service_instance
+    if _db_service_instance:
+        await _db_service_instance.close_connection()
+        _db_service_instance = None
+
+
+@lru_cache()
+def get_youtube_service(config: AppConfig = Depends(get_app_config)) -> YouTubeService:
+    return YouTubeService(api_key=config.youtube_api_key)
+
+```
+
+__init__.py:
+```
+
+```
+
+MongoDbImpl.py:
+```
+import logging
+from typing import List, Optional
+from motor.motor_asyncio import (
+    AsyncIOMotorClient,
+    AsyncIOMotorDatabase,
+    AsyncIOMotorCollection,
+)
+from datetime import datetime, timezone
+from pymongo import ReturnDocument
+
+from src.infrastructure.interfaces.IDataBase import AbstractDBService
+from src.core.models.sessions.SessionMetadataModel import SessionMetadata
+from src.core.models.chatting.ChatMessageModel import ChatMessage
+
+
+logger = logging.getLogger(__name__)
+
+
+class MongoDBService(AbstractDBService):
+    def __init__(
+        self,
+        connection_string: str,
+        database_name: str,
+        chat_history_collection_name: str,
+        sessions_metadata_collection_name: str,
+    ):
+        try:
+            self.client: AsyncIOMotorClient = AsyncIOMotorClient(connection_string)
+            self.db: AsyncIOMotorDatabase = self.client[database_name]
+
+            self.history_collection: AsyncIOMotorCollection = self.db[
+                chat_history_collection_name
+            ]
+            self.sessions_collection: AsyncIOMotorCollection = self.db[
+                sessions_metadata_collection_name
+            ]
+            logger.info(
+                f"Успешно подключено к MongoDB: {database_name}. Коллекции: {chat_history_collection_name}, {sessions_metadata_collection_name}"
+            )
+        except Exception as e:
+            logger.error(f"Ошибка подключения к MongoDB: {e}", exc_info=True)
+            raise ConnectionError(f"Не удалось подключиться к MongoDB: {e}")
+
+    async def save_message(self, session_id: str, message: ChatMessage) -> None:
+        doc = {
+            "session_id": session_id,
+            "sender": message.sender,
+            "text": message.text,
+            "timestamp": message.timestamp.replace(tzinfo=timezone.utc),
+        }
+        try:
+            await self.history_collection.insert_one(doc)
+        except Exception as e:
+            logger.error(
+                f"Ошибка сохранения сообщения ({session_id}): {e}", exc_info=True
+            )
+
+    async def save_messages(self, session_id: str, messages: List[ChatMessage]) -> None:
+        if not messages:
+            return
+        docs_to_insert = [
+            {
+                "session_id": session_id,
+                "sender": msg.sender,
+                "text": msg.text,
+                "timestamp": msg.timestamp.replace(tzinfo=timezone.utc),
+            }
+            for msg in messages
+        ]
+        try:
+            await self.history_collection.insert_many(docs_to_insert)
+        except Exception as e:
+            logger.error(
+                f"Ошибка сохранения списка сообщений ({session_id}): {e}", exc_info=True
+            )
+
+    async def get_history(self, session_id: str, limit: int = 20) -> List[ChatMessage]:
+        messages_data = []
+        try:
+            cursor = (
+                self.history_collection.find({"session_id": session_id})
+                .sort("timestamp", -1)
+                .limit(limit)
+            )
+            async for doc in cursor:
+                ts = doc.get("timestamp")
+                if isinstance(ts, datetime):
+                    pass
+                else:
+                    try:
+                        ts = datetime.fromisoformat(str(ts))
+                    except:
+                        ts = datetime.now(timezone.utc)
+
+                messages_data.append(
+                    ChatMessage(sender=doc["sender"], text=doc["text"], timestamp=ts)
+                )
+            messages_data.reverse()
+        except Exception as e:
+            logger.error(f"Ошибка загрузки истории ({session_id}): {e}", exc_info=True)
+        return messages_data
+
+    async def get_session_metadata(self, session_id: str) -> Optional[SessionMetadata]:
+        try:
+            doc = await self.sessions_collection.find_one({"_id": session_id})
+            if doc:
+                return SessionMetadata(**doc)
+        except Exception as e:
+            logger.error(
+                f"Ошибка получения метаданных сессии {session_id}: {e}", exc_info=True
+            )
+        return None
+
+    async def create_or_update_session_metadata(
+        self, session_metadata: SessionMetadata
+    ) -> SessionMetadata:
+        update_data = {
+            "title": session_metadata.title,
+            "user_id": session_metadata.user_id,
+            "updated_at": datetime.now(timezone.utc),
+        }
+
+        on_insert_data = {
+            "created_at": session_metadata.created_at.replace(tzinfo=timezone.utc)
+        }
+
+        session_id_for_query = session_metadata.id
+
+        try:
+            updated_document = await self.sessions_collection.find_one_and_update(
+                {"_id": session_id_for_query},
+                {
+                    "$set": update_data,
+                    "$setOnInsert": {
+                        **on_insert_data,
+                        "_id": session_id_for_query,
+                    },
+                },
+                upsert=True,
+                return_document=ReturnDocument.AFTER,
+            )
+
+            if updated_document:
+                logger.info(
+                    f"Метаданные сессии {session_metadata.id} созданы/обновлены."
+                )
+                return SessionMetadata(**updated_document)
+            else:
+                logger.error(
+                    f"Не удалось создать/обновить метаданные сессии {session_metadata.id}, find_one_and_update вернул None"
+                )
+                raise Exception(
+                    f"MongoDB не вернула документ после upsert для сессии {session_metadata.id}"
+                )
+
+        except Exception as e:
+            logger.error(
+                f"Ошибка создания/обновления метаданных сессии {session_metadata.id}: {e}",
+                exc_info=True,
+            )
+            raise
+
+    async def list_sessions_metadata(
+        self, user_id: Optional[str] = None, limit: int = 50, skip: int = 0
+    ) -> List[SessionMetadata]:
+        sessions_list = []
+        query = {}
+        if user_id:
+            query["user_id"] = user_id
+
+        try:
+            cursor = (
+                self.sessions_collection.find(query)
+                .sort("updated_at", -1)
+                .skip(skip)
+                .limit(limit)
+            )
+            async for doc in cursor:
+                sessions_list.append(SessionMetadata(**doc))
+            logger.info(f"Загружено {len(sessions_list)} метаданных сессий.")
+        except Exception as e:
+            logger.error(
+                f"Ошибка загрузки списка метаданных сессий: {e}", exc_info=True
+            )
+        return sessions_list
+
+    async def close_connection(self):
+        if self.client:
+            self.client.close()
+            logger.info("Соединение с MongoDB закрыто.")
+
+    async def delete_session_and_history(self, session_id: str) -> bool:
+        try:
+            delete_meta_result = await self.sessions_collection.delete_one(
+                {"_id": session_id}
+            )
+
+            delete_history_result = await self.history_collection.delete_many(
+                {"session_id": session_id}
+            )
+
+            deleted_meta_count = delete_meta_result.deleted_count
+            deleted_history_count = delete_history_result.deleted_count
+
+            if deleted_meta_count > 0:
+                logger.info(
+                    f"Метаданные для сессии {session_id} удалены (удалено: {deleted_meta_count}). Сообщений удалено: {deleted_history_count}."
+                )
+                return True
+            elif deleted_history_count > 0:
+                logger.info(
+                    f"Метаданные для сессии {session_id} не найдены, но история сообщений удалена (удалено: {deleted_history_count})."
+                )
+                return True
+            else:
+                logger.warning(
+                    f"Сессия {session_id} не найдена для удаления (ни метаданные, ни история)."
+                )
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка при удалении сессии {session_id}: {e}", exc_info=True)
+            return False
+
+```
+
+__init__.py:
+```
+
+```
+
+OpenAIClient.py:
+```
+import os
+import logging
+import re
+from typing import List, Optional
+
+from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletion
+
+from src.infrastructure.interfaces.IService import AbstractAIService
+from src.core.models.chatting.ChatMessageModel import ChatMessage
+from src.core.models.settings.UserPreferencesDataModel import UserPreferencesData
+from src.core.models.youtube.AIProviderResponseModel import AIProviderResponse
+
+
+logger = logging.getLogger(__name__)
+
+
+class OpenAIAITunnelService(AbstractAIService):
+    def __init__(
+        self,
+        api_key: str,
+        base_url: str,
+        model_name: str,
+        system_prompt_file: Optional[str] = None,
+    ):
+        if not api_key:
+            logger.error(
+                "API ключ для AITunnel не предоставлен при инициализации сервиса."
+            )
+
+        self.model_name = model_name
+        self.async_client = AsyncOpenAI(
+            api_key=api_key,
+            base_url=base_url,
+        )
+        self.base_system_prompt = "Ты — полезный ИИ-ассистент."
+        if system_prompt_file:
+            try:
+                with open(system_prompt_file, "r", encoding="utf-8") as f:
+                    self.base_system_prompt = f.read().strip()
+                logger.info(
+                    f"Базовый системный промпт успешно загружен из {system_prompt_file}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Ошибка при загрузке системного промпта из {system_prompt_file}: {e}. Используется fallback."
+                )
+
+    async def load_system_prompt(self, file_path: str) -> str:
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    return f.read().strip()
+            except Exception as e:
+                logger.error(
+                    f"Ошибка при динамической загрузке системного промпта из {file_path}: {e}"
+                )
+        return self.base_system_prompt
+
+    def _convert_history_to_openai_format(
+        self,
+        effective_system_prompt: str,
+        conversation_history: List[ChatMessage],
+        user_prompt: str,
+    ) -> List[ChatCompletionMessageParam]:
+        messages: List[ChatCompletionMessageParam] = []
+        if effective_system_prompt:
+            messages.append({"role": "system", "content": effective_system_prompt})
+        for msg in conversation_history:
+            role = "user" if msg.sender == "user" else "assistant"
+            messages.append({"role": role, "content": msg.text})
+        messages.append({"role": "user", "content": user_prompt})
+        return messages
+
+    async def get_ai_response(
+        self,
+        user_prompt: str,
+        conversation_history: List[ChatMessage],
+        system_prompt: Optional[str] = None,
+        preferences_text: Optional[str] = None,
+    ) -> AIProviderResponse:
+
+        effective_system_prompt = system_prompt or self.base_system_prompt
+        if preferences_text:
+            effective_system_prompt = f"{effective_system_prompt}\n\n{preferences_text}"
+
+        if not effective_system_prompt.strip():
+            logger.warning("Итоговый системный промпт пуст!")
+            effective_system_prompt = "Ты полезный ассистент."
+
+        openai_messages = self._convert_history_to_openai_format(
+            effective_system_prompt, conversation_history, user_prompt
+        )
+        logger.info(
+            f"Запрос к AITunnel API. Модель: {self.model_name}. Сообщений: {len(openai_messages)}"
+        )
+
+        try:
+            chat_completion: ChatCompletion = (
+                await self.async_client.chat.completions.create(
+                    messages=openai_messages,
+                    model=self.model_name,
+                    max_tokens=4000,
+                    temperature=0.6,
+                )
+            )
+
+            ai_text_reply = ""
+            if (
+                chat_completion.choices
+                and chat_completion.choices[0].message
+                and chat_completion.choices[0].message.content
+            ):
+                ai_text_reply = chat_completion.choices[0].message.content.strip()
+
+            video_search_query = None
+            match = re.search(
+                r"\[YOUTUBE_SEARCH:\s*\"(.*?)\"\s*\]", ai_text_reply, re.IGNORECASE
+            )
+            if match:
+                video_search_query = match.group(1).strip()
+                ai_text_reply = ai_text_reply.replace(match.group(0), "").strip()
+                logger.info(
+                    f"AI запросил поиск видео на YouTube: '{video_search_query}'"
+                )
+            else:
+                logger.info("AI НЕ запросил поиск видео (тег не найден в ответе).")
+
+            return AIProviderResponse(
+                reply=ai_text_reply, trigger_video_search_query=video_search_query
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Ошибка при взаимодействии с AITunnel (OpenAI SDK): {e}", exc_info=True
+            )
+            return AIProviderResponse(
+                reply="Извините, сервис AI временно недоступен.",
+                trigger_video_search_query=None,
+            )
+
+    async def get_personalized_suggestions(
+        self,
+        conversation_history: List[ChatMessage],
+        preferences: Optional[UserPreferencesData],
+        system_prompt: Optional[str] = None,
+    ) -> List[str]:
+        effective_system_prompt = system_prompt or self.base_system_prompt
+        preferences_text_parts: List[str] = []
+        if preferences:
+            if preferences.allergies:
+                preferences_text_parts.append(
+                    f"- Аллергии: {', '.join(preferences.allergies)}."
+                )
+            if preferences.dietary_restrictions:
+                preferences_text_parts.append(
+                    f"- Диета: {', '.join(preferences.dietary_restrictions)}."
+                )
+            if preferences.favorite_cuisines:
+                preferences_text_parts.append(
+                    f"- Любимые кухни: {', '.join(preferences.favorite_cuisines)}."
+                )
+
+        preferences_text_for_prompt = ""
+        if preferences_text_parts:
+            preferences_text_for_prompt = "Мои предпочтения:\n" + "\n".join(
+                preferences_text_parts
+            )
+
+        history_summary = (
+            "Ранее мы обсуждали:\n"
+            + "\n".join(
+                [
+                    f"{'Я' if m.sender=='user' else 'Ты'}: {m.text}"
+                    for m in conversation_history[-6:]
+                ]
+            )
+            if conversation_history
+            else "Это наш первый диалог."
+        )
+
+        recommendation_prompt_content = f"""
+        {history_summary}
+        {preferences_text_for_prompt}
+
+        Исходя из этой информации (моей истории и предпочтений), предложи мне 2-3 интересных и разнообразных идеи для еды или рецепта на сегодня. 
+        Представь каждое предложение как отдельный пункт, кратко объяснив, почему оно может мне подойти.
+        Например:
+        1.  [Название блюда/идея] - потому что ты упоминал X, и это сочетается с Y.
+        2.  [Название блюда/идея] - так как ты любишь кухню Z, это блюдо тебе понравится.
+        """
+        openai_messages: List[ChatCompletionMessageParam] = []
+        if effective_system_prompt:
+            openai_messages.append(
+                {"role": "system", "content": effective_system_prompt}
+            )
+        openai_messages.append(
+            {"role": "user", "content": recommendation_prompt_content}
+        )
+
+        try:
+            chat_completion = await self.async_client.chat.completions.create(
+                messages=openai_messages,
+                model=self.model_name,
+                max_tokens=500,
+                temperature=0.8,
+                n=1,
+            )
+            raw_reply = (
+                chat_completion.choices[0].message.content.strip()
+                if chat_completion.choices and chat_completion.choices[0].message
+                else ""
+            )
+            suggestions = []
+            if raw_reply:
+                potential_suggestions = re.findall(
+                    r"^\s*(\d+\.\s*.*?|- \s*.*?|\* \s*.*?)$", raw_reply, re.MULTILINE
+                )
+                if potential_suggestions:
+                    suggestions = [s.strip() for s in potential_suggestions]
+                else:
+                    lines = [
+                        line.strip() for line in raw_reply.split("\n") if line.strip()
+                    ]
+                    if len(lines) > 1:
+                        suggestions = lines
+                    elif raw_reply:
+                        suggestions.append(raw_reply)
+
+            return suggestions if suggestions else ["К сожалению, сейчас нет идей."]
+        except Exception as e:
+            logger.error(f"Ошибка персонализированных предложений: {e}", exc_info=True)
+            return ["Ошибка получения предложений."]
+
+```
+
+__init__.py:
+```
+
+```
+
+YoutubeService.py:
+```
+import logging
+from typing import List
+import asyncio
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+
+from src.core.models.youtube.VideoSearchResultModel import VideoSearchResult
+
+logger = logging.getLogger(__name__)
+
+
+class YouTubeService:
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        if not self.api_key:
+            logger.warning(
+                "API ключ YouTube не предоставлен! Поиск видео не будет работать."
+            )
+        self.youtube_service_name = "youtube"
+        self.youtube_api_version = "v3"
+
+    def _perform_search_sync(
+        self, query: str, max_results: int
+    ) -> List[VideoSearchResult]:
+        if not self.api_key:
+            return []
+        try:
+            youtube = build(
+                self.youtube_service_name,
+                self.youtube_api_version,
+                developerKey=self.api_key,
+                cache_discovery=False,
+            )
+            search_response = (
+                youtube.search()
+                .list(
+                    q=query + " рецепт",
+                    part="id,snippet",
+                    type="video",
+                    videoEmbeddable="true",
+                    maxResults=max_results,
+                    relevanceLanguage="ru",
+                )
+                .execute()
+            )
+
+            videos: List[VideoSearchResult] = []
+            for item in search_response.get("items", []):
+                video_id = item.get("id", {}).get("videoId")
+                snippet = item.get("snippet", {})
+                if video_id and snippet:
+                    videos.append(
+                        VideoSearchResult(
+                            title=snippet.get("title", "Без названия"),
+                            video_id=video_id,
+                            thumbnail_url=snippet.get("thumbnails", {})
+                            .get("default", {})
+                            .get("url"),
+                            channel_title=snippet.get("channelTitle"),
+                        )
+                    )
+            logger.info(f"YouTube поиск для '{query}': найдено {len(videos)} видео.")
+            return videos
+        except HttpError as e:
+            logger.error(
+                f"Ошибка YouTube API: {e.resp.status} - {e._get_reason()}",
+                exc_info=True,
+            )
+            return []
+        except Exception as e:
+            logger.error(
+                f"Непредвиденная ошибка при поиске на YouTube: {e}", exc_info=True
+            )
+            return []
+
+    async def search_videos(
+        self, query: str, max_results: int = 3
+    ) -> List[VideoSearchResult]:
+        if not self.api_key:
+            logger.warning("Попытка поиска видео на YouTube без API ключа.")
+            return []
+        loop = asyncio.get_event_loop()
+
+        return await loop.run_in_executor(
+            None, self._perform_search_sync, query, max_results
+        )
+
+```
+
+__init__.py:
+```
+
+```
+
+IDataBase.py:
+```
+from abc import ABC, abstractmethod
+from typing import List, Optional
+
+from src.core.models.chatting.ChatMessageModel import ChatMessage
+from src.core.models.sessions.SessionMetadataModel import SessionMetadata
+
+
+class AbstractDBService(ABC):
+    @abstractmethod
+    async def save_message(self, session_id: str, message: ChatMessage) -> None:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def save_messages(self, session_id: str, messages: List[ChatMessage]) -> None:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def get_history(self, session_id: str, limit: int = 20) -> List[ChatMessage]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def get_session_metadata(self, session_id: str) -> Optional[SessionMetadata]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def create_or_update_session_metadata(
+        self, session_metadata: SessionMetadata
+    ) -> SessionMetadata:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def list_sessions_metadata(
+        self, user_id: Optional[str] = None, limit: int = 50, skip: int = 0
+    ) -> List[SessionMetadata]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def delete_session_and_history(self, session_id: str) -> bool:
+        raise NotImplementedError()
+
+```
+
+IService.py:
+```
+from abc import ABC, abstractmethod
+from typing import List, Optional
+
+from src.core.models.settings.UserPreferencesDataModel import UserPreferencesData
+from src.core.models.youtube.AIProviderResponseModel import AIProviderResponse
+from src.core.models.chatting.ChatMessageModel import ChatMessage
+
+
+class AbstractAIService(ABC):
+    @abstractmethod
+    async def get_ai_response(
+        self,
+        user_prompt: str,
+        conversation_history: List[ChatMessage],
+        system_prompt: str,
+        preferences_text: Optional[str] = None,
+    ) -> AIProviderResponse:
+        """
+        Получает ответ от AI модели, может содержать запрос на поиск видео.
+        """
+        pass
+
+    @abstractmethod
+    async def load_system_prompt(self, file_path: str) -> str:
+        pass
+
+    @abstractmethod
+    async def get_personalized_suggestions(
+        self,
+        conversation_history: List[ChatMessage],
+        preferences: Optional[UserPreferencesData],
+        system_prompt: str,
+    ) -> List[str]:
+        pass
+
+```
+
+__init__.py:
+```
+
+```
+
+app.py:
+```
+import logging
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+from src.services.api.ChatRouter import router as chat_api_router
+from src.infrastructure.dependencies.Dependencies import (
+    get_app_config,
+    get_db_service_dependency,
+    close_db_connection,
+)
+
+load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Гастрономический Помощник AI",
+        description="Бэкенд для чат-бота с AITunnel, FastAPI Depends и MongoDB.",
+        version="1.0.0",
+    )
+
+    origins = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:5174",
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+    )
+
+    app.include_router(chat_api_router)
+    logger.info("FastAPI приложение успешно сконфигурировано с роутерами и CORS.")
+
+    @app.on_event("startup")
+    async def startup_event():
+        logger.info("Приложение запускается...")
+        try:
+            app_config = get_app_config()
+            logger.info(
+                f"Конфигурация загружена. Модель AI: {app_config.aitunnel_model_name}"
+            )
+            await get_db_service_dependency(config=app_config)
+            logger.info("Сервис базы данных успешно инициализирован.")
+        except ConnectionError as e:
+            logger.error(
+                f"КРИТИЧЕСКАЯ ОШИБКА ПРИ СТАРТЕ: Не удалось подключиться к MongoDB. {e}",
+                exc_info=True,
+            )
+        except Exception as e:
+            logger.error(
+                f"Критическая ошибка при старте приложения: {e}", exc_info=True
+            )
+
+    @app.on_event("shutdown")
+    async def shutdown_event():
+        logger.info("Приложение останавливается...")
+        await close_db_connection()
+
+    @app.get("/", tags=["Root"])
+    async def read_root():
+        return {"message": "🤖 AI Гастро-Помощник (Python/FastAPI + MongoDB) на связи!"}
+
+    return app
+
+
+app = create_app()
+
+```
+
+__init__.py:
+```
+
+```
+
+ChatRouter.py:
+```
+import logging
+import uuid
+from fastapi import APIRouter, HTTPException, Depends, status
+from typing import List, Optional
+from datetime import datetime, timezone
+
+from src.infrastructure.interfaces.IDataBase import AbstractDBService
+from src.infrastructure.interfaces.IService import AbstractAIService
+from src.infrastructure.impl.youtube.YoutubeService import YouTubeService
+from src.core.models.chatting.APIChatResponseModel import APIChatResponse
+from src.core.models.chatting.ChatMessageModel import ChatMessage
+from src.core.models.chatting.UserChatRequestModel import UserChatRequest
+from src.core.models.personalize.PersonalizedSuggestionsRequestModel import (
+    PersonalizedSuggestionsRequest,
+)
+from src.core.models.personalize.PersonalizedSuggestionsResponseModel import (
+    PersonalizedSuggestionsResponse,
+)
+from src.core.models.sessions.SessionMetadataListResponseModel import (
+    SessionMetadataListResponse,
+)
+from src.core.models.sessions.SessionMetadataModel import SessionMetadata
+from src.core.models.youtube.VideoSearchResultModel import VideoSearchResult
+
+from src.infrastructure.dependencies.Dependencies import (
+    get_ai_service_dependency,
+    get_db_service_dependency,
+    get_youtube_service,
+)
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/api", tags=["Chat & Sessions"])
+
+
+def generate_session_title(prompt: str) -> str:
+    words = prompt.split()
+    return " ".join(words[:5]) + ("..." if len(words) > 5 else "")
+
+
+class APIChatResponseWithVideos(APIChatResponse):
+    videos: Optional[List[VideoSearchResult]] = None
+
+
+@router.post("/chat", response_model=APIChatResponseWithVideos)
+async def handle_chat_request(
+    chat_request: UserChatRequest,
+    ai_service: AbstractAIService = Depends(get_ai_service_dependency),
+    db_service: AbstractDBService = Depends(get_db_service_dependency),
+    youtube_service: YouTubeService = Depends(get_youtube_service),
+):
+    if not chat_request.prompt:
+        raise HTTPException(
+            status_code=400, detail="Сообщение пользователя (prompt) обязательно."
+        )
+
+    is_new_session = False
+    if chat_request.session_id:
+        current_session_id = chat_request.session_id
+        session_meta = await db_service.get_session_metadata(current_session_id)
+        if not session_meta:
+            title = generate_session_title(chat_request.prompt)
+            new_meta = SessionMetadata(id=current_session_id, title=title)
+            session_meta = await db_service.create_or_update_session_metadata(new_meta)
+    else:
+        current_session_id = str(uuid.uuid4())
+        is_new_session = True
+        title = generate_session_title(chat_request.prompt)
+        session_meta = SessionMetadata(id=current_session_id, title=title)
+        session_meta = await db_service.create_or_update_session_metadata(session_meta)
+
+    conversation_history_from_db: List[ChatMessage] = await db_service.get_history(
+        current_session_id, limit=10
+    )
+    user_message = ChatMessage(sender="user", text=chat_request.prompt)
+
+    preferences_prompt_text = ""
+    if chat_request.preferences:
+        prefs = chat_request.preferences
+        pref_parts = []
+        if prefs.allergies:
+            pref_parts.append(f"- Аллергии: {', '.join(prefs.allergies)}.")
+        if prefs.dietary_restrictions:
+            pref_parts.append(
+                f"- Диетические ограничения: {', '.join(prefs.dietary_restrictions)}."
+            )
+        if prefs.favorite_cuisines:
+            pref_parts.append(f"- Любимые кухни: {', '.join(prefs.favorite_cuisines)}.")
+        if prefs.disliked_cuisines:
+            pref_parts.append(
+                f"- Нелюбимые кухни: {', '.join(prefs.disliked_cuisines)}."
+            )
+        if prefs.favorite_ingredients:
+            pref_parts.append(
+                f"- Любимые ингредиенты: {', '.join(prefs.favorite_ingredients)}."
+            )
+        if prefs.disliked_ingredients:
+            pref_parts.append(
+                f"- Нелюбимые ингредиенты: {', '.join(prefs.disliked_ingredients)}."
+            )
+        if prefs.preferred_difficulty:
+            pref_parts.append(f"- Сложность: {prefs.preferred_difficulty}.")
+        if prefs.available_time:
+            pref_parts.append(f"- Время на готовку: {prefs.available_time}.")
+        if pref_parts:
+            preferences_prompt_text = "Учти мои предпочтения:\n" + "\n".join(pref_parts)
+
+    try:
+        ai_provider_response = await ai_service.get_ai_response(
+            user_prompt=user_message.text,
+            conversation_history=conversation_history_from_db,
+            system_prompt="",
+            preferences_text=preferences_prompt_text,
+        )
+
+        if "Извините" in ai_provider_response.reply:
+            raise HTTPException(status_code=503, detail=ai_provider_response.reply)
+
+        bot_message_text = ai_provider_response.reply
+        found_videos: Optional[List[VideoSearchResult]] = None
+
+        if ai_provider_response.trigger_video_search_query:
+            logger.info(
+                f"AI запросил поиск видео: '{ai_provider_response.trigger_video_search_query}'"
+            )
+            videos_from_yt = await youtube_service.search_videos(
+                query=ai_provider_response.trigger_video_search_query, max_results=2
+            )
+            if videos_from_yt:
+                found_videos = videos_from_yt
+
+        bot_message = ChatMessage(sender="assistant", text=bot_message_text)
+        await db_service.save_messages(current_session_id, [user_message, bot_message])
+
+        if session_meta:
+            session_meta.updated_at = datetime.now(timezone.utc)
+            await db_service.create_or_update_session_metadata(session_meta)
+
+        return APIChatResponseWithVideos(
+            reply=bot_message.text, session_id=current_session_id, videos=found_videos
+        )
+
+    except HTTPException:
+        raise
+    except ConnectionError as e:
+        raise HTTPException(status_code=503, detail="Сервис БД недоступен.")
+    except Exception as e:
+        logger.error(f"Ошибка в chat_router ({current_session_id}): {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}"
+        )
+
+
+@router.get("/sessions", response_model=List[SessionMetadataListResponse])
+async def list_user_sessions(
+    db_service: AbstractDBService = Depends(get_db_service_dependency),
+    limit: int = 50,
+    skip: int = 0,
+):
+    sessions_metadata = await db_service.list_sessions_metadata(limit=limit, skip=skip)
+    return [
+        SessionMetadataListResponse(**meta.model_dump()) for meta in sessions_metadata
+    ]
+
+
+@router.get("/sessions/{session_id}/history", response_model=List[ChatMessage])
+async def get_session_history_route(
+    session_id: str,
+    db_service: AbstractDBService = Depends(get_db_service_dependency),
+    limit: int = 100,
+):
+    history = await db_service.get_history(session_id, limit=limit)
+    if not history and not await db_service.get_session_metadata(session_id):
+        raise HTTPException(status_code=404, detail="Сессия не найдена")
+    return history
+
+
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_session_route(
+    session_id: str, db_service: AbstractDBService = Depends(get_db_service_dependency)
+):
+    if not await db_service.get_session_metadata(session_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Сессия не найдена"
+        )
+    if not await db_service.delete_session_and_history(session_id):
+        raise HTTPException(status_code=500, detail="Не удалось удалить сессию")
+    return
+
+
+@router.post(
+    "/suggestions", response_model=PersonalizedSuggestionsResponse, tags=["Suggestions"]
+)
+async def get_personalized_suggestions_route(
+    request_data: PersonalizedSuggestionsRequest,
+    ai_service: AbstractAIService = Depends(get_ai_service_dependency),
+    db_service: AbstractDBService = Depends(get_db_service_dependency),
+):
+    history = (
+        await db_service.get_history(request_data.session_id, limit=50)
+        if request_data.session_id
+        else []
+    )
+    suggestions = await ai_service.get_personalized_suggestions(
+        conversation_history=history,
+        preferences=request_data.preferences,
+        system_prompt="",
+    )
+    return PersonalizedSuggestionsResponse(suggestions=suggestions)
+
+```
+
+__init__.py:
+```
+
+```
+
+```
+
+__init__.py:
+```
+
+```
+
+__init__.py:
+```
+
+```
+
+APIChatResponseModel.py:
+```
+from pydantic import BaseModel
+
+
+class APIChatResponse(BaseModel):
+    reply: str
+    session_id: str
+
+```
+
+ChatMessageModel.py:
+```
+from datetime import datetime
+from pydantic import BaseModel, Field
+
+
+class ChatMessage(BaseModel):
+    sender: str
+    text: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+```
+
+UserChatRequestModel.py:
+```
+from typing import Optional
+from pydantic import BaseModel
+from src.core.models.settings.UserPreferencesDataModel import (
+    UserPreferencesData,
+)
+
+
+class UserChatRequest(BaseModel):
+    prompt: str
+    session_id: Optional[str] = None
+    preferences: Optional[UserPreferencesData] = None
+
+```
+
+__init__.py:
+```
+
+```
+
+APIChatResponseModel.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+ChatMessageModel.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+UserChatRequestModel.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+PersonalizedSuggestionsRequestModel.py:
+```
+from typing import Optional
+from pydantic import BaseModel
+
+from src.core.models.settings.UserPreferencesDataModel import (
+    UserPreferencesData,
+)
+
+
+class PersonalizedSuggestionsRequest(BaseModel):
+    session_id: Optional[str] = (
+        None  
+    )
+    preferences: Optional[UserPreferencesData] = None  
+
+```
+
+PersonalizedSuggestionsResponseModel.py:
+```
+from typing import List
+from pydantic import BaseModel
+
+
+class PersonalizedSuggestionsResponse(BaseModel):
+    suggestions: List[str]
+
+```
+
+__init__.py:
+```
+
+```
+
+PersonalizedSuggestionsRequestModel.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+PersonalizedSuggestionsResponseModel.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+SessionMetadataListResponseModel.py:
+```
+from datetime import datetime
+from pydantic import BaseModel
+
+
+class SessionMetadataListResponse(BaseModel):
+    id: str
+    title: str
+    updated_at: datetime
+
+```
+
+SessionMetadataModel.py:
+```
+from datetime import datetime
+from typing import Optional
+import uuid
+from pydantic import BaseModel, Field
+
+
+class SessionMetadata(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
+    user_id: Optional[str] = None
+    title: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        populate_by_name = True
+        json_encoders = {datetime: lambda dt: dt.isoformat()}
+
+```
+
+__init__.py:
+```
+
+```
+
+SessionMetadataListResponseModel.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+SessionMetadataModel.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+UserPreferencesDataModel.py:
+```
+from typing import List, Optional
+from pydantic import BaseModel, Field
+
+
+class UserPreferencesData(BaseModel):
+    allergies: List[str] = Field(default_factory=list)
+    dietary_restrictions: List[str] = Field(
+        default_factory=list, alias="dietaryRestrictions"
+    )
+    favorite_cuisines: List[str] = Field(default_factory=list, alias="favoriteCuisines")
+    disliked_cuisines: List[str] = Field(default_factory=list, alias="dislikedCuisines")
+    favorite_ingredients: List[str] = Field(
+        default_factory=list, alias="favoriteIngredients"
+    )
+    disliked_ingredients: List[str] = Field(
+        default_factory=list, alias="dislikedIngredients"
+    )
+    preferred_difficulty: Optional[str] = Field(
+        default=None, alias="preferredDifficulty"
+    )
+    available_time: Optional[str] = Field(default=None, alias="availableTime")
+
+    class Config:
+        populate_by_name = True
+
+```
+
+__init__.py:
+```
+
+```
+
+UserPreferencesDataModel.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+AIProviderResponseModel.py:
+```
+from typing import Optional
+from pydantic import BaseModel
+
+
+class AIProviderResponse(BaseModel):
+    reply: str
+    trigger_video_search_query: Optional[str] = None
+
+```
+
+VideoSearchResultModel.py:
+```
+from typing import Optional
+
+from pydantic import BaseModel
+
+
+class VideoSearchResult(BaseModel):
+    title: str
+    video_id: str
+    thumbnail_url: Optional[str] = None
+    channel_title: Optional[str] = None
+
+```
+
+__init__.py:
+```
+
+```
+
+AIProviderResponseModel.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+VideoSearchResultModel.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+system_prompt_gastronomy.txt:
+```
+Ты — "Шеф ГастроБот", виртуозный кулинарный ИИ-ассистент.
+Твоя миссия — вдохновлять пользователей на кулинарные подвиги, помогать им с выбором блюд, поиском рецептов и давать полезные советы по приготовлению пищи.
+Общайся дружелюбно, с энтузиазмом и ноткой юмора, как настоящий шеф-повар, который рад поделиться своими секретами.
+
+Ключевые аспекты твоей работы:
+1.  **Понимание предпочтений:** Внимательно анализируй запросы пользователя, уточняй детали (любимые ингредиенты, тип кухни, ограничения в диете, доступное время, уровень сложности).
+2.  **Креативные предложения:** Не ограничивайся стандартными ответами. Предлагай интересные сочетания, необычные блюда или вариации классических рецептов.
+3.  **Подробные рецепты (по запросу):** Если пользователь просит рецепт, предоставь его в четком и понятном формате: список ингредиентов с точными количествами и пошаговую инструкцию приготовления. Указывай время приготовления и уровень сложности, если это уместно.
+4.  **Советы и хитрости:** Делись кулинарными лайфхаками, техниками приготовления, советами по выбору продуктов или замене ингредиентов.
+5.  **Поддержание диалога:** Старайся делать диалог живым. Задавай уточняющие вопросы, чтобы лучше понять пользователя.
+6.  **Формат ответа:**
+    *   Если это просто совет или ответ на вопрос - будь краток и по делу.
+    *   Если это рецепт - структурируй его (Ингредиенты, Инструкция).
+    *   Избегай возвращения просто списка блюд без контекста, если только пользователь явно этого не попросил. Лучше предложи одно-два наиболее подходящих блюда с кратким описанием.
+7.  **Безопасность и диета:** Если пользователь упоминает аллергии или строгие диетические ограничения, отнесись к этому серьезно и предлагай только безопасные варианты.
+8.  **Видео-рецепты с YouTube (по необходимости):**
+    Если ты считаешь, что видео-рецепт с YouTube будет очень полезен для пользователя в ответ на его текущий запрос (например, он **явно просит "видео"** или ищет рецепт блюда, которое лучше показать визуально, как сложная выпечка или техника нарезки), ты можешь инициировать поиск видео.
+    Для этого в своем текстовом ответе, после основного ответа пользователю, добавь специальный тег в точно таком формате:
+    `[YOUTUBE_SEARCH: "точный поисковый запрос для YouTube"]`
+    Замени "точный поисковый запрос для YouTube" на наиболее релевантные ключевые слова для поиска видео по теме запроса пользователя (например, "пицца маргарита рецепт видео", "как приготовить соус бешамель видео", "техника шинковки лука видео").
+    Твой основной текстовый ответ должен предшествовать этому тегу. Система затем выполнит поиск на YouTube и добавит найденные видео к твоему ответу.
+    **Используй этот тег только тогда, когда это действительно уместно и значительно улучшит помощь пользователю. Не нужно предлагать видео на каждый запрос рецепта, если пользователь об этом не просил или если текстового описания достаточно.**
+
+    *Пример твоего ответа, если нужен поиск видео:*
+    Пользователь: "Хочу посмотреть видео, как готовят настоящую пасту карбонара."
+    Ты (Помощник): "Отличная идея! Настоящая карбонара – это песня! Я как раз поищу для тебя хорошее видео, чтобы ты увидел все нюансы. [YOUTUBE_SEARCH: \"паста карбонара аутентичный рецепт видео\"]"
+
+    *Пример твоего ответа, если видео НЕ нужно (обычный запрос рецепта):*
+    Пользователь: "Какой-нибудь простой салат на ужин?"
+    Ты (Помощник): "Конечно! Как насчет легкого греческого салата? Свежие овощи, фета, оливки... ммм! Могу рассказать подробнее или предложить другой вариант." (Здесь тег [YOUTUBE_SEARCH:] НЕ НУЖЕН)
+
+Твоя цель — сделать кулинарный опыт пользователя приятным и успешным! Приступай, Шеф!
+
+
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.py:
+```
+
+```
+
+Config.py:
+```
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+class AppConfig:
+    def __init__(self):
+        self.aitunnel_api_key: str = os.getenv("AITUNNEL_API_KEY", "")
+        self.aitunnel_base_url: str = os.getenv(
+            "AITUNNEL_BASE_URL", "https://api.aitunnel.ru/v1/"
+        )
+        self.aitunnel_model_name: str = os.getenv(
+            "AITUNNEL_CHAT_MODEL", "gemini-1.5-flash-latest"
+        )
+        self.system_prompt_file: str = os.getenv(
+            "SYSTEM_PROMPT_FILE", "./src/core/prompts/system_prompt_gastronomy.txt"
+        )
+
+        self.mongodb_connection_string: str = os.getenv(
+            "MONGODB_CONNECTION_STRING", "mongodb://localhost:27017/"
+        )
+        self.mongodb_database_name: str = os.getenv(
+            "MONGODB_DATABASE_NAME", "gastronomic_chat_ai"
+        )
+        self.mongodb_chat_history_collection_name: str = os.getenv(
+            "MONGODB_CHAT_HISTORY_COLLECTION_NAME", "chat_histories"
+        )
+        self.mongodb_sessions_metadata_collection_name: str = os.getenv(
+            "MONGODB_SESSIONS_METADATA_COLLECTION_NAME", "sessions_metadata"
+        )
+
+        self.youtube_api_key: str = os.getenv("YOUTUBE_API_KEY", "")
+
+```
+
+Dependencies.py:
+```
+import os
+import logging
+from functools import lru_cache
+from fastapi import Depends
+from typing import Optional
+
+from src.infrastructure.dependencies.Config import AppConfig
+from src.infrastructure.interfaces.IDataBase import AbstractDBService
+from src.infrastructure.interfaces.IService import AbstractAIService
+from src.infrastructure.impl.mongodb_client.MongoDbImpl import MongoDBService
+from src.infrastructure.impl.openai_client.OpenAIClient import OpenAIAITunnelService
+from src.infrastructure.impl.youtube.YoutubeService import YouTubeService
+
+
+logger = logging.getLogger(__name__)
+
+
+@lru_cache()
+def get_app_config() -> AppConfig:
+    config = AppConfig()
+    if not config.aitunnel_api_key:
+        logger.warning("AITUNNEL_API_KEY не установлен!")
+    if not config.youtube_api_key:
+        logger.warning("YOUTUBE_API_KEY не установлен! Поиск видео не будет работать.")
+    return config
+
+
+async def get_ai_service_dependency(
+    config: AppConfig = Depends(get_app_config),
+) -> AbstractAIService:
+    return OpenAIAITunnelService(
+        api_key=config.aitunnel_api_key,
+        base_url=config.aitunnel_base_url,
+        model_name=config.aitunnel_model_name,
+        system_prompt_file=config.system_prompt_file,
+    )
+
+
+_db_service_instance: Optional[MongoDBService] = None
+
+
+async def get_db_service_dependency(
+    config: AppConfig = Depends(get_app_config),
+) -> AbstractDBService:
+    global _db_service_instance
+    if _db_service_instance is None:
+        try:
+            _db_service_instance = MongoDBService(
+                connection_string=config.mongodb_connection_string,
+                database_name=config.mongodb_database_name,
+                chat_history_collection_name=config.mongodb_chat_history_collection_name,
+                sessions_metadata_collection_name=config.mongodb_sessions_metadata_collection_name,
+            )
+        except ConnectionError as e:
+            logger.error(f"КРИТИЧЕСКАЯ ОШИБКА MongoDB: {e}")
+            raise
+    return _db_service_instance
+
+
+async def close_db_connection():
+    global _db_service_instance
+    if _db_service_instance:
+        await _db_service_instance.close_connection()
+        _db_service_instance = None
+
+
+@lru_cache()
+def get_youtube_service(config: AppConfig = Depends(get_app_config)) -> YouTubeService:
+    return YouTubeService(api_key=config.youtube_api_key)
+
+```
+
+__init__.py:
+```
+
+```
+
+Config.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+Dependencies.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+MongoDbImpl.py:
+```
+import logging
+from typing import List, Optional
+from motor.motor_asyncio import (
+    AsyncIOMotorClient,
+    AsyncIOMotorDatabase,
+    AsyncIOMotorCollection,
+)
+from datetime import datetime, timezone
+from pymongo import ReturnDocument
+
+from src.infrastructure.interfaces.IDataBase import AbstractDBService
+from src.core.models.sessions.SessionMetadataModel import SessionMetadata
+from src.core.models.chatting.ChatMessageModel import ChatMessage
+
+
+logger = logging.getLogger(__name__)
+
+
+class MongoDBService(AbstractDBService):
+    def __init__(
+        self,
+        connection_string: str,
+        database_name: str,
+        chat_history_collection_name: str,
+        sessions_metadata_collection_name: str,
+    ):
+        try:
+            self.client: AsyncIOMotorClient = AsyncIOMotorClient(connection_string)
+            self.db: AsyncIOMotorDatabase = self.client[database_name]
+
+            self.history_collection: AsyncIOMotorCollection = self.db[
+                chat_history_collection_name
+            ]
+            self.sessions_collection: AsyncIOMotorCollection = self.db[
+                sessions_metadata_collection_name
+            ]
+            logger.info(
+                f"Успешно подключено к MongoDB: {database_name}. Коллекции: {chat_history_collection_name}, {sessions_metadata_collection_name}"
+            )
+        except Exception as e:
+            logger.error(f"Ошибка подключения к MongoDB: {e}", exc_info=True)
+            raise ConnectionError(f"Не удалось подключиться к MongoDB: {e}")
+
+    async def save_message(self, session_id: str, message: ChatMessage) -> None:
+        doc = {
+            "session_id": session_id,
+            "sender": message.sender,
+            "text": message.text,
+            "timestamp": message.timestamp.replace(tzinfo=timezone.utc),
+        }
+        try:
+            await self.history_collection.insert_one(doc)
+        except Exception as e:
+            logger.error(
+                f"Ошибка сохранения сообщения ({session_id}): {e}", exc_info=True
+            )
+
+    async def save_messages(self, session_id: str, messages: List[ChatMessage]) -> None:
+        if not messages:
+            return
+        docs_to_insert = [
+            {
+                "session_id": session_id,
+                "sender": msg.sender,
+                "text": msg.text,
+                "timestamp": msg.timestamp.replace(tzinfo=timezone.utc),
+            }
+            for msg in messages
+        ]
+        try:
+            await self.history_collection.insert_many(docs_to_insert)
+        except Exception as e:
+            logger.error(
+                f"Ошибка сохранения списка сообщений ({session_id}): {e}", exc_info=True
+            )
+
+    async def get_history(self, session_id: str, limit: int = 20) -> List[ChatMessage]:
+        messages_data = []
+        try:
+            cursor = (
+                self.history_collection.find({"session_id": session_id})
+                .sort("timestamp", -1)
+                .limit(limit)
+            )
+            async for doc in cursor:
+                ts = doc.get("timestamp")
+                if isinstance(ts, datetime):
+                    pass
+                else:
+                    try:
+                        ts = datetime.fromisoformat(str(ts))
+                    except:
+                        ts = datetime.now(timezone.utc)
+
+                messages_data.append(
+                    ChatMessage(sender=doc["sender"], text=doc["text"], timestamp=ts)
+                )
+            messages_data.reverse()
+        except Exception as e:
+            logger.error(f"Ошибка загрузки истории ({session_id}): {e}", exc_info=True)
+        return messages_data
+
+    async def get_session_metadata(self, session_id: str) -> Optional[SessionMetadata]:
+        try:
+            doc = await self.sessions_collection.find_one({"_id": session_id})
+            if doc:
+                return SessionMetadata(**doc)
+        except Exception as e:
+            logger.error(
+                f"Ошибка получения метаданных сессии {session_id}: {e}", exc_info=True
+            )
+        return None
+
+    async def create_or_update_session_metadata(
+        self, session_metadata: SessionMetadata
+    ) -> SessionMetadata:
+        update_data = {
+            "title": session_metadata.title,
+            "user_id": session_metadata.user_id,
+            "updated_at": datetime.now(timezone.utc),
+        }
+
+        on_insert_data = {
+            "created_at": session_metadata.created_at.replace(tzinfo=timezone.utc)
+        }
+
+        session_id_for_query = session_metadata.id
+
+        try:
+            updated_document = await self.sessions_collection.find_one_and_update(
+                {"_id": session_id_for_query},
+                {
+                    "$set": update_data,
+                    "$setOnInsert": {
+                        **on_insert_data,
+                        "_id": session_id_for_query,
+                    },
+                },
+                upsert=True,
+                return_document=ReturnDocument.AFTER,
+            )
+
+            if updated_document:
+                logger.info(
+                    f"Метаданные сессии {session_metadata.id} созданы/обновлены."
+                )
+                return SessionMetadata(**updated_document)
+            else:
+                logger.error(
+                    f"Не удалось создать/обновить метаданные сессии {session_metadata.id}, find_one_and_update вернул None"
+                )
+                raise Exception(
+                    f"MongoDB не вернула документ после upsert для сессии {session_metadata.id}"
+                )
+
+        except Exception as e:
+            logger.error(
+                f"Ошибка создания/обновления метаданных сессии {session_metadata.id}: {e}",
+                exc_info=True,
+            )
+            raise
+
+    async def list_sessions_metadata(
+        self, user_id: Optional[str] = None, limit: int = 50, skip: int = 0
+    ) -> List[SessionMetadata]:
+        sessions_list = []
+        query = {}
+        if user_id:
+            query["user_id"] = user_id
+
+        try:
+            cursor = (
+                self.sessions_collection.find(query)
+                .sort("updated_at", -1)
+                .skip(skip)
+                .limit(limit)
+            )
+            async for doc in cursor:
+                sessions_list.append(SessionMetadata(**doc))
+            logger.info(f"Загружено {len(sessions_list)} метаданных сессий.")
+        except Exception as e:
+            logger.error(
+                f"Ошибка загрузки списка метаданных сессий: {e}", exc_info=True
+            )
+        return sessions_list
+
+    async def close_connection(self):
+        if self.client:
+            self.client.close()
+            logger.info("Соединение с MongoDB закрыто.")
+
+    async def delete_session_and_history(self, session_id: str) -> bool:
+        try:
+            delete_meta_result = await self.sessions_collection.delete_one(
+                {"_id": session_id}
+            )
+
+            delete_history_result = await self.history_collection.delete_many(
+                {"session_id": session_id}
+            )
+
+            deleted_meta_count = delete_meta_result.deleted_count
+            deleted_history_count = delete_history_result.deleted_count
+
+            if deleted_meta_count > 0:
+                logger.info(
+                    f"Метаданные для сессии {session_id} удалены (удалено: {deleted_meta_count}). Сообщений удалено: {deleted_history_count}."
+                )
+                return True
+            elif deleted_history_count > 0:
+                logger.info(
+                    f"Метаданные для сессии {session_id} не найдены, но история сообщений удалена (удалено: {deleted_history_count})."
+                )
+                return True
+            else:
+                logger.warning(
+                    f"Сессия {session_id} не найдена для удаления (ни метаданные, ни история)."
+                )
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка при удалении сессии {session_id}: {e}", exc_info=True)
+            return False
+
+```
+
+__init__.py:
+```
+
+```
+
+MongoDbImpl.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+OpenAIClient.py:
+```
+import os
+import logging
+import re
+from typing import List, Optional
+
+from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletion
+
+from src.infrastructure.interfaces.IService import AbstractAIService
+from src.core.models.chatting.ChatMessageModel import ChatMessage
+from src.core.models.settings.UserPreferencesDataModel import UserPreferencesData
+from src.core.models.youtube.AIProviderResponseModel import AIProviderResponse
+
+
+logger = logging.getLogger(__name__)
+
+
+class OpenAIAITunnelService(AbstractAIService):
+    def __init__(
+        self,
+        api_key: str,
+        base_url: str,
+        model_name: str,
+        system_prompt_file: Optional[str] = None,
+    ):
+        if not api_key:
+            logger.error(
+                "API ключ для AITunnel не предоставлен при инициализации сервиса."
+            )
+
+        self.model_name = model_name
+        self.async_client = AsyncOpenAI(
+            api_key=api_key,
+            base_url=base_url,
+        )
+        self.base_system_prompt = "Ты — полезный ИИ-ассистент."
+        if system_prompt_file:
+            try:
+                with open(system_prompt_file, "r", encoding="utf-8") as f:
+                    self.base_system_prompt = f.read().strip()
+                logger.info(
+                    f"Базовый системный промпт успешно загружен из {system_prompt_file}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Ошибка при загрузке системного промпта из {system_prompt_file}: {e}. Используется fallback."
+                )
+
+    async def load_system_prompt(self, file_path: str) -> str:
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    return f.read().strip()
+            except Exception as e:
+                logger.error(
+                    f"Ошибка при динамической загрузке системного промпта из {file_path}: {e}"
+                )
+        return self.base_system_prompt
+
+    def _convert_history_to_openai_format(
+        self,
+        effective_system_prompt: str,
+        conversation_history: List[ChatMessage],
+        user_prompt: str,
+    ) -> List[ChatCompletionMessageParam]:
+        messages: List[ChatCompletionMessageParam] = []
+        if effective_system_prompt:
+            messages.append({"role": "system", "content": effective_system_prompt})
+        for msg in conversation_history:
+            role = "user" if msg.sender == "user" else "assistant"
+            messages.append({"role": role, "content": msg.text})
+        messages.append({"role": "user", "content": user_prompt})
+        return messages
+
+    async def get_ai_response(
+        self,
+        user_prompt: str,
+        conversation_history: List[ChatMessage],
+        system_prompt: Optional[str] = None,
+        preferences_text: Optional[str] = None,
+    ) -> AIProviderResponse:
+
+        effective_system_prompt = system_prompt or self.base_system_prompt
+        if preferences_text:
+            effective_system_prompt = f"{effective_system_prompt}\n\n{preferences_text}"
+
+        if not effective_system_prompt.strip():
+            logger.warning("Итоговый системный промпт пуст!")
+            effective_system_prompt = "Ты полезный ассистент."
+
+        openai_messages = self._convert_history_to_openai_format(
+            effective_system_prompt, conversation_history, user_prompt
+        )
+        logger.info(
+            f"Запрос к AITunnel API. Модель: {self.model_name}. Сообщений: {len(openai_messages)}"
+        )
+
+        try:
+            chat_completion: ChatCompletion = (
+                await self.async_client.chat.completions.create(
+                    messages=openai_messages,
+                    model=self.model_name,
+                    max_tokens=4000,
+                    temperature=0.6,
+                )
+            )
+
+            ai_text_reply = ""
+            if (
+                chat_completion.choices
+                and chat_completion.choices[0].message
+                and chat_completion.choices[0].message.content
+            ):
+                ai_text_reply = chat_completion.choices[0].message.content.strip()
+
+            video_search_query = None
+            match = re.search(
+                r"\[YOUTUBE_SEARCH:\s*\"(.*?)\"\s*\]", ai_text_reply, re.IGNORECASE
+            )
+            if match:
+                video_search_query = match.group(1).strip()
+                ai_text_reply = ai_text_reply.replace(match.group(0), "").strip()
+                logger.info(
+                    f"AI запросил поиск видео на YouTube: '{video_search_query}'"
+                )
+            else:
+                logger.info("AI НЕ запросил поиск видео (тег не найден в ответе).")
+
+            return AIProviderResponse(
+                reply=ai_text_reply, trigger_video_search_query=video_search_query
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Ошибка при взаимодействии с AITunnel (OpenAI SDK): {e}", exc_info=True
+            )
+            return AIProviderResponse(
+                reply="Извините, сервис AI временно недоступен.",
+                trigger_video_search_query=None,
+            )
+
+    async def get_personalized_suggestions(
+        self,
+        conversation_history: List[ChatMessage],
+        preferences: Optional[UserPreferencesData],
+        system_prompt: Optional[str] = None,
+    ) -> List[str]:
+        effective_system_prompt = system_prompt or self.base_system_prompt
+        preferences_text_parts: List[str] = []
+        if preferences:
+            if preferences.allergies:
+                preferences_text_parts.append(
+                    f"- Аллергии: {', '.join(preferences.allergies)}."
+                )
+            if preferences.dietary_restrictions:
+                preferences_text_parts.append(
+                    f"- Диета: {', '.join(preferences.dietary_restrictions)}."
+                )
+            if preferences.favorite_cuisines:
+                preferences_text_parts.append(
+                    f"- Любимые кухни: {', '.join(preferences.favorite_cuisines)}."
+                )
+
+        preferences_text_for_prompt = ""
+        if preferences_text_parts:
+            preferences_text_for_prompt = "Мои предпочтения:\n" + "\n".join(
+                preferences_text_parts
+            )
+
+        history_summary = (
+            "Ранее мы обсуждали:\n"
+            + "\n".join(
+                [
+                    f"{'Я' if m.sender=='user' else 'Ты'}: {m.text}"
+                    for m in conversation_history[-6:]
+                ]
+            )
+            if conversation_history
+            else "Это наш первый диалог."
+        )
+
+        recommendation_prompt_content = f"""
+        {history_summary}
+        {preferences_text_for_prompt}
+
+        Исходя из этой информации (моей истории и предпочтений), предложи мне 2-3 интересных и разнообразных идеи для еды или рецепта на сегодня. 
+        Представь каждое предложение как отдельный пункт, кратко объяснив, почему оно может мне подойти.
+        Например:
+        1.  [Название блюда/идея] - потому что ты упоминал X, и это сочетается с Y.
+        2.  [Название блюда/идея] - так как ты любишь кухню Z, это блюдо тебе понравится.
+        """
+        openai_messages: List[ChatCompletionMessageParam] = []
+        if effective_system_prompt:
+            openai_messages.append(
+                {"role": "system", "content": effective_system_prompt}
+            )
+        openai_messages.append(
+            {"role": "user", "content": recommendation_prompt_content}
+        )
+
+        try:
+            chat_completion = await self.async_client.chat.completions.create(
+                messages=openai_messages,
+                model=self.model_name,
+                max_tokens=500,
+                temperature=0.8,
+                n=1,
+            )
+            raw_reply = (
+                chat_completion.choices[0].message.content.strip()
+                if chat_completion.choices and chat_completion.choices[0].message
+                else ""
+            )
+            suggestions = []
+            if raw_reply:
+                potential_suggestions = re.findall(
+                    r"^\s*(\d+\.\s*.*?|- \s*.*?|\* \s*.*?)$", raw_reply, re.MULTILINE
+                )
+                if potential_suggestions:
+                    suggestions = [s.strip() for s in potential_suggestions]
+                else:
+                    lines = [
+                        line.strip() for line in raw_reply.split("\n") if line.strip()
+                    ]
+                    if len(lines) > 1:
+                        suggestions = lines
+                    elif raw_reply:
+                        suggestions.append(raw_reply)
+
+            return suggestions if suggestions else ["К сожалению, сейчас нет идей."]
+        except Exception as e:
+            logger.error(f"Ошибка персонализированных предложений: {e}", exc_info=True)
+            return ["Ошибка получения предложений."]
+
+```
+
+__init__.py:
+```
+
+```
+
+OpenAIClient.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+YoutubeService.py:
+```
+import logging
+from typing import List
+import asyncio
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+
+from src.core.models.youtube.VideoSearchResultModel import VideoSearchResult
+
+logger = logging.getLogger(__name__)
+
+
+class YouTubeService:
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        if not self.api_key:
+            logger.warning(
+                "API ключ YouTube не предоставлен! Поиск видео не будет работать."
+            )
+        self.youtube_service_name = "youtube"
+        self.youtube_api_version = "v3"
+
+    def _perform_search_sync(
+        self, query: str, max_results: int
+    ) -> List[VideoSearchResult]:
+        if not self.api_key:
+            return []
+        try:
+            youtube = build(
+                self.youtube_service_name,
+                self.youtube_api_version,
+                developerKey=self.api_key,
+                cache_discovery=False,
+            )
+            search_response = (
+                youtube.search()
+                .list(
+                    q=query + " рецепт",
+                    part="id,snippet",
+                    type="video",
+                    videoEmbeddable="true",
+                    maxResults=max_results,
+                    relevanceLanguage="ru",
+                )
+                .execute()
+            )
+
+            videos: List[VideoSearchResult] = []
+            for item in search_response.get("items", []):
+                video_id = item.get("id", {}).get("videoId")
+                snippet = item.get("snippet", {})
+                if video_id and snippet:
+                    videos.append(
+                        VideoSearchResult(
+                            title=snippet.get("title", "Без названия"),
+                            video_id=video_id,
+                            thumbnail_url=snippet.get("thumbnails", {})
+                            .get("default", {})
+                            .get("url"),
+                            channel_title=snippet.get("channelTitle"),
+                        )
+                    )
+            logger.info(f"YouTube поиск для '{query}': найдено {len(videos)} видео.")
+            return videos
+        except HttpError as e:
+            logger.error(
+                f"Ошибка YouTube API: {e.resp.status} - {e._get_reason()}",
+                exc_info=True,
+            )
+            return []
+        except Exception as e:
+            logger.error(
+                f"Непредвиденная ошибка при поиске на YouTube: {e}", exc_info=True
+            )
+            return []
+
+    async def search_videos(
+        self, query: str, max_results: int = 3
+    ) -> List[VideoSearchResult]:
+        if not self.api_key:
+            logger.warning("Попытка поиска видео на YouTube без API ключа.")
+            return []
+        loop = asyncio.get_event_loop()
+
+        return await loop.run_in_executor(
+            None, self._perform_search_sync, query, max_results
+        )
+
+```
+
+__init__.py:
+```
+
+```
+
+YoutubeService.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+IDataBase.py:
+```
+from abc import ABC, abstractmethod
+from typing import List, Optional
+
+from src.core.models.chatting.ChatMessageModel import ChatMessage
+from src.core.models.sessions.SessionMetadataModel import SessionMetadata
+
+
+class AbstractDBService(ABC):
+    @abstractmethod
+    async def save_message(self, session_id: str, message: ChatMessage) -> None:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def save_messages(self, session_id: str, messages: List[ChatMessage]) -> None:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def get_history(self, session_id: str, limit: int = 20) -> List[ChatMessage]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def get_session_metadata(self, session_id: str) -> Optional[SessionMetadata]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def create_or_update_session_metadata(
+        self, session_metadata: SessionMetadata
+    ) -> SessionMetadata:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def list_sessions_metadata(
+        self, user_id: Optional[str] = None, limit: int = 50, skip: int = 0
+    ) -> List[SessionMetadata]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def delete_session_and_history(self, session_id: str) -> bool:
+        raise NotImplementedError()
+
+```
+
+IService.py:
+```
+from abc import ABC, abstractmethod
+from typing import List, Optional
+
+from src.core.models.settings.UserPreferencesDataModel import UserPreferencesData
+from src.core.models.youtube.AIProviderResponseModel import AIProviderResponse
+from src.core.models.chatting.ChatMessageModel import ChatMessage
+
+
+class AbstractAIService(ABC):
+    @abstractmethod
+    async def get_ai_response(
+        self,
+        user_prompt: str,
+        conversation_history: List[ChatMessage],
+        system_prompt: str,
+        preferences_text: Optional[str] = None,
+    ) -> AIProviderResponse:
+        """
+        Получает ответ от AI модели, может содержать запрос на поиск видео.
+        """
+        pass
+
+    @abstractmethod
+    async def load_system_prompt(self, file_path: str) -> str:
+        pass
+
+    @abstractmethod
+    async def get_personalized_suggestions(
+        self,
+        conversation_history: List[ChatMessage],
+        preferences: Optional[UserPreferencesData],
+        system_prompt: str,
+    ) -> List[str]:
+        pass
+
+```
+
+__init__.py:
+```
+
+```
+
+IDataBase.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+IService.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+app.py:
+```
+import logging
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+from src.services.api.ChatRouter import router as chat_api_router
+from src.infrastructure.dependencies.Dependencies import (
+    get_app_config,
+    get_db_service_dependency,
+    close_db_connection,
+)
+
+load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Гастрономический Помощник AI",
+        description="Бэкенд для чат-бота с AITunnel, FastAPI Depends и MongoDB.",
+        version="1.0.0",
+    )
+
+    origins = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:5174",
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+    )
+
+    app.include_router(chat_api_router)
+    logger.info("FastAPI приложение успешно сконфигурировано с роутерами и CORS.")
+
+    @app.on_event("startup")
+    async def startup_event():
+        logger.info("Приложение запускается...")
+        try:
+            app_config = get_app_config()
+            logger.info(
+                f"Конфигурация загружена. Модель AI: {app_config.aitunnel_model_name}"
+            )
+            await get_db_service_dependency(config=app_config)
+            logger.info("Сервис базы данных успешно инициализирован.")
+        except ConnectionError as e:
+            logger.error(
+                f"КРИТИЧЕСКАЯ ОШИБКА ПРИ СТАРТЕ: Не удалось подключиться к MongoDB. {e}",
+                exc_info=True,
+            )
+        except Exception as e:
+            logger.error(
+                f"Критическая ошибка при старте приложения: {e}", exc_info=True
+            )
+
+    @app.on_event("shutdown")
+    async def shutdown_event():
+        logger.info("Приложение останавливается...")
+        await close_db_connection()
+
+    @app.get("/", tags=["Root"])
+    async def read_root():
+        return {"message": "🤖 AI Гастро-Помощник (Python/FastAPI + MongoDB) на связи!"}
+
+    return app
+
+
+app = create_app()
+
+```
+
+__init__.py:
+```
+
+```
+
+ChatRouter.py:
+```
+import logging
+import uuid
+from fastapi import APIRouter, HTTPException, Depends, status
+from typing import List, Optional
+from datetime import datetime, timezone
+
+from src.infrastructure.interfaces.IDataBase import AbstractDBService
+from src.infrastructure.interfaces.IService import AbstractAIService
+from src.infrastructure.impl.youtube.YoutubeService import YouTubeService
+from src.core.models.chatting.APIChatResponseModel import APIChatResponse
+from src.core.models.chatting.ChatMessageModel import ChatMessage
+from src.core.models.chatting.UserChatRequestModel import UserChatRequest
+from src.core.models.personalize.PersonalizedSuggestionsRequestModel import (
+    PersonalizedSuggestionsRequest,
+)
+from src.core.models.personalize.PersonalizedSuggestionsResponseModel import (
+    PersonalizedSuggestionsResponse,
+)
+from src.core.models.sessions.SessionMetadataListResponseModel import (
+    SessionMetadataListResponse,
+)
+from src.core.models.sessions.SessionMetadataModel import SessionMetadata
+from src.core.models.youtube.VideoSearchResultModel import VideoSearchResult
+
+from src.infrastructure.dependencies.Dependencies import (
+    get_ai_service_dependency,
+    get_db_service_dependency,
+    get_youtube_service,
+)
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/api", tags=["Chat & Sessions"])
+
+
+def generate_session_title(prompt: str) -> str:
+    words = prompt.split()
+    return " ".join(words[:5]) + ("..." if len(words) > 5 else "")
+
+
+class APIChatResponseWithVideos(APIChatResponse):
+    videos: Optional[List[VideoSearchResult]] = None
+
+
+@router.post("/chat", response_model=APIChatResponseWithVideos)
+async def handle_chat_request(
+    chat_request: UserChatRequest,
+    ai_service: AbstractAIService = Depends(get_ai_service_dependency),
+    db_service: AbstractDBService = Depends(get_db_service_dependency),
+    youtube_service: YouTubeService = Depends(get_youtube_service),
+):
+    if not chat_request.prompt:
+        raise HTTPException(
+            status_code=400, detail="Сообщение пользователя (prompt) обязательно."
+        )
+
+    is_new_session = False
+    if chat_request.session_id:
+        current_session_id = chat_request.session_id
+        session_meta = await db_service.get_session_metadata(current_session_id)
+        if not session_meta:
+            title = generate_session_title(chat_request.prompt)
+            new_meta = SessionMetadata(id=current_session_id, title=title)
+            session_meta = await db_service.create_or_update_session_metadata(new_meta)
+    else:
+        current_session_id = str(uuid.uuid4())
+        is_new_session = True
+        title = generate_session_title(chat_request.prompt)
+        session_meta = SessionMetadata(id=current_session_id, title=title)
+        session_meta = await db_service.create_or_update_session_metadata(session_meta)
+
+    conversation_history_from_db: List[ChatMessage] = await db_service.get_history(
+        current_session_id, limit=10
+    )
+    user_message = ChatMessage(sender="user", text=chat_request.prompt)
+
+    preferences_prompt_text = ""
+    if chat_request.preferences:
+        prefs = chat_request.preferences
+        pref_parts = []
+        if prefs.allergies:
+            pref_parts.append(f"- Аллергии: {', '.join(prefs.allergies)}.")
+        if prefs.dietary_restrictions:
+            pref_parts.append(
+                f"- Диетические ограничения: {', '.join(prefs.dietary_restrictions)}."
+            )
+        if prefs.favorite_cuisines:
+            pref_parts.append(f"- Любимые кухни: {', '.join(prefs.favorite_cuisines)}.")
+        if prefs.disliked_cuisines:
+            pref_parts.append(
+                f"- Нелюбимые кухни: {', '.join(prefs.disliked_cuisines)}."
+            )
+        if prefs.favorite_ingredients:
+            pref_parts.append(
+                f"- Любимые ингредиенты: {', '.join(prefs.favorite_ingredients)}."
+            )
+        if prefs.disliked_ingredients:
+            pref_parts.append(
+                f"- Нелюбимые ингредиенты: {', '.join(prefs.disliked_ingredients)}."
+            )
+        if prefs.preferred_difficulty:
+            pref_parts.append(f"- Сложность: {prefs.preferred_difficulty}.")
+        if prefs.available_time:
+            pref_parts.append(f"- Время на готовку: {prefs.available_time}.")
+        if pref_parts:
+            preferences_prompt_text = "Учти мои предпочтения:\n" + "\n".join(pref_parts)
+
+    try:
+        ai_provider_response = await ai_service.get_ai_response(
+            user_prompt=user_message.text,
+            conversation_history=conversation_history_from_db,
+            system_prompt="",
+            preferences_text=preferences_prompt_text,
+        )
+
+        if "Извините" in ai_provider_response.reply:
+            raise HTTPException(status_code=503, detail=ai_provider_response.reply)
+
+        bot_message_text = ai_provider_response.reply
+        found_videos: Optional[List[VideoSearchResult]] = None
+
+        if ai_provider_response.trigger_video_search_query:
+            logger.info(
+                f"AI запросил поиск видео: '{ai_provider_response.trigger_video_search_query}'"
+            )
+            videos_from_yt = await youtube_service.search_videos(
+                query=ai_provider_response.trigger_video_search_query, max_results=2
+            )
+            if videos_from_yt:
+                found_videos = videos_from_yt
+
+        bot_message = ChatMessage(sender="assistant", text=bot_message_text)
+        await db_service.save_messages(current_session_id, [user_message, bot_message])
+
+        if session_meta:
+            session_meta.updated_at = datetime.now(timezone.utc)
+            await db_service.create_or_update_session_metadata(session_meta)
+
+        return APIChatResponseWithVideos(
+            reply=bot_message.text, session_id=current_session_id, videos=found_videos
+        )
+
+    except HTTPException:
+        raise
+    except ConnectionError as e:
+        raise HTTPException(status_code=503, detail="Сервис БД недоступен.")
+    except Exception as e:
+        logger.error(f"Ошибка в chat_router ({current_session_id}): {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}"
+        )
+
+
+@router.get("/sessions", response_model=List[SessionMetadataListResponse])
+async def list_user_sessions(
+    db_service: AbstractDBService = Depends(get_db_service_dependency),
+    limit: int = 50,
+    skip: int = 0,
+):
+    sessions_metadata = await db_service.list_sessions_metadata(limit=limit, skip=skip)
+    return [
+        SessionMetadataListResponse(**meta.model_dump()) for meta in sessions_metadata
+    ]
+
+
+@router.get("/sessions/{session_id}/history", response_model=List[ChatMessage])
+async def get_session_history_route(
+    session_id: str,
+    db_service: AbstractDBService = Depends(get_db_service_dependency),
+    limit: int = 100,
+):
+    history = await db_service.get_history(session_id, limit=limit)
+    if not history and not await db_service.get_session_metadata(session_id):
+        raise HTTPException(status_code=404, detail="Сессия не найдена")
+    return history
+
+
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_session_route(
+    session_id: str, db_service: AbstractDBService = Depends(get_db_service_dependency)
+):
+    if not await db_service.get_session_metadata(session_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Сессия не найдена"
+        )
+    if not await db_service.delete_session_and_history(session_id):
+        raise HTTPException(status_code=500, detail="Не удалось удалить сессию")
+    return
+
+
+@router.post(
+    "/suggestions", response_model=PersonalizedSuggestionsResponse, tags=["Suggestions"]
+)
+async def get_personalized_suggestions_route(
+    request_data: PersonalizedSuggestionsRequest,
+    ai_service: AbstractAIService = Depends(get_ai_service_dependency),
+    db_service: AbstractDBService = Depends(get_db_service_dependency),
+):
+    history = (
+        await db_service.get_history(request_data.session_id, limit=50)
+        if request_data.session_id
+        else []
+    )
+    suggestions = await ai_service.get_personalized_suggestions(
+        conversation_history=history,
+        preferences=request_data.preferences,
+        system_prompt="",
+    )
+    return PersonalizedSuggestionsResponse(suggestions=suggestions)
+
+```
+
+__init__.py:
+```
+
+```
+
+ChatRouter.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+app.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
+
+__init__.cpython-313.pyc:
+```
+Error reading file: 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+```
