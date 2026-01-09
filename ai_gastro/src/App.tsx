@@ -16,7 +16,8 @@ import type {
     UserPreferences, 
     SessionDisplayInfo, 
     BackendChatResponse, 
-    BackendPersonalizedSuggestions 
+    BackendPersonalizedSuggestions,
+    DailyProgress 
 } from './types';
 
 const API_BASE_URL = 'http://localhost:8000/api';
@@ -24,6 +25,7 @@ const API_BASE_URL = 'http://localhost:8000/api';
 const initialUserPreferences: UserPreferences = {
     allergies: [], dietaryRestrictions: [], favoriteCuisines: [], dislikedCuisines: [],
     favoriteIngredients: [], dislikedIngredients: [], preferredDifficulty: null, availableTime: null,
+    targetCalories: 2000 // Цель по умолчанию
 };
 
 function App() {
@@ -35,11 +37,33 @@ function App() {
     const [sessionsList, setSessionsList] = useState<SessionDisplayInfo[]>([]);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<boolean>(false);
     
+    // Состояние дневника калорий
+    const [dailyProgress, setDailyProgress] = useState<DailyProgress>({
+        totalCalories: 0,
+        targetCalories: 2000,
+        protein: 0,
+        fat: 0,
+        carbs: 0
+    });
+    
     const [activeSessionId, setActiveSessionId] = useState<string | null>(() => localStorage.getItem('activeChatSessionId'));
     const [userPreferences, setUserPreferences] = useState<UserPreferences>(() => {
         const stored = localStorage.getItem('userGastronomicPreferences');
         try { return stored ? JSON.parse(stored) : initialUserPreferences; } catch { return initialUserPreferences; }
     });
+
+    // 1. Загрузка прогресса калорий из БД
+    const fetchDailyProgress = useCallback(async () => {
+        try {
+            const res = await axios.get(`${API_BASE_URL}/diary/daily-summary`);
+            setDailyProgress(prev => ({
+                ...res.data,
+                targetCalories: userPreferences.targetCalories || 2000
+            }));
+        } catch (error) {
+            console.error("Не удалось загрузить прогресс калорий");
+        }
+    }, [userPreferences.targetCalories]);
 
     const fetchSessions = useCallback(async () => {
         try {
@@ -51,7 +75,10 @@ function App() {
         } catch {}
     }, []);
 
-    useEffect(() => { fetchSessions(); }, [fetchSessions]);
+    useEffect(() => { 
+        fetchSessions(); 
+        fetchDailyProgress(); // Загружаем калории при старте
+    }, [fetchSessions, fetchDailyProgress]);
 
     useEffect(() => {
         if (activeSessionId) localStorage.setItem('activeChatSessionId', activeSessionId);
@@ -68,7 +95,6 @@ function App() {
                 setIsBotTyping(true);
                 try {
                     const res = await axios.get(`${API_BASE_URL}/sessions/${activeSessionId}/history`);
-                    // ВАЖНО: Нормализуем sender из бэкенда ('assistant' -> 'bot')
                     const normalizedHistory = res.data.map((msg: any) => ({
                         ...msg,
                         id: uuidv4(),
@@ -76,18 +102,14 @@ function App() {
                         timestamp: new Date(msg.timestamp)
                     }));
                     setMessages(normalizedHistory);
-                } catch { 
-                    setActiveSessionId(null); 
-                } finally { 
-                    setIsBotTyping(false); 
-                }
+                } catch { setActiveSessionId(null); } finally { setIsBotTyping(false); }
             } else {
                 setMessages([{ 
                     id: uuidv4(), 
-                    text: "Привет! Я Гастро-Помощник! 🍽️ Чем могу помочь?", 
+                    text: "Привет! Я Гастро-Помощник! 🍽️ Чем могу помочь? Я также могу записывать твои калории!", 
                     sender: 'bot', 
                     timestamp: new Date(), 
-                    suggestions: ["Что на ужин?", "Легкий десерт"] 
+                    suggestions: ["Что на ужин?", "Запиши: я съел яблоко"] 
                 }]);
             }
         };
@@ -96,7 +118,6 @@ function App() {
 
     const handleSendMessage = async (text: string) => {
         if (!text.trim()) return;
-        
         setMessages(prev => [...prev, { id: uuidv4(), text, sender: 'user', timestamp: new Date() }]);
         setUserInput(''); 
         setIsBotTyping(true);
@@ -113,15 +134,33 @@ function App() {
                 fetchSessions(); 
             }
 
+            let botText = res.data.reply;
+
+            // 2. ЛОГИКА ДНЕВНИКА: Поиск тега [ADD_FOOD: ...] в ответе бота
+            const foodMatch = botText.match(/\[ADD_FOOD:\s*({.*?})\s*\]/);
+            if (foodMatch) {
+                try {
+                    const foodData = JSON.parse(foodMatch[1]);
+                    // Отправляем данные на бэкенд для сохранения в MongoDB
+                    await axios.post(`${API_BASE_URL}/diary/entries`, foodData);
+                    // Обновляем виджет
+                    fetchDailyProgress();
+                    // Очищаем текст сообщения от технического тега
+                    botText = botText.replace(foodMatch[0], "").trim();
+                } catch (e) {
+                    console.error("Ошибка парсинга еды от AI", e);
+                }
+            }
+
             setMessages(prev => [...prev, { 
                 id: uuidv4(), 
-                text: res.data.reply, 
-                sender: 'bot', // Здесь мы жестко ставим 'bot' для нового сообщения
+                text: botText, 
+                sender: 'bot', 
                 timestamp: new Date(), 
                 videos: res.data.videos 
             }]);
         } catch {
-            // обработка ошибки
+            setMessages(prev => [...prev, { id: uuidv4(), text: "Ошибка связи с шефом...", sender: 'bot', timestamp: new Date() }]);
         } finally { 
             setIsBotTyping(false); 
         }
@@ -148,7 +187,11 @@ function App() {
             <button className="settings-toggle-button top-right-button" onClick={() => setIsSettingsModalOpen(true)}>⚙️</button>
             
             <Sidebar 
-                isOpen={isSidebarOpen} sessions={sessionsList} activeSessionId={activeSessionId} isLoadingSuggestions={isLoadingSuggestions}
+                isOpen={isSidebarOpen} 
+                sessions={sessionsList} 
+                activeSessionId={activeSessionId} 
+                isLoadingSuggestions={isLoadingSuggestions}
+                dailyProgress={dailyProgress} // Передаем данные калорий
                 onSelectSession={id => { setActiveSessionId(id); setIsSidebarOpen(false); }}
                 onNewChat={() => { setActiveSessionId(null); setIsSidebarOpen(false); }}
                 onDeleteSession={async id => { 
@@ -159,7 +202,7 @@ function App() {
                 onFetchSuggestions={fetchPersonalizedSuggestions}
             />
 
-            <div className="chat-app-container">
+            <div className={`chat-app-container ${isSidebarOpen ? 'shifted' : ''}`}>
                 <ChatHeader onClearChat={() => {
                     if (activeSessionId && window.confirm("Удалить этот диалог?")) {
                         axios.delete(`${API_BASE_URL}/sessions/${activeSessionId}`).then(() => setActiveSessionId(null));

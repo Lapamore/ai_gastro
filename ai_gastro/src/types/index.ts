@@ -26,6 +26,36 @@ export interface UserPreferences {
     dislikedIngredients: string[];
     preferredDifficulty: 'легко' | 'средне' | 'сложно' | null;
     availableTime: '15 мин' | '30 мин' | '1 час' | '>1 часа' | null;
+    
+    // Новое: Физические параметры и цели
+    targetCalories: number; // ВОТ ЭТО ПОЛЕ МЫ ДОБАВИЛИ
+    weight?: number;
+    height?: number;
+    age?: number;
+    gender?: 'male' | 'female';
+    activityLevel?: 'low' | 'medium' | 'high';
+    goal?: 'lose' | 'maintain' | 'gain';
+}
+
+// --- Данные дневника калорий ---
+export interface DiaryEntry {
+    id: string;
+    name: string;
+    calories: number;
+    protein?: number;
+    fat?: number;
+    carbs?: number;
+    mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+    timestamp: Date;
+}
+
+// --- Статистика дня (Прогресс в сайдбаре) ---
+export interface DailyProgress {
+    totalCalories: number;
+    targetCalories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
 }
 
 // --- Сессии (Диалоги в сайдбаре) ---
@@ -40,13 +70,21 @@ export interface BackendChatResponse {
     reply: string;
     session_id: string;
     videos?: BackendVideoResult[]; 
+    // AI может вернуть данные для авто-записи в дневник
+    extracted_food?: {
+        name: string;
+        calories: number;
+        protein: number;
+        fat: number;
+        carbs: number;
+    };
 }
 
 export interface BackendPersonalizedSuggestions {
     suggestions: string[];
 }
 
-// --- Типы для работы с рецептами (если используется recipesData.ts) ---
+// --- Типы для работы с рецептами ---
 export interface Recipe {
     id: string;
     name: string;
@@ -59,7 +97,7 @@ export interface Recipe {
     time?: string;
 }
 
-// --- Состояние диалога (для botService.ts) ---
+// --- Состояние диалога ---
 export type ConversationStage = 
     | 'initial' 
     | 'asking_taste' 

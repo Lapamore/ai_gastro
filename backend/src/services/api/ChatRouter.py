@@ -21,7 +21,7 @@ from src.core.models.sessions.SessionMetadataListResponseModel import (
 )
 from src.core.models.sessions.SessionMetadataModel import SessionMetadata
 from src.core.models.youtube.VideoSearchResultModel import VideoSearchResult
-
+from src.core.models.diary.DiaryEntryModel import DiaryEntry
 from src.infrastructure.dependencies.Dependencies import (
     get_ai_service_dependency,
     get_db_service_dependency,
@@ -206,3 +206,18 @@ async def get_personalized_suggestions_route(
         system_prompt="",
     )
     return PersonalizedSuggestionsResponse(suggestions=suggestions)
+# Эндпоинт для сохранения новой еды
+@router.post("/diary/entries")
+async def add_food_entry(
+    entry: DiaryEntry, 
+    db_service: AbstractDBService = Depends(get_db_service_dependency)
+):
+    await db_service.add_diary_entry(entry)
+    return {"status": "success"}
+
+# Эндпоинт для получения сводки за сегодня (вызывается фронтендом при F5)
+@router.get("/diary/daily-summary")
+async def get_daily_summary_route(
+    db_service: AbstractDBService = Depends(get_db_service_dependency)
+):
+    return await db_service.get_daily_summary()
