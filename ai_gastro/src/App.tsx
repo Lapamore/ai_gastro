@@ -56,7 +56,7 @@ function App() {
     const fetchDailyProgress = useCallback(async () => {
         try {
             const res = await axios.get(`${API_BASE_URL}/diary/daily-summary`);
-            setDailyProgress(prev => ({
+            setDailyProgress(_ => ({
                 ...res.data,
                 targetCalories: userPreferences.targetCalories || 2000
             }));
