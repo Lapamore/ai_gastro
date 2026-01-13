@@ -45,3 +45,8 @@ class AbstractDBService(ABC):
     @abstractmethod
     async def get_daily_summary(self) -> dict:
         raise NotImplementedError()
+
+    @abstractmethod
+    async def get_today_diary_entries(self) -> List[DiaryEntry]:
+        """Получить записи дневника за сегодня"""
+        raise NotImplementedError()

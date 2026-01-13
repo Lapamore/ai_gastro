@@ -158,3 +158,21 @@ class MongoDBService(AbstractDBService):
         except Exception as e:
             logger.error(f"Ошибка агрегации калорий: {e}", exc_info=True)
             return {"totalCalories": 0, "protein": 0, "fat": 0, "carbs": 0}
+
+    async def get_today_diary_entries(self) -> List[DiaryEntry]:
+        """Получить все записи дневника за сегодня"""
+        try:
+            today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            cursor = self.diary_collection.find(
+                {"timestamp": {"$gte": today_start}}
+            ).sort("timestamp", 1)
+            
+            entries = []
+            async for doc in cursor:
+                entries.append(DiaryEntry(**doc))
+            
+            return entries
+        except Exception as e:
+            logger.error(f"Ошибка получения записей дневника: {e}", exc_info=True)
+            return []

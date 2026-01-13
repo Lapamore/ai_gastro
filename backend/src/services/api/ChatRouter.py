@@ -37,6 +37,25 @@ def generate_session_title(prompt: str) -> str:
     return " ".join(words[:5]) + ("..." if len(words) > 5 else "")
 
 
+def build_diary_context(entries: List[DiaryEntry], daily_summary: dict) -> str:
+    """Формирует контекст дневника для ИИ с информацией только за сегодня"""
+    today_str = datetime.now(timezone.utc).strftime("%d.%m.%Y")
+    
+    if not entries:
+        return f"\n--- ДНЕВНИК ПИТАНИЯ ЗА СЕГОДНЯ ({today_str}) ---\nСегодня записей о еде нет.\n--- КОНЕЦ ДНЕВНИКА ---\n"
+    
+    lines = [f"\n--- ДНЕВНИК ПИТАНИЯ ЗА СЕГОДНЯ ({today_str}) ---"]
+    for entry in entries:
+        time_str = entry.timestamp.strftime("%H:%M")
+        lines.append(f"• {time_str} - {entry.name}: {entry.calories} ккал (Б:{entry.protein}г, Ж:{entry.fat}г, У:{entry.carbs}г)")
+    
+    lines.append(f"\nИТОГО ЗА СЕГОДНЯ: {daily_summary['totalCalories']} ккал "
+                 f"(Б:{daily_summary['protein']}г, Ж:{daily_summary['fat']}г, У:{daily_summary['carbs']}г)")
+    lines.append("--- КОНЕЦ ДНЕВНИКА ---\n")
+    
+    return "\n".join(lines)
+
+
 class APIChatResponseWithVideos(APIChatResponse):
     videos: Optional[List[VideoSearchResult]] = None
 
@@ -73,7 +92,15 @@ async def handle_chat_request(
     )
     user_message = ChatMessage(sender="user", text=chat_request.prompt)
 
-    preferences_prompt_text = ""
+    # Получаем данные дневника за СЕГОДНЯ
+    today_entries = await db_service.get_today_diary_entries()
+    daily_summary = await db_service.get_daily_summary()
+    diary_context = build_diary_context(today_entries, daily_summary)
+
+    # Добавляем текущую дату в контекст
+    current_date_context = f"Сегодняшняя дата: {datetime.now(timezone.utc).strftime('%d.%m.%Y')}.\n"
+
+    preferences_prompt_text = current_date_context + diary_context
     if chat_request.preferences:
         prefs = chat_request.preferences
         pref_parts = []
@@ -102,7 +129,7 @@ async def handle_chat_request(
         if prefs.available_time:
             pref_parts.append(f"- Время на готовку: {prefs.available_time}.")
         if pref_parts:
-            preferences_prompt_text = "Учти мои предпочтения:\n" + "\n".join(pref_parts)
+            preferences_prompt_text += "\nУчти мои предпочтения:\n" + "\n".join(pref_parts)
 
     try:
         ai_provider_response = await ai_service.get_ai_response(

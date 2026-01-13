@@ -26,8 +26,17 @@ const MessageItem: React.FC<MessageItemProps> = ({
         return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
     };
 
+    // Очищаем текст от системных тегов, которые не должен видеть пользователь
+    const cleanText = (rawText: string): string => {
+        return rawText
+            .replace(/\[ADD_FOOD:\s*\{[^}]*\}\]/g, '')  // Удаляем [ADD_FOOD: {...}]
+            .replace(/\[YOUTUBE_SEARCH:\s*"[^"]*"\]/g, '')  // Удаляем [YOUTUBE_SEARCH: "..."]
+            .trim();
+    };
+
     // Бот это либо 'bot' (фронтенд), либо 'assistant' (бэкенд)
     const isBot = sender === 'bot' || (sender as string) === 'assistant';
+    const displayText = isBot ? cleanText(text) : text;
 
     return (
         <div className={`message-wrapper ${isBot ? 'bot' : 'user'}`}>
@@ -42,11 +51,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
                     {isBot ? (
                         <div className="text markdown-content">
-                           <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+                           <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayText}</ReactMarkdown>
                         </div>
                     ) : (
                         <div className="text"> 
-                            {text} 
+                            {displayText} 
                         </div>
                     )}
 
