@@ -49,6 +49,16 @@ export interface DiaryEntry {
     timestamp: Date;
 }
 
+// Для отправки на бэкенд (без id и timestamp)
+export interface DiaryEntryInput {
+    name: string;
+    calories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+    mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+}
+
 // --- Статистика дня (Прогресс в сайдбаре) ---
 export interface DailyProgress {
     totalCalories: number;
@@ -77,6 +87,15 @@ export interface BackendChatResponse {
         protein: number;
         fat: number;
         carbs: number;
+    };
+    // Обновлённые данные дневника после записи
+    diary_updated?: {
+        summary: {
+            totalCalories: number;
+            protein: number;
+            fat: number;
+            carbs: number;
+        };
     };
 }
 

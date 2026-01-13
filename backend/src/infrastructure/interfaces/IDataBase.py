@@ -50,3 +50,8 @@ class AbstractDBService(ABC):
     async def get_today_diary_entries(self) -> List[DiaryEntry]:
         """Получить записи дневника за сегодня"""
         raise NotImplementedError()
+        
+    @abstractmethod
+    async def delete_diary_entry_by_name(self, name: str) -> bool:
+        """Удалить запись из дневника за сегодня по названию"""
+        raise NotImplementedError()

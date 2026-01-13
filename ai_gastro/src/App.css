@@ -53,6 +53,31 @@
     transform: scale(1.1) rotate(-90deg);
 }
 
+/* Кнопка дневника */
+.diary-toggle-button {
+    right: 60px !important;
+}
+
+.top-right-button {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    z-index: 100;
+    background: rgba(30, 30, 50, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.top-right-button:hover {
+    transform: scale(1.1);
+    background: rgba(50, 50, 80, 0.95);
+}
+
 /* Мобильная адаптация */
 @media (max-width: 768px) {
     .chat-app-container {

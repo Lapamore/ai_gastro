@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from src.services.api.ChatRouter import router as chat_api_router
+from src.api.routes.diary_routes import router as diary_router
 from src.infrastructure.dependencies.Dependencies import (
     get_app_config,
     get_db_service_dependency,
@@ -39,6 +40,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(chat_api_router)
+    app.include_router(diary_router, prefix="/api")
     logger.info("FastAPI приложение успешно сконфигурировано с роутерами и CORS.")
 
     @app.on_event("startup")

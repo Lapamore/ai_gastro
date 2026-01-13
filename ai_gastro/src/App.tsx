@@ -10,6 +10,7 @@ import SidebarToggle from './components/SidebarToggle/SidebarToggle';
 import Sidebar from './components/Sidebar/Sidebar';
 import QuickActions from './components/QuickActions/QuickActions';
 import SettingsModal from './components/SettingsModal/SettingsModal';
+import DiaryModal from './components/DiaryModal/DiaryModal';
 
 import type { 
     FrontendMessage, 
@@ -34,6 +35,7 @@ function App() {
     const [userInput, setUserInput] = useState<string>('');
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
+    const [isDiaryModalOpen, setIsDiaryModalOpen] = useState<boolean>(false);
     const [sessionsList, setSessionsList] = useState<SessionDisplayInfo[]>([]);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<boolean>(false);
     
@@ -136,20 +138,12 @@ function App() {
 
             let botText = res.data.reply;
 
-            // 2. ЛОГИКА ДНЕВНИКА: Поиск тега [ADD_FOOD: ...] в ответе бота
-            const foodMatch = botText.match(/\[ADD_FOOD:\s*({.*?})\s*\]/);
-            if (foodMatch) {
-                try {
-                    const foodData = JSON.parse(foodMatch[1]);
-                    // Отправляем данные на бэкенд для сохранения в MongoDB
-                    await axios.post(`${API_BASE_URL}/diary/entries`, foodData);
-                    // Обновляем виджет
-                    fetchDailyProgress();
-                    // Очищаем текст сообщения от технического тега
-                    botText = botText.replace(foodMatch[0], "").trim();
-                } catch (e) {
-                    console.error("Ошибка парсинга еды от AI", e);
-                }
+            // Если бэкенд вернул обновлённые данные дневника — применяем их сразу
+            if (res.data.diary_updated) {
+                setDailyProgress(prev => ({
+                    ...res.data.diary_updated!.summary,
+                    targetCalories: prev.targetCalories
+                }));
             }
 
             setMessages(prev => [...prev, { 
@@ -185,6 +179,7 @@ function App() {
         <div className="chat-app-wrapper">
             <SidebarToggle onClick={() => setIsSidebarOpen(!isSidebarOpen)} isOpen={isSidebarOpen} />
             <button className="settings-toggle-button top-right-button" onClick={() => setIsSettingsModalOpen(true)}>⚙️</button>
+            <button className="diary-toggle-button top-right-button" onClick={() => setIsDiaryModalOpen(true)}>📔</button>
             
             <Sidebar 
                 isOpen={isSidebarOpen} 
@@ -214,6 +209,12 @@ function App() {
             </div>
 
             <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} preferences={userPreferences} onPreferencesChange={setUserPreferences} />
+            <DiaryModal 
+                isOpen={isDiaryModalOpen} 
+                onClose={() => setIsDiaryModalOpen(false)} 
+                dailyProgress={dailyProgress}
+                onProgressUpdate={setDailyProgress}
+            />
         </div>
     );
 }

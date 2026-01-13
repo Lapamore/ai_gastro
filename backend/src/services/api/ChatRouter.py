@@ -1,5 +1,7 @@
 import logging
 import uuid
+import re
+import json
 from fastapi import APIRouter, HTTPException, Depends, status
 from typing import List, Optional
 from datetime import datetime, timezone
@@ -42,22 +44,65 @@ def build_diary_context(entries: List[DiaryEntry], daily_summary: dict) -> str:
     today_str = datetime.now(timezone.utc).strftime("%d.%m.%Y")
     
     if not entries:
-        return f"\n--- ДНЕВНИК ПИТАНИЯ ЗА СЕГОДНЯ ({today_str}) ---\nСегодня записей о еде нет.\n--- КОНЕЦ ДНЕВНИКА ---\n"
+        return f"\n--- АКТУАЛЬНОЕ СОСТОЯНИЕ ДНЕВНИКА ПИТАНИЯ ({today_str}) ---\n⚠️ ВАЖНО: Сейчас в дневнике НЕТ ни одной записи о еде. Дневник пуст.\n--- КОНЕЦ АКТУАЛЬНЫХ ДАННЫХ ---\n"
     
-    lines = [f"\n--- ДНЕВНИК ПИТАНИЯ ЗА СЕГОДНЯ ({today_str}) ---"]
+    lines = [f"\n--- АКТУАЛЬНОЕ СОСТОЯНИЕ ДНЕВНИКА ПИТАНИЯ ({today_str}) ---"]
+    lines.append(f"⚠️ ВАЖНО: Это ТЕКУЩИЙ список всей еды в дневнике. Если ранее упоминалось что-то, чего здесь нет - значит оно было удалено.")
     for entry in entries:
         time_str = entry.timestamp.strftime("%H:%M")
         lines.append(f"• {time_str} - {entry.name}: {entry.calories} ккал (Б:{entry.protein}г, Ж:{entry.fat}г, У:{entry.carbs}г)")
     
     lines.append(f"\nИТОГО ЗА СЕГОДНЯ: {daily_summary['totalCalories']} ккал "
                  f"(Б:{daily_summary['protein']}г, Ж:{daily_summary['fat']}г, У:{daily_summary['carbs']}г)")
-    lines.append("--- КОНЕЦ ДНЕВНИКА ---\n")
+    lines.append("--- КОНЕЦ АКТУАЛЬНЫХ ДАННЫХ ---\n")
     
     return "\n".join(lines)
 
 
 class APIChatResponseWithVideos(APIChatResponse):
     videos: Optional[List[VideoSearchResult]] = None
+    diary_updated: Optional[dict] = None  # Новое поле для обновлённых данных дневника
+
+
+async def process_food_tags(bot_message_text: str, db_service: AbstractDBService) -> tuple[str, bool]:
+    """Обрабатывает теги ADD_FOOD и DELETE_FOOD, возвращает очищенный текст и флаг изменения дневника"""
+    
+    diary_changed = False
+    
+    logger.info(f"Обработка тегов в ответе ИИ: {bot_message_text[:200]}...")
+    
+    # Обработка добавления еды
+    add_food_pattern = r'\[ADD_FOOD:\s*(\{.*?\})\]'
+    add_matches = re.findall(add_food_pattern, bot_message_text, re.DOTALL)
+    logger.info(f"Найдено ADD_FOOD тегов: {len(add_matches)}")
+    for match in add_matches:
+        try:
+            food_data = json.loads(match)
+            entry = DiaryEntry(**food_data)
+            await db_service.add_diary_entry(entry)
+            logger.info(f"Автоматически добавлена еда: {entry.name}")
+            diary_changed = True
+        except Exception as e:
+            logger.error(f"Ошибка парсинга ADD_FOOD: {e}, данные: {match}")
+    
+    # Обработка удаления еды
+    delete_food_pattern = r'\[DELETE_FOOD:\s*["\']([^"\']+)["\']\]'
+    delete_matches = re.findall(delete_food_pattern, bot_message_text)
+    logger.info(f"Найдено DELETE_FOOD тегов: {len(delete_matches)}, значения: {delete_matches}")
+    for food_name in delete_matches:
+        try:
+            logger.info(f"Попытка удаления еды: '{food_name}'")
+            deleted = await db_service.delete_diary_entry_by_name(food_name)
+            logger.info(f"Удаление еды '{food_name}': {'успешно' if deleted else 'не найдено'}")
+            if deleted:
+                diary_changed = True
+        except Exception as e:
+            logger.error(f"Ошибка удаления еды: {e}")
+    
+    # Убираем теги из текста ответа
+    clean_text = re.sub(add_food_pattern, '', bot_message_text)
+    clean_text = re.sub(r'\[DELETE_FOOD:\s*["\'][^"\']+["\']\]', '', clean_text)
+    return clean_text.strip(), diary_changed
 
 
 @router.post("/chat", response_model=APIChatResponseWithVideos)
@@ -143,6 +188,20 @@ async def handle_chat_request(
             raise HTTPException(status_code=503, detail=ai_provider_response.reply)
 
         bot_message_text = ai_provider_response.reply
+        
+        # Обрабатываем теги еды (добавление/удаление) и очищаем текст
+        bot_message_text, diary_changed = await process_food_tags(bot_message_text, db_service)
+        
+        # Если дневник изменился, получаем обновлённые данные
+        diary_updated = None
+        if diary_changed:
+            daily_summary = await db_service.get_daily_summary()
+            today_entries = await db_service.get_today_diary_entries()
+            diary_updated = {
+                "summary": daily_summary,
+                "entries": [entry.model_dump() for entry in today_entries]
+            }
+        
         found_videos: Optional[List[VideoSearchResult]] = None
 
         if ai_provider_response.trigger_video_search_query:
@@ -163,7 +222,10 @@ async def handle_chat_request(
             await db_service.create_or_update_session_metadata(session_meta)
 
         return APIChatResponseWithVideos(
-            reply=bot_message.text, session_id=current_session_id, videos=found_videos
+            reply=bot_message.text, 
+            session_id=current_session_id, 
+            videos=found_videos,
+            diary_updated=diary_updated
         )
 
     except HTTPException:
@@ -248,3 +310,14 @@ async def get_daily_summary_route(
     db_service: AbstractDBService = Depends(get_db_service_dependency)
 ):
     return await db_service.get_daily_summary()
+
+# Эндпоинт для удаления еды по названию
+@router.delete("/diary/entries/{food_name}")
+async def delete_food_entry(
+    food_name: str,
+    db_service: AbstractDBService = Depends(get_db_service_dependency)
+):
+    deleted = await db_service.delete_diary_entry_by_name(food_name)
+    if deleted:
+        return {"status": "success", "message": f"Запись '{food_name}' удалена"}
+    raise HTTPException(status_code=404, detail=f"Запись '{food_name}' не найдена за сегодня")

@@ -7,6 +7,7 @@ from motor.motor_asyncio import (
 )
 from datetime import datetime, timezone
 from pymongo import ReturnDocument
+import re
 
 from src.infrastructure.interfaces.IDataBase import AbstractDBService
 from src.core.models.sessions.SessionMetadataModel import SessionMetadata
@@ -176,3 +177,40 @@ class MongoDBService(AbstractDBService):
         except Exception as e:
             logger.error(f"Ошибка получения записей дневника: {e}", exc_info=True)
             return []
+
+    async def delete_diary_entry_by_name(self, name: str) -> bool:
+        """Удалить запись из дневника за сегодня по названию еды"""
+        try:
+            today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            # Убираем лишние пробелы и нормализуем
+            search_name = name.strip()
+            
+            # Экранируем специальные символы regex
+            escaped_name = re.escape(search_name)
+            
+            logger.info(f"Попытка удаления записи '{search_name}' за сегодня (с {today_start})")
+            
+            # Сначала проверим, что есть в базе за сегодня
+            cursor = self.diary_collection.find({"timestamp": {"$gte": today_start}})
+            all_today = await cursor.to_list(length=100)
+            logger.info(f"Все записи за сегодня: {[doc.get('name') for doc in all_today]}")
+            
+            # Ищем и удаляем запись с похожим названием за сегодня
+            result = await self.diary_collection.find_one_and_delete(
+                {
+                    "timestamp": {"$gte": today_start},
+                    "name": {"$regex": escaped_name, "$options": "i"}
+                },
+                sort=[("timestamp", -1)]
+            )
+            
+            if result:
+                logger.info(f"Запись '{result.get('name')}' успешно удалена из дневника")
+                return True
+            else:
+                logger.warning(f"Запись '{search_name}' не найдена в дневнике за сегодня")
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка удаления записи из дневника: {e}", exc_info=True)
+            return False
