@@ -7,7 +7,7 @@ from typing import Optional
 from src.infrastructure.dependencies.Config import AppConfig
 from src.infrastructure.interfaces.IDataBase import AbstractDBService
 from src.infrastructure.interfaces.IService import AbstractAIService
-from src.infrastructure.impl.mongodb_client.MongoDbImpl import MongoDBService
+from src.infrastructure.impl.mysql_client.MySQLImpl import MySQLService
 from src.infrastructure.impl.openai_client.OpenAIClient import OpenAIAITunnelService
 from src.infrastructure.impl.youtube.YoutubeService import YouTubeService
 
@@ -36,7 +36,7 @@ async def get_ai_service_dependency(
     )
 
 
-_db_service_instance: Optional[MongoDBService] = None
+_db_service_instance: Optional[MySQLService] = None
 
 
 async def get_db_service_dependency(
@@ -45,14 +45,15 @@ async def get_db_service_dependency(
     global _db_service_instance
     if _db_service_instance is None:
         try:
-            _db_service_instance = MongoDBService(
-                connection_string=config.mongodb_connection_string,
-                database_name=config.mongodb_database_name,
-                chat_history_collection_name=config.mongodb_chat_history_collection_name,
-                sessions_metadata_collection_name=config.mongodb_sessions_metadata_collection_name,
+            _db_service_instance = MySQLService(
+                host=config.mysql_host,
+                port=config.mysql_port,
+                user=config.mysql_user,
+                password=config.mysql_password,
+                database=config.mysql_database,
             )
-        except ConnectionError as e:
-            logger.error(f"КРИТИЧЕСКАЯ ОШИБКА MongoDB: {e}")
+        except Exception as e:
+            logger.error(f"КРИТИЧЕСКАЯ ОШИБКА MySQL: {e}")
             raise
     return _db_service_instance
 

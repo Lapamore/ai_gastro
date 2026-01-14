@@ -17,17 +17,11 @@ class AppConfig:
             "SYSTEM_PROMPT_FILE", "./src/core/prompts/system_prompt_gastronomy.txt"
         )
 
-        self.mongodb_connection_string: str = os.getenv(
-            "MONGODB_CONNECTION_STRING", "mongodb://localhost:27017/"
-        )
-        self.mongodb_database_name: str = os.getenv(
-            "MONGODB_DATABASE_NAME", "gastronomic_chat_ai"
-        )
-        self.mongodb_chat_history_collection_name: str = os.getenv(
-            "MONGODB_CHAT_HISTORY_COLLECTION_NAME", "chat_histories"
-        )
-        self.mongodb_sessions_metadata_collection_name: str = os.getenv(
-            "MONGODB_SESSIONS_METADATA_COLLECTION_NAME", "sessions_metadata"
-        )
+        # MySQL настройки
+        self.mysql_host: str = os.getenv("MYSQL_HOST", "localhost")
+        self.mysql_port: int = int(os.getenv("MYSQL_PORT", "3306"))
+        self.mysql_user: str = os.getenv("MYSQL_USER", "root")
+        self.mysql_password: str = os.getenv("MYSQL_PASSWORD", "")
+        self.mysql_database: str = os.getenv("MYSQL_DATABASE", "gastro_ai")
 
         self.youtube_api_key: str = os.getenv("YOUTUBE_API_KEY", "")
