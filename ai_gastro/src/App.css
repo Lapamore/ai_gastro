@@ -26,56 +26,48 @@
     z-index: 10;
 }
 
-/* Кнопка настроек в углу */
-.settings-toggle-button.top-right-button {
+/* Кнопки в правом верхнем углу */
+.top-right-button {
     position: fixed;
     top: 25px;
-    right: 25px;
     background: var(--container-bg);
     border: none;
     color: var(--primary-color);
-    width: 50px; 
+    width: 50px;
     height: 50px;
     border-radius: 50%;
-    font-size: 1.8em;
+    font-size: 1.6rem;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px var(--shadow-medium);
     z-index: 1001;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.settings-toggle-button.top-right-button:hover {
+.top-right-button:hover {
     background: var(--primary-color);
     color: white;
+    transform: scale(1.1);
+}
+
+/* Кнопка настроек */
+.settings-toggle-button {
+    right: 25px;
+}
+
+.settings-toggle-button:hover {
     transform: scale(1.1) rotate(-90deg);
 }
 
 /* Кнопка дневника */
 .diary-toggle-button {
-    right: 60px !important;
+    right: 85px;
 }
 
-.top-right-button {
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    z-index: 100;
-    background: rgba(30, 30, 50, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    width: 44px;
-    height: 44px;
-    font-size: 1.3rem;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
-}
-
-.top-right-button:hover {
-    transform: scale(1.1);
-    background: rgba(50, 50, 80, 0.95);
+.diary-toggle-button:hover {
+    background: var(--accent-color);
 }
 
 /* Мобильная адаптация */
@@ -87,10 +79,18 @@
         width: 100vw;
     }
     
-    .settings-toggle-button.top-right-button {
+    .top-right-button {
         top: 15px;
+        width: 42px;
+        height: 42px;
+        font-size: 1.3rem;
+    }
+    
+    .settings-toggle-button {
         right: 15px;
-        width: 45px;
-        height: 45px;
+    }
+    
+    .diary-toggle-button {
+        right: 65px;
     }
 }

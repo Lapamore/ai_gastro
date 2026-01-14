@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(38, 70, 83, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -13,16 +13,16 @@
 }
 
 .diary-modal-content {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    border-radius: 20px;
+    background: var(--container-bg);
+    border-radius: var(--border-radius-md);
     width: 90%;
     max-width: 600px;
     max-height: 85vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 60px var(--shadow-medium);
+    border: 1px solid var(--border-color);
 }
 
 .diary-modal-header {
@@ -30,60 +30,64 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
 }
 
 .diary-modal-header h2 {
     margin: 0;
     color: #fff;
     font-size: 1.4rem;
+    font-family: var(--font-display);
 }
 
 .diary-modal-close {
-    background: none;
+    background: rgba(255, 255, 255, 0.2);
     border: none;
-    color: #888;
-    font-size: 28px;
+    color: #fff;
+    font-size: 24px;
     cursor: pointer;
-    padding: 0;
+    padding: 4px 10px;
+    border-radius: 50%;
     line-height: 1;
-    transition: color 0.2s;
+    transition: all 0.2s;
 }
 
 .diary-modal-close:hover {
-    color: #ff6b6b;
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
 }
 
 /* Прогресс */
 .diary-progress-section {
     padding: 20px 24px;
-    background: rgba(255, 255, 255, 0.03);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bot-message-bg);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .diary-progress-header {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
-    color: #aaa;
+    color: var(--text-color-light);
     font-size: 0.9rem;
 }
 
 .diary-progress-numbers {
-    color: #4ecdc4;
+    color: var(--accent-color);
     font-weight: 600;
 }
 
 .diary-progress-bar {
     height: 12px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--border-color);
     border-radius: 6px;
     overflow: hidden;
 }
 
 .diary-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #4ecdc4, #44a08d);
+    background: linear-gradient(90deg, var(--accent-color), #44a08d);
     border-radius: 6px;
     transition: width 0.5s ease;
 }
@@ -102,7 +106,7 @@
 }
 
 .macro-label {
-    color: #888;
+    color: var(--text-color-light);
     font-size: 0.8rem;
 }
 
@@ -111,15 +115,16 @@
     font-size: 1.1rem;
 }
 
-.macro-value.protein { color: #ff6b6b; }
-.macro-value.fat { color: #ffd93d; }
-.macro-value.carbs { color: #6bcb77; }
+.macro-value.protein { color: var(--primary-color); }
+.macro-value.fat { color: var(--secondary-color); }
+.macro-value.carbs { color: var(--accent-color); }
 
 /* Записи */
 .diary-entries-section {
     flex: 1;
     overflow-y: auto;
     padding: 20px 24px;
+    background: var(--container-bg);
 }
 
 .diary-entries-header {
@@ -131,45 +136,59 @@
 
 .diary-entries-header h3 {
     margin: 0;
-    color: #fff;
+    color: var(--text-color);
     font-size: 1.1rem;
+    font-family: var(--font-display);
 }
 
 .diary-add-button {
-    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+    background: linear-gradient(135deg, var(--accent-color), #44a08d);
     border: none;
     color: #fff;
     padding: 8px 16px;
     border-radius: 20px;
     cursor: pointer;
     font-size: 0.9rem;
+    font-family: var(--font-main);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .diary-add-button:hover {
     transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+    box-shadow: 0 4px 15px var(--shadow-light);
 }
 
 /* Форма добавления */
 .diary-add-form {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bot-message-bg);
     padding: 16px;
-    border-radius: 12px;
+    border-radius: var(--border-radius-sm);
     margin-bottom: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    border: 1px solid var(--border-color);
 }
 
 .diary-add-form input[type="text"] {
     width: 100%;
     padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.2);
-    color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--container-bg);
+    color: var(--text-color);
     font-size: 1rem;
+    font-family: var(--font-main);
+}
+
+.diary-add-form input[type="text"]::placeholder {
+    color: var(--text-color-light);
+}
+
+.diary-add-form input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--shadow-light);
 }
 
 .diary-form-row {
@@ -185,7 +204,7 @@
 
 .diary-form-field label {
     display: block;
-    color: #888;
+    color: var(--text-color-light);
     font-size: 0.75rem;
     margin-bottom: 4px;
 }
@@ -193,37 +212,53 @@
 .diary-form-field input {
     width: 100%;
     padding: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    background: rgba(0, 0, 0, 0.2);
-    color: #fff;
+    background: var(--container-bg);
+    color: var(--text-color);
     font-size: 0.9rem;
+    font-family: var(--font-main);
+}
+
+.diary-form-field input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
 }
 
 .diary-add-form select {
     flex: 1;
     padding: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.3);
-    color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--container-bg);
+    color: var(--text-color);
     font-size: 0.9rem;
+    font-family: var(--font-main);
+    cursor: pointer;
+}
+
+.diary-add-form select:focus {
+    outline: none;
+    border-color: var(--accent-color);
 }
 
 .diary-submit-button {
     flex: 2;
     padding: 10px 20px;
-    background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+    background: linear-gradient(135deg, var(--primary-color), #c41e33);
     border: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius-sm);
     color: #fff;
     font-weight: 600;
+    font-family: var(--font-main);
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .diary-submit-button:hover {
     transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(215, 38, 61, 0.3);
 }
 
 /* Список записей */
@@ -234,15 +269,17 @@
 }
 
 .diary-entry-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
+    background: var(--user-message-bg);
+    border-radius: var(--border-radius-sm);
     padding: 14px 16px;
     position: relative;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    border: 1px solid transparent;
 }
 
 .diary-entry-card:hover {
-    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--secondary-color);
+    box-shadow: 0 4px 12px var(--shadow-light);
 }
 
 .diary-entry-main {
@@ -258,25 +295,25 @@
 
 .diary-entry-name {
     flex: 1;
-    color: #fff;
+    color: var(--text-color);
     font-weight: 500;
 }
 
 .diary-entry-calories {
-    color: #4ecdc4;
+    color: var(--accent-color);
     font-weight: 600;
 }
 
 .diary-entry-details {
     display: flex;
     gap: 16px;
-    color: #888;
+    color: var(--text-color-light);
     font-size: 0.85rem;
 }
 
 .diary-entry-time {
     margin-left: auto;
-    color: #666;
+    color: var(--text-color-light);
 }
 
 .diary-entry-delete {
@@ -287,22 +324,49 @@
     border: none;
     cursor: pointer;
     opacity: 0.5;
-    transition: opacity 0.2s;
+    transition: all 0.2s;
     font-size: 1rem;
 }
 
 .diary-entry-delete:hover {
     opacity: 1;
+    transform: scale(1.2);
 }
 
 .diary-loading,
 .diary-empty {
     text-align: center;
     padding: 40px 20px;
-    color: #888;
+    color: var(--text-color-light);
 }
 
 .diary-empty {
     font-size: 0.95rem;
     line-height: 1.6;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .diary-modal-content {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: var(--border-radius-sm);
+    }
+    
+    .diary-modal-header {
+        padding: 16px 20px;
+    }
+    
+    .diary-progress-section,
+    .diary-entries-section {
+        padding: 16px 20px;
+    }
+    
+    .diary-form-row {
+        flex-direction: column;
+    }
+    
+    .diary-form-field {
+        min-width: 100%;
+    }
 }
