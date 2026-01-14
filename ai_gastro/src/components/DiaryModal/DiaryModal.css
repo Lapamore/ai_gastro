@@ -224,7 +224,7 @@
     outline: none;
     border-color: var(--accent-color);
 }
-}
+
 
 .diary-add-form select {
     flex: 1;
