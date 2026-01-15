@@ -81,6 +81,50 @@ def build_diary_context(entries: List[DiaryEntry], daily_summary: dict) -> str:
     return "\n".join(lines)
 
 
+def build_user_profile_context(prefs) -> str:
+    """Формирует контекст профиля пользователя для ИИ"""
+    if not prefs:
+        return ""
+    
+    # Если пользователь не заполнил данные тела, не добавляем контекст
+    if not (prefs.weight and prefs.height and prefs.age and prefs.gender):
+        return ""
+    
+    goal_labels = {
+        'lose': 'похудеть',
+        'maintain': 'поддерживать вес',
+        'gain': 'набрать мышечную массу'
+    }
+    
+    activity_labels = {
+        'sedentary': 'сидячий образ жизни',
+        'light': 'лёгкая активность',
+        'moderate': 'умеренная активность',
+        'active': 'высокая активность',
+        'very_active': 'очень высокая активность'
+    }
+    
+    gender_label = 'мужчина' if prefs.gender == 'male' else 'женщина'
+    goal_label = goal_labels.get(prefs.goal, 'не указана')
+    activity_label = activity_labels.get(prefs.activity_level, 'не указан')
+    
+    profile_text = f"""
+╔══════════════════════════════════════════════════════════════╗
+║  👤 ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ                                      ║
+╠══════════════════════════════════════════════════════════════╣
+║  Пол: {gender_label}, Возраст: {prefs.age} лет
+║  Вес: {prefs.weight} кг, Рост: {prefs.height} см
+║  Активность: {activity_label}
+║  🎯 Цель: {goal_label}
+╠══════════════════════════════════════════════════════════════╣
+║  📊 Рассчитанная норма:
+║  • Калории: {prefs.target_calories} ккал/день
+║  • Белки: {prefs.target_protein}г | Жиры: {prefs.target_fat}г | Углеводы: {prefs.target_carbs}г
+╚══════════════════════════════════════════════════════════════╝
+"""
+    return profile_text
+
+
 class APIChatResponseWithVideos(APIChatResponse):
     videos: Optional[List[VideoSearchResult]] = None
     diary_updated: Optional[dict] = None  # Новое поле для обновлённых данных дневника
@@ -165,10 +209,14 @@ async def handle_chat_request(
     daily_summary = await db_service.get_daily_summary(user_id)
     diary_context = build_diary_context(today_entries, daily_summary)
 
+    # Получаем профиль пользователя (вес, рост, цель и т.д.)
+    user_prefs = await db_service.get_user_preferences(user_id)
+    profile_context = build_user_profile_context(user_prefs)
+
     # Добавляем текущую дату в контекст
     current_date_context = f"Сегодняшняя дата: {datetime.now(timezone.utc).strftime('%d.%m.%Y')}.\n"
 
-    preferences_prompt_text = current_date_context + diary_context
+    preferences_prompt_text = current_date_context + profile_context + diary_context
     if chat_request.preferences:
         prefs = chat_request.preferences
         pref_parts = []

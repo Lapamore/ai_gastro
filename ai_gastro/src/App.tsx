@@ -271,6 +271,8 @@ function App() {
                 dailyProgress={dailyProgress}
                 onProgressUpdate={setDailyProgress}
                 api={api}
+                preferences={userPreferences}
+                onPreferencesChange={handlePreferencesChange}
             />
         </div>
     );

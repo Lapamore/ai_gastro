@@ -75,6 +75,15 @@ class MySQLService(AbstractDBService):
                         preferred_difficulty VARCHAR(20),
                         available_time INT,
                         target_calories INT DEFAULT 2000,
+                        weight FLOAT,
+                        height FLOAT,
+                        age INT,
+                        gender VARCHAR(10),
+                        activity_level VARCHAR(20),
+                        goal VARCHAR(20),
+                        target_protein FLOAT,
+                        target_fat FLOAT,
+                        target_carbs FLOAT,
                         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                         INDEX idx_user_id (user_id)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -181,6 +190,15 @@ class MySQLService(AbstractDBService):
             
             json_data = preferences.lists_to_json()
             
+            # Если есть данные тела, пересчитываем калории и БЖУ
+            if preferences.weight and preferences.height and preferences.age and preferences.gender:
+                calculated = preferences.calculate_tdee_and_macros()
+                if calculated:
+                    preferences.target_calories = calculated['target_calories']
+                    preferences.target_protein = calculated['target_protein']
+                    preferences.target_fat = calculated['target_fat']
+                    preferences.target_carbs = calculated['target_carbs']
+            
             async with self.pool.acquire() as conn:
                 async with conn.cursor() as cur:
                     await cur.execute(
@@ -200,7 +218,16 @@ class MySQLService(AbstractDBService):
                                 disliked_ingredients = %s,
                                 preferred_difficulty = %s,
                                 available_time = %s,
-                                target_calories = %s
+                                target_calories = %s,
+                                weight = %s,
+                                height = %s,
+                                age = %s,
+                                gender = %s,
+                                activity_level = %s,
+                                goal = %s,
+                                target_protein = %s,
+                                target_fat = %s,
+                                target_carbs = %s
                             WHERE user_id = %s
                         """, (
                             json_data['allergies'],
@@ -212,6 +239,15 @@ class MySQLService(AbstractDBService):
                             preferences.preferred_difficulty,
                             preferences.available_time,
                             preferences.target_calories,
+                            preferences.weight,
+                            preferences.height,
+                            preferences.age,
+                            preferences.gender,
+                            preferences.activity_level,
+                            preferences.goal,
+                            preferences.target_protein,
+                            preferences.target_fat,
+                            preferences.target_carbs,
                             preferences.user_id
                         ))
                     else:
@@ -220,8 +256,10 @@ class MySQLService(AbstractDBService):
                                 user_id, allergies, dietary_restrictions,
                                 favorite_cuisines, disliked_cuisines,
                                 favorite_ingredients, disliked_ingredients,
-                                preferred_difficulty, available_time, target_calories
-                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                preferred_difficulty, available_time, target_calories,
+                                weight, height, age, gender, activity_level, goal,
+                                target_protein, target_fat, target_carbs
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """, (
                             preferences.user_id,
                             json_data['allergies'],
@@ -232,7 +270,16 @@ class MySQLService(AbstractDBService):
                             json_data['disliked_ingredients'],
                             preferences.preferred_difficulty,
                             preferences.available_time,
-                            preferences.target_calories
+                            preferences.target_calories,
+                            preferences.weight,
+                            preferences.height,
+                            preferences.age,
+                            preferences.gender,
+                            preferences.activity_level,
+                            preferences.goal,
+                            preferences.target_protein,
+                            preferences.target_fat,
+                            preferences.target_carbs
                         ))
                     
                     logger.info(f"Предпочтения пользователя {preferences.user_id} сохранены")

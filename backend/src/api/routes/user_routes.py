@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel
 from typing import List
 import logging
@@ -25,6 +25,13 @@ class PreferencesInput(BaseModel):
     preferredDifficulty: Optional[str] = None
     availableTime: Optional[int] = None
     targetCalories: int = 2000
+    # Новые поля - физические параметры
+    weight: Optional[float] = None
+    height: Optional[float] = None
+    age: Optional[int] = None
+    gender: Optional[Literal['male', 'female']] = None
+    activityLevel: Optional[Literal['sedentary', 'light', 'moderate', 'active', 'very_active']] = None
+    goal: Optional[Literal['lose', 'maintain', 'gain']] = None
 
 
 class PreferencesResponse(BaseModel):
@@ -38,6 +45,16 @@ class PreferencesResponse(BaseModel):
     preferredDifficulty: Optional[str] = None
     availableTime: Optional[int] = None
     targetCalories: int = 2000
+    # Новые поля
+    weight: Optional[float] = None
+    height: Optional[float] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    activityLevel: Optional[str] = None
+    goal: Optional[str] = None
+    targetProtein: Optional[float] = None
+    targetFat: Optional[float] = None
+    targetCarbs: Optional[float] = None
 
 
 def get_user_id(x_user_id: str = Header(..., alias="X-User-ID")) -> str:
@@ -75,7 +92,16 @@ async def get_preferences(
         dislikedIngredients=prefs.disliked_ingredients,
         preferredDifficulty=prefs.preferred_difficulty,
         availableTime=prefs.available_time,
-        targetCalories=prefs.target_calories
+        targetCalories=prefs.target_calories,
+        weight=prefs.weight,
+        height=prefs.height,
+        age=prefs.age,
+        gender=prefs.gender,
+        activityLevel=prefs.activity_level,
+        goal=prefs.goal,
+        targetProtein=prefs.target_protein,
+        targetFat=prefs.target_fat,
+        targetCarbs=prefs.target_carbs
     )
 
 
@@ -98,7 +124,13 @@ async def save_preferences(
         disliked_ingredients=prefs_input.dislikedIngredients,
         preferred_difficulty=prefs_input.preferredDifficulty,
         available_time=prefs_input.availableTime,
-        target_calories=prefs_input.targetCalories
+        target_calories=prefs_input.targetCalories,
+        weight=prefs_input.weight,
+        height=prefs_input.height,
+        age=prefs_input.age,
+        gender=prefs_input.gender,
+        activity_level=prefs_input.activityLevel,
+        goal=prefs_input.goal
     )
     
     saved = await db_service.save_user_preferences(prefs)
@@ -112,5 +144,14 @@ async def save_preferences(
         dislikedIngredients=saved.disliked_ingredients,
         preferredDifficulty=saved.preferred_difficulty,
         availableTime=saved.available_time,
-        targetCalories=saved.target_calories
+        targetCalories=saved.target_calories,
+        weight=saved.weight,
+        height=saved.height,
+        age=saved.age,
+        gender=saved.gender,
+        activityLevel=saved.activity_level,
+        goal=saved.goal,
+        targetProtein=saved.target_protein,
+        targetFat=saved.target_fat,
+        targetCarbs=saved.target_carbs
     )

@@ -27,14 +27,32 @@ export interface UserPreferences {
     preferredDifficulty: 'легко' | 'средне' | 'сложно' | null;
     availableTime: '15 мин' | '30 мин' | '1 час' | '>1 часа' | null;
     
-    // Новое: Физические параметры и цели
-    targetCalories: number; // ВОТ ЭТО ПОЛЕ МЫ ДОБАВИЛИ
+    // Физические параметры и цели
+    targetCalories: number;
     weight?: number;
     height?: number;
     age?: number;
     gender?: 'male' | 'female';
-    activityLevel?: 'low' | 'medium' | 'high';
+    activityLevel?: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
     goal?: 'lose' | 'maintain' | 'gain';
+    
+    // Расчётные значения БЖУ (приходят с бэкенда после расчёта)
+    targetProtein?: number;
+    targetFat?: number;
+    targetCarbs?: number;
+}
+
+// --- Статистика дня (Прогресс в сайдбаре) ---
+export interface DailyProgress {
+    totalCalories: number;
+    targetCalories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+    // Добавляем целевые значения БЖУ
+    targetProtein?: number;
+    targetFat?: number;
+    targetCarbs?: number;
 }
 
 // --- Данные дневника калорий ---
@@ -57,15 +75,6 @@ export interface DiaryEntryInput {
     fat: number;
     carbs: number;
     mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
-}
-
-// --- Статистика дня (Прогресс в сайдбаре) ---
-export interface DailyProgress {
-    totalCalories: number;
-    targetCalories: number;
-    protein: number;
-    fat: number;
-    carbs: number;
 }
 
 // --- Сессии (Диалоги в сайдбаре) ---

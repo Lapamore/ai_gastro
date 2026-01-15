@@ -345,6 +345,247 @@
     line-height: 1.6;
 }
 
+/* Расширенная модалка */
+.diary-modal-wide {
+    max-width: 700px;
+}
+
+/* Вкладки */
+.diary-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bot-message-bg);
+}
+
+.diary-tab {
+    flex: 1;
+    padding: 14px 20px;
+    background: none;
+    border: none;
+    color: var(--text-color-light);
+    font-size: 1rem;
+    font-family: var(--font-main);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.diary-tab:hover {
+    color: var(--text-color);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.diary-tab.active {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.diary-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20%;
+    right: 20%;
+    height: 3px;
+    background: var(--accent-color);
+    border-radius: 3px 3px 0 0;
+}
+
+/* Подсказка заполнить профиль */
+.diary-profile-hint {
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(230, 125, 34, 0.15);
+    border: 1px solid var(--secondary-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--secondary-color);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Целевые значения БЖУ */
+.macro-target {
+    color: var(--text-color-light);
+    font-weight: 400;
+    font-size: 0.85rem;
+}
+
+/* Секция профиля */
+.diary-profile-section {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.diary-profile-section h3 {
+    margin: 0 0 8px;
+    color: var(--text-color);
+    font-family: var(--font-display);
+}
+
+.diary-profile-desc {
+    margin: 0 0 20px;
+    color: var(--text-color-light);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.diary-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.profile-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.profile-field {
+    flex: 1;
+    min-width: 120px;
+}
+
+.profile-field.wide {
+    flex: 2;
+    min-width: 200px;
+}
+
+.profile-field label {
+    display: block;
+    color: var(--text-color-light);
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.profile-field input,
+.profile-field select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--container-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    font-family: var(--font-main);
+    transition: all 0.2s;
+}
+
+.profile-field input::placeholder {
+    color: var(--text-color-light);
+}
+
+.profile-field input:focus,
+.profile-field select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--shadow-light);
+}
+
+/* Кнопки целей */
+.goal-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.goal-btn {
+    flex: 1;
+    min-width: 140px;
+    padding: 14px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--container-bg);
+    color: var(--text-color);
+    font-size: 0.95rem;
+    font-family: var(--font-main);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.goal-btn:hover {
+    border-color: var(--secondary-color);
+    background: rgba(230, 125, 34, 0.1);
+}
+
+.goal-btn.active {
+    border-color: var(--accent-color);
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* Рассчитанные значения */
+.profile-calculated {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(38, 166, 154, 0.1));
+    border: 1px solid var(--accent-color);
+    border-radius: var(--border-radius-sm);
+    padding: 20px;
+}
+
+.profile-calculated h4 {
+    margin: 0 0 16px;
+    color: var(--accent-color);
+    font-family: var(--font-display);
+    font-size: 1rem;
+}
+
+.calculated-values {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.calc-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.calc-label {
+    color: var(--text-color-light);
+    font-size: 0.8rem;
+}
+
+.calc-value {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--text-color);
+}
+
+.calc-value.protein { color: var(--primary-color); }
+.calc-value.fat { color: var(--secondary-color); }
+.calc-value.carbs { color: var(--accent-color); }
+
+/* Кнопка сохранения профиля */
+.profile-save-button {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent-color), #38a169);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: var(--font-main);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.profile-save-button:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+}
+
+.profile-save-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 /* Мобильная адаптация */
 @media (max-width: 768px) {
     .diary-modal-content {
@@ -358,15 +599,26 @@
     }
     
     .diary-progress-section,
-    .diary-entries-section {
+    .diary-entries-section,
+    .diary-profile-section {
         padding: 16px 20px;
     }
     
-    .diary-form-row {
+    .diary-form-row,
+    .profile-row {
         flex-direction: column;
     }
     
-    .diary-form-field {
+    .diary-form-field,
+    .profile-field {
+        min-width: 100%;
+    }
+    
+    .goal-buttons {
+        flex-direction: column;
+    }
+    
+    .goal-btn {
         min-width: 100%;
     }
 }
