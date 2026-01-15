@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import type { AxiosInstance } from 'axios';
 import type { DiaryEntry, DiaryEntryInput, DailyProgress } from '../../types';
 import './DiaryModal.css';
-
-const API_BASE_URL = 'http://localhost:8000/api';
 
 interface DiaryModalProps {
     isOpen: boolean;
     onClose: () => void;
     dailyProgress: DailyProgress;
     onProgressUpdate: (progress: DailyProgress) => void;
+    api: AxiosInstance;
 }
 
 const mealTypeLabels: Record<string, string> = {
@@ -19,7 +18,7 @@ const mealTypeLabels: Record<string, string> = {
     snack: '🍿 Перекус'
 };
 
-function DiaryModal({ isOpen, onClose, dailyProgress, onProgressUpdate }: DiaryModalProps) {
+function DiaryModal({ isOpen, onClose, dailyProgress, onProgressUpdate, api }: DiaryModalProps) {
     const [entries, setEntries] = useState<DiaryEntry[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [showAddForm, setShowAddForm] = useState(false);
@@ -37,7 +36,7 @@ function DiaryModal({ isOpen, onClose, dailyProgress, onProgressUpdate }: DiaryM
     const fetchEntries = async () => {
         setIsLoading(true);
         try {
-            const res = await axios.get(`${API_BASE_URL}/diary/entries`);
+            const res = await api.get('/diary/entries');
             setEntries(res.data.map((e: any) => ({
                 ...e,
                 timestamp: new Date(e.timestamp)
@@ -51,7 +50,7 @@ function DiaryModal({ isOpen, onClose, dailyProgress, onProgressUpdate }: DiaryM
 
     const fetchProgress = async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/diary/daily-summary`);
+            const res = await api.get('/diary/daily-summary');
             onProgressUpdate({
                 ...res.data,
                 targetCalories: dailyProgress.targetCalories
@@ -72,7 +71,7 @@ function DiaryModal({ isOpen, onClose, dailyProgress, onProgressUpdate }: DiaryM
         if (!newEntry.name.trim()) return;
 
         try {
-            await axios.post(`${API_BASE_URL}/diary/add`, newEntry);
+            await api.post('/diary/add', newEntry);
             await fetchEntries();
             await fetchProgress();
             setNewEntry({
@@ -93,7 +92,7 @@ function DiaryModal({ isOpen, onClose, dailyProgress, onProgressUpdate }: DiaryM
         if (!window.confirm(`Удалить "${name}" из дневника?`)) return;
         
         try {
-            await axios.delete(`${API_BASE_URL}/diary/delete/${encodeURIComponent(name)}`);
+            await api.delete(`/diary/delete/${encodeURIComponent(name)}`);
             await fetchEntries();
             await fetchProgress();
         } catch (error) {

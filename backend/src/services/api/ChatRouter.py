@@ -2,7 +2,7 @@ import logging
 import uuid
 import re
 import json
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Header
 from typing import List, Optional
 from datetime import datetime, timezone
 
@@ -34,6 +34,11 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["Chat & Sessions"])
 
 
+def get_user_id(x_user_id: str = Header(..., alias="X-User-ID")) -> str:
+    """Получаем user_id из заголовка запроса"""
+    return x_user_id
+
+
 def generate_session_title(prompt: str) -> str:
     words = prompt.split()
     return " ".join(words[:5]) + ("..." if len(words) > 5 else "")
@@ -44,17 +49,34 @@ def build_diary_context(entries: List[DiaryEntry], daily_summary: dict) -> str:
     today_str = datetime.now(timezone.utc).strftime("%d.%m.%Y")
     
     if not entries:
-        return f"\n--- АКТУАЛЬНОЕ СОСТОЯНИЕ ДНЕВНИКА ПИТАНИЯ ({today_str}) ---\n⚠️ ВАЖНО: Сейчас в дневнике НЕТ ни одной записи о еде. Дневник пуст.\n--- КОНЕЦ АКТУАЛЬНЫХ ДАННЫХ ---\n"
+        return f"""
+╔══════════════════════════════════════════════════════════════╗
+║  🔴 АКТУАЛЬНЫЕ ДАННЫЕ ДНЕВНИКА ПИТАНИЯ ({today_str})  🔴      ║
+╠══════════════════════════════════════════════════════════════╣
+║  ❌ ДНЕВНИК ПУСТ - нет ни одной записи о еде!                ║
+║                                                              ║
+║  ⚠️ КРИТИЧЕСКИ ВАЖНО: Если ранее в диалоге упоминалась еда,  ║
+║  но её нет в этом списке - значит пользователь её УДАЛИЛ!   ║
+║  Игнорируй историю чата и используй ТОЛЬКО эти данные!       ║
+║  ИТОГО: 0 ккал (Б:0г, Ж:0г, У:0г)                            ║
+╚══════════════════════════════════════════════════════════════╝
+"""
     
-    lines = [f"\n--- АКТУАЛЬНОЕ СОСТОЯНИЕ ДНЕВНИКА ПИТАНИЯ ({today_str}) ---"]
-    lines.append(f"⚠️ ВАЖНО: Это ТЕКУЩИЙ список всей еды в дневнике. Если ранее упоминалось что-то, чего здесь нет - значит оно было удалено.")
+    lines = [f"""
+╔══════════════════════════════════════════════════════════════╗
+║  🟢 АКТУАЛЬНЫЕ ДАННЫЕ ДНЕВНИКА ПИТАНИЯ ({today_str})  🟢      ║
+╠══════════════════════════════════════════════════════════════╣
+║  ⚠️ КРИТИЧЕСКИ ВАЖНО: Используй ТОЛЬКО этот список!          ║
+║  Если еда была в истории чата, но её нет здесь - УДАЛЕНА!    ║
+╠══════════════════════════════════════════════════════════════╣"""]
+    
     for entry in entries:
         time_str = entry.timestamp.strftime("%H:%M")
-        lines.append(f"• {time_str} - {entry.name}: {entry.calories} ккал (Б:{entry.protein}г, Ж:{entry.fat}г, У:{entry.carbs}г)")
+        lines.append(f"║  • {time_str} - {entry.name}: {entry.calories} ккал (Б:{entry.protein}г, Ж:{entry.fat}г, У:{entry.carbs}г)")
     
-    lines.append(f"\nИТОГО ЗА СЕГОДНЯ: {daily_summary['totalCalories']} ккал "
-                 f"(Б:{daily_summary['protein']}г, Ж:{daily_summary['fat']}г, У:{daily_summary['carbs']}г)")
-    lines.append("--- КОНЕЦ АКТУАЛЬНЫХ ДАННЫХ ---\n")
+    lines.append(f"""╠══════════════════════════════════════════════════════════════╣
+║  ИТОГО: {daily_summary['totalCalories']} ккал (Б:{daily_summary['protein']}г, Ж:{daily_summary['fat']}г, У:{daily_summary['carbs']}г)
+╚══════════════════════════════════════════════════════════════╝""")
     
     return "\n".join(lines)
 
@@ -64,7 +86,7 @@ class APIChatResponseWithVideos(APIChatResponse):
     diary_updated: Optional[dict] = None  # Новое поле для обновлённых данных дневника
 
 
-async def process_food_tags(bot_message_text: str, db_service: AbstractDBService) -> tuple[str, bool]:
+async def process_food_tags(bot_message_text: str, user_id: str, db_service: AbstractDBService) -> tuple[str, bool]:
     """Обрабатывает теги ADD_FOOD и DELETE_FOOD, возвращает очищенный текст и флаг изменения дневника"""
     
     diary_changed = False
@@ -79,7 +101,7 @@ async def process_food_tags(bot_message_text: str, db_service: AbstractDBService
         try:
             food_data = json.loads(match)
             entry = DiaryEntry(**food_data)
-            await db_service.add_diary_entry(entry)
+            await db_service.add_diary_entry(user_id, entry)
             logger.info(f"Автоматически добавлена еда: {entry.name}")
             diary_changed = True
         except Exception as e:
@@ -92,7 +114,7 @@ async def process_food_tags(bot_message_text: str, db_service: AbstractDBService
     for food_name in delete_matches:
         try:
             logger.info(f"Попытка удаления еды: '{food_name}'")
-            deleted = await db_service.delete_diary_entry_by_name(food_name)
+            deleted = await db_service.delete_diary_entry_by_name(user_id, food_name)
             logger.info(f"Удаление еды '{food_name}': {'успешно' if deleted else 'не найдено'}")
             if deleted:
                 diary_changed = True
@@ -108,6 +130,7 @@ async def process_food_tags(bot_message_text: str, db_service: AbstractDBService
 @router.post("/chat", response_model=APIChatResponseWithVideos)
 async def handle_chat_request(
     chat_request: UserChatRequest,
+    user_id: str = Depends(get_user_id),
     ai_service: AbstractAIService = Depends(get_ai_service_dependency),
     db_service: AbstractDBService = Depends(get_db_service_dependency),
     youtube_service: YouTubeService = Depends(get_youtube_service),
@@ -124,13 +147,13 @@ async def handle_chat_request(
         if not session_meta:
             title = generate_session_title(chat_request.prompt)
             new_meta = SessionMetadata(id=current_session_id, title=title)
-            session_meta = await db_service.create_or_update_session_metadata(new_meta)
+            session_meta = await db_service.create_or_update_session_metadata(new_meta, user_id)
     else:
         current_session_id = str(uuid.uuid4())
         is_new_session = True
         title = generate_session_title(chat_request.prompt)
         session_meta = SessionMetadata(id=current_session_id, title=title)
-        session_meta = await db_service.create_or_update_session_metadata(session_meta)
+        session_meta = await db_service.create_or_update_session_metadata(session_meta, user_id)
 
     conversation_history_from_db: List[ChatMessage] = await db_service.get_history(
         current_session_id, limit=10
@@ -138,8 +161,8 @@ async def handle_chat_request(
     user_message = ChatMessage(sender="user", text=chat_request.prompt)
 
     # Получаем данные дневника за СЕГОДНЯ
-    today_entries = await db_service.get_today_diary_entries()
-    daily_summary = await db_service.get_daily_summary()
+    today_entries = await db_service.get_today_diary_entries(user_id)
+    daily_summary = await db_service.get_daily_summary(user_id)
     diary_context = build_diary_context(today_entries, daily_summary)
 
     # Добавляем текущую дату в контекст
@@ -190,13 +213,13 @@ async def handle_chat_request(
         bot_message_text = ai_provider_response.reply
         
         # Обрабатываем теги еды (добавление/удаление) и очищаем текст
-        bot_message_text, diary_changed = await process_food_tags(bot_message_text, db_service)
+        bot_message_text, diary_changed = await process_food_tags(bot_message_text, user_id, db_service)
         
         # Если дневник изменился, получаем обновлённые данные
         diary_updated = None
         if diary_changed:
-            daily_summary = await db_service.get_daily_summary()
-            today_entries = await db_service.get_today_diary_entries()
+            daily_summary = await db_service.get_daily_summary(user_id)
+            today_entries = await db_service.get_today_diary_entries(user_id)
             diary_updated = {
                 "summary": daily_summary,
                 "entries": [entry.model_dump() for entry in today_entries]
@@ -219,7 +242,7 @@ async def handle_chat_request(
 
         if session_meta:
             session_meta.updated_at = datetime.now(timezone.utc)
-            await db_service.create_or_update_session_metadata(session_meta)
+            await db_service.create_or_update_session_metadata(session_meta, user_id)
 
         return APIChatResponseWithVideos(
             reply=bot_message.text, 
@@ -241,11 +264,12 @@ async def handle_chat_request(
 
 @router.get("/sessions", response_model=List[SessionMetadataListResponse])
 async def list_user_sessions(
+    user_id: str = Depends(get_user_id),
     db_service: AbstractDBService = Depends(get_db_service_dependency),
     limit: int = 50,
     skip: int = 0,
 ):
-    sessions_metadata = await db_service.list_sessions_metadata(limit=limit, skip=skip)
+    sessions_metadata = await db_service.list_sessions_metadata(user_id=user_id, limit=limit, skip=skip)
     return [
         SessionMetadataListResponse(**meta.model_dump()) for meta in sessions_metadata
     ]
@@ -295,29 +319,3 @@ async def get_personalized_suggestions_route(
         system_prompt="",
     )
     return PersonalizedSuggestionsResponse(suggestions=suggestions)
-# Эндпоинт для сохранения новой еды
-@router.post("/diary/entries")
-async def add_food_entry(
-    entry: DiaryEntry, 
-    db_service: AbstractDBService = Depends(get_db_service_dependency)
-):
-    await db_service.add_diary_entry(entry)
-    return {"status": "success"}
-
-# Эндпоинт для получения сводки за сегодня (вызывается фронтендом при F5)
-@router.get("/diary/daily-summary")
-async def get_daily_summary_route(
-    db_service: AbstractDBService = Depends(get_db_service_dependency)
-):
-    return await db_service.get_daily_summary()
-
-# Эндпоинт для удаления еды по названию
-@router.delete("/diary/entries/{food_name}")
-async def delete_food_entry(
-    food_name: str,
-    db_service: AbstractDBService = Depends(get_db_service_dependency)
-):
-    deleted = await db_service.delete_diary_entry_by_name(food_name)
-    if deleted:
-        return {"status": "success", "message": f"Запись '{food_name}' удалена"}
-    raise HTTPException(status_code=404, detail=f"Запись '{food_name}' не найдена за сегодня")

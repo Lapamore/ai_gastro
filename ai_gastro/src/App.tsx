@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import type { AxiosInstance } from 'axios';
 import './App.css'; 
 
 import ChatHeader from './components/ChatHeader/ChatHeader';
@@ -26,7 +27,17 @@ const API_BASE_URL = 'http://localhost:8000/api';
 const initialUserPreferences: UserPreferences = {
     allergies: [], dietaryRestrictions: [], favoriteCuisines: [], dislikedCuisines: [],
     favoriteIngredients: [], dislikedIngredients: [], preferredDifficulty: null, availableTime: null,
-    targetCalories: 2000 // Цель по умолчанию
+    targetCalories: 2000
+};
+
+// Получаем или создаём user_id
+const getUserId = (): string => {
+    let userId = localStorage.getItem('gastro_user_id');
+    if (!userId) {
+        userId = uuidv4();
+        localStorage.setItem('gastro_user_id', userId);
+    }
+    return userId;
 };
 
 function App() {
@@ -38,6 +49,16 @@ function App() {
     const [isDiaryModalOpen, setIsDiaryModalOpen] = useState<boolean>(false);
     const [sessionsList, setSessionsList] = useState<SessionDisplayInfo[]>([]);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<boolean>(false);
+    const [preferencesLoaded, setPreferencesLoaded] = useState<boolean>(false);
+    
+    // User ID хранится локально
+    const userId = useMemo(() => getUserId(), []);
+    
+    // Axios instance с заголовком X-User-ID
+    const api: AxiosInstance = useMemo(() => axios.create({
+        baseURL: API_BASE_URL,
+        headers: { 'X-User-ID': userId }
+    }), [userId]);
     
     // Состояние дневника калорий
     const [dailyProgress, setDailyProgress] = useState<DailyProgress>({
@@ -49,38 +70,76 @@ function App() {
     });
     
     const [activeSessionId, setActiveSessionId] = useState<string | null>(() => localStorage.getItem('activeChatSessionId'));
-    const [userPreferences, setUserPreferences] = useState<UserPreferences>(() => {
-        const stored = localStorage.getItem('userGastronomicPreferences');
-        try { return stored ? JSON.parse(stored) : initialUserPreferences; } catch { return initialUserPreferences; }
-    });
+    const [userPreferences, setUserPreferences] = useState<UserPreferences>(initialUserPreferences);
 
-    // 1. Загрузка прогресса калорий из БД
+    // Загрузка предпочтений с бэкенда при старте
+    const fetchPreferences = useCallback(async () => {
+        try {
+            const res = await api.get('/user/preferences');
+            setUserPreferences(prev => ({
+                ...prev,
+                ...res.data,
+                targetCalories: res.data.targetCalories || 2000
+            }));
+            setPreferencesLoaded(true);
+        } catch (error) {
+            console.error("Не удалось загрузить предпочтения с сервера");
+            // Загружаем из localStorage как fallback
+            const stored = localStorage.getItem('userGastronomicPreferences');
+            if (stored) {
+                try { setUserPreferences(JSON.parse(stored)); } catch {}
+            }
+            setPreferencesLoaded(true);
+        }
+    }, [api]);
+
+    // Сохранение предпочтений на бэкенд
+    const savePreferencesToBackend = useCallback(async (prefs: UserPreferences) => {
+        try {
+            await api.post('/user/preferences', prefs);
+            localStorage.setItem('userGastronomicPreferences', JSON.stringify(prefs));
+        } catch (error) {
+            console.error("Не удалось сохранить предпочтения");
+        }
+    }, [api]);
+
+    // Обработчик изменения предпочтений
+    const handlePreferencesChange = useCallback((newPrefs: UserPreferences) => {
+        setUserPreferences(newPrefs);
+        savePreferencesToBackend(newPrefs);
+        // Обновляем targetCalories в dailyProgress
+        setDailyProgress(prev => ({ ...prev, targetCalories: newPrefs.targetCalories || 2000 }));
+    }, [savePreferencesToBackend]);
+
+    // Загрузка прогресса калорий из БД
     const fetchDailyProgress = useCallback(async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/diary/daily-summary`);
-            setDailyProgress(_ => ({
+            const res = await api.get('/diary/daily-summary');
+            setDailyProgress(prev => ({
                 ...res.data,
-                targetCalories: userPreferences.targetCalories || 2000
+                targetCalories: prev.targetCalories || userPreferences.targetCalories || 2000
             }));
         } catch (error) {
             console.error("Не удалось загрузить прогресс калорий");
         }
-    }, [userPreferences.targetCalories]);
+    }, [api, userPreferences.targetCalories]);
 
     const fetchSessions = useCallback(async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/sessions`);
+            const res = await api.get('/sessions');
             setSessionsList(res.data.map((s: any) => ({
                 ...s, 
                 updated_at: new Date(s.updated_at)
             })).sort((a: any, b: any) => b.updated_at.getTime() - a.updated_at.getTime()));
         } catch {}
-    }, []);
+    }, [api]);
 
+    // Инициализация при старте
     useEffect(() => { 
+        fetchPreferences();
         fetchSessions(); 
-        fetchDailyProgress(); // Загружаем калории при старте
-    }, [fetchSessions, fetchDailyProgress]);
+        fetchDailyProgress();
+    }, [fetchPreferences, fetchSessions, fetchDailyProgress]);
 
     useEffect(() => {
         if (activeSessionId) localStorage.setItem('activeChatSessionId', activeSessionId);
@@ -88,15 +147,11 @@ function App() {
     }, [activeSessionId]);
 
     useEffect(() => {
-        localStorage.setItem('userGastronomicPreferences', JSON.stringify(userPreferences));
-    }, [userPreferences]);
-
-    useEffect(() => {
         const loadInitialData = async () => {
             if (activeSessionId) {
                 setIsBotTyping(true);
                 try {
-                    const res = await axios.get(`${API_BASE_URL}/sessions/${activeSessionId}/history`);
+                    const res = await api.get(`/sessions/${activeSessionId}/history`);
                     const normalizedHistory = res.data.map((msg: any) => ({
                         ...msg,
                         id: uuidv4(),
@@ -116,7 +171,7 @@ function App() {
             }
         };
         loadInitialData();
-    }, [activeSessionId]);
+    }, [activeSessionId, api]);
 
     const handleSendMessage = async (text: string) => {
         if (!text.trim()) return;
@@ -125,7 +180,7 @@ function App() {
         setIsBotTyping(true);
 
         try {
-            const res = await axios.post<BackendChatResponse>(`${API_BASE_URL}/chat`, { 
+            const res = await api.post<BackendChatResponse>('/chat', { 
                 prompt: text, 
                 session_id: activeSessionId, 
                 preferences: userPreferences 
@@ -164,7 +219,7 @@ function App() {
         if (isLoadingSuggestions) return;
         setIsLoadingSuggestions(true);
         try {
-            const res = await axios.post<BackendPersonalizedSuggestions>(`${API_BASE_URL}/suggestions`, {
+            const res = await api.post<BackendPersonalizedSuggestions>('/suggestions', {
                 session_id: activeSessionId, preferences: userPreferences
             });
             if (res.data.suggestions.length > 0) {
@@ -172,6 +227,7 @@ function App() {
                 setMessages(prev => [...prev, { id: uuidv4(), text: combinedText, sender: 'bot', timestamp: new Date() }]);
             }
         } catch {
+            // Ошибка получения персонализированных предложений
         } finally { setIsLoadingSuggestions(false); }
     };
 
@@ -190,7 +246,7 @@ function App() {
                 onSelectSession={id => { setActiveSessionId(id); setIsSidebarOpen(false); }}
                 onNewChat={() => { setActiveSessionId(null); setIsSidebarOpen(false); }}
                 onDeleteSession={async id => { 
-                    await axios.delete(`${API_BASE_URL}/sessions/${id}`); 
+                    await api.delete(`/sessions/${id}`); 
                     fetchSessions(); 
                     if(activeSessionId === id) setActiveSessionId(null); 
                 }}
@@ -200,7 +256,7 @@ function App() {
             <div className={`chat-app-container ${isSidebarOpen ? 'shifted' : ''}`}>
                 <ChatHeader onClearChat={() => {
                     if (activeSessionId && window.confirm("Удалить этот диалог?")) {
-                        axios.delete(`${API_BASE_URL}/sessions/${activeSessionId}`).then(() => setActiveSessionId(null));
+                        api.delete(`/sessions/${activeSessionId}`).then(() => setActiveSessionId(null));
                     }
                 }} />
                 <MessageList messages={messages} isBotTyping={isBotTyping} onSuggestionClick={handleSendMessage} />
@@ -208,12 +264,13 @@ function App() {
                 <QuickActions onActionClick={handleSendMessage} />
             </div>
 
-            <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} preferences={userPreferences} onPreferencesChange={setUserPreferences} />
+            <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} preferences={userPreferences} onPreferencesChange={handlePreferencesChange} />
             <DiaryModal 
                 isOpen={isDiaryModalOpen} 
                 onClose={() => setIsDiaryModalOpen(false)} 
                 dailyProgress={dailyProgress}
                 onProgressUpdate={setDailyProgress}
+                api={api}
             />
         </div>
     );

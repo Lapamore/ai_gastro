@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from src.services.api.ChatRouter import router as chat_api_router
 from src.api.routes.diary_routes import router as diary_router
+from src.api.routes.user_routes import router as user_router
 from src.infrastructure.dependencies.Dependencies import (
     get_app_config,
     get_db_service_dependency,
@@ -22,8 +23,8 @@ logger = logging.getLogger(__name__)
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Гастрономический Помощник AI",
-        description="Бэкенд для чат-бота с AITunnel, FastAPI Depends и MongoDB.",
-        version="1.0.0",
+        description="Бэкенд для чат-бота с AITunnel, FastAPI Depends и MySQL.",
+        version="2.0.0",
     )
 
     origins = [
@@ -41,6 +42,7 @@ def create_app() -> FastAPI:
 
     app.include_router(chat_api_router)
     app.include_router(diary_router, prefix="/api")
+    app.include_router(user_router, prefix="/api")
     logger.info("FastAPI приложение успешно сконфигурировано с роутерами и CORS.")
 
     @app.on_event("startup")
