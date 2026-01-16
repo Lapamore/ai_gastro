@@ -14,6 +14,7 @@ class AbstractAIService(ABC):
         conversation_history: List[ChatMessage],
         system_prompt: str,
         preferences_text: Optional[str] = None,
+        realtime_context: Optional[str] = None,
     ) -> AIProviderResponse:
         """
         Получает ответ от AI модели, может содержать запрос на поиск видео.

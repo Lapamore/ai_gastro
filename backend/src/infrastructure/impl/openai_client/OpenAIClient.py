@@ -62,6 +62,7 @@ class OpenAIAITunnelService(AbstractAIService):
         effective_system_prompt: str,
         conversation_history: List[ChatMessage],
         user_prompt: str,
+        realtime_context: Optional[str] = None,
     ) -> List[ChatCompletionMessageParam]:
         messages: List[ChatCompletionMessageParam] = []
         if effective_system_prompt:
@@ -69,7 +70,14 @@ class OpenAIAITunnelService(AbstractAIService):
         for msg in conversation_history:
             role = "user" if msg.sender == "user" else "assistant"
             messages.append({"role": role, "content": msg.text})
-        messages.append({"role": "user", "content": user_prompt})
+        
+        # Добавляем актуальные данные (дневник, профиль) ПРЯМО перед вопросом пользователя
+        # Это гарантирует что AI увидит свежие данные последними
+        final_user_content = user_prompt
+        if realtime_context:
+            final_user_content = f"🔴 АКТУАЛЬНЫЕ ДАННЫЕ (ИГНОРИРУЙ ВСЮ ИСТОРИЮ ЧАТА, ИСПОЛЬЗУЙ ТОЛЬКО ЭТО):\n{realtime_context}\n\n📝 МОЙ ВОПРОС: {user_prompt}"
+        
+        messages.append({"role": "user", "content": final_user_content})
         return messages
 
     async def get_ai_response(
@@ -78,18 +86,17 @@ class OpenAIAITunnelService(AbstractAIService):
         conversation_history: List[ChatMessage],
         system_prompt: Optional[str] = None,
         preferences_text: Optional[str] = None,
+        realtime_context: Optional[str] = None,
     ) -> AIProviderResponse:
 
         effective_system_prompt = system_prompt or self.base_system_prompt
-        if preferences_text:
-            effective_system_prompt = f"{effective_system_prompt}\n\n{preferences_text}"
 
         if not effective_system_prompt.strip():
             logger.warning("Итоговый системный промпт пуст!")
             effective_system_prompt = "Ты полезный ассистент."
 
         openai_messages = self._convert_history_to_openai_format(
-            effective_system_prompt, conversation_history, user_prompt
+            effective_system_prompt, conversation_history, user_prompt, realtime_context
         )
         logger.info(
             f"Запрос к AITunnel API. Модель: {self.model_name}. Сообщений: {len(openai_messages)}"

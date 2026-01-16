@@ -144,6 +144,9 @@ async def process_food_tags(bot_message_text: str, user_id: str, db_service: Abs
     for match in add_matches:
         try:
             food_data = json.loads(match)
+            # Добавляем timestamp если его нет
+            if 'timestamp' not in food_data:
+                food_data['timestamp'] = datetime.now(timezone.utc).isoformat()
             entry = DiaryEntry(**food_data)
             await db_service.add_diary_entry(user_id, entry)
             logger.info(f"Автоматически добавлена еда: {entry.name}")
@@ -216,7 +219,11 @@ async def handle_chat_request(
     # Добавляем текущую дату в контекст
     current_date_context = f"Сегодняшняя дата: {datetime.now(timezone.utc).strftime('%d.%m.%Y')}.\n"
 
-    preferences_prompt_text = current_date_context + profile_context + diary_context
+    # Формируем realtime контекст (дневник + профиль) - передаётся прямо в сообщение пользователя
+    realtime_context = current_date_context + profile_context + diary_context
+    
+    # Остальные предпочтения (аллергии, кухни и т.д.) - можно оставить в системном промпте
+    preferences_prompt_text = ""
     if chat_request.preferences:
         prefs = chat_request.preferences
         pref_parts = []
@@ -245,7 +252,7 @@ async def handle_chat_request(
         if prefs.available_time:
             pref_parts.append(f"- Время на готовку: {prefs.available_time}.")
         if pref_parts:
-            preferences_prompt_text += "\nУчти мои предпочтения:\n" + "\n".join(pref_parts)
+            preferences_prompt_text = "Учти мои предпочтения:\n" + "\n".join(pref_parts)
 
     try:
         ai_provider_response = await ai_service.get_ai_response(
@@ -253,6 +260,7 @@ async def handle_chat_request(
             conversation_history=conversation_history_from_db,
             system_prompt="",
             preferences_text=preferences_prompt_text,
+            realtime_context=realtime_context,
         )
 
         if "Извините" in ai_provider_response.reply:

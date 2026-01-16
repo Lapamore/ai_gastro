@@ -76,10 +76,21 @@ function App() {
     const fetchPreferences = useCallback(async () => {
         try {
             const res = await api.get('/user/preferences');
-            setUserPreferences(prev => ({
-                ...prev,
+            const loadedPrefs = {
                 ...res.data,
                 targetCalories: res.data.targetCalories || 2000
+            };
+            setUserPreferences(prev => ({
+                ...prev,
+                ...loadedPrefs
+            }));
+            // Сразу обновляем dailyProgress с загруженными целями
+            setDailyProgress(prev => ({
+                ...prev,
+                targetCalories: loadedPrefs.targetCalories,
+                targetProtein: res.data.targetProtein || prev.targetProtein,
+                targetFat: res.data.targetFat || prev.targetFat,
+                targetCarbs: res.data.targetCarbs || prev.targetCarbs
             }));
             setPreferencesLoaded(true);
         } catch (error) {
