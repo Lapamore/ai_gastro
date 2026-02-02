@@ -1,4 +1,11 @@
-import type { Recipe, ConversationState, UserPreferences, BotServiceResponse, RecipeDetailsResponse } from '../types';
+import type { Recipe, ConversationState, BotServiceResponse, RecipeDetailsResponse } from '../types';
+
+// Локальный тип для предпочтений рецептов (taste, cuisine, type)
+interface RecipePreferences {
+    taste: string | null;
+    cuisine: string | null;
+    type: string | null;
+}
 
 const getRandom = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
@@ -280,7 +287,7 @@ export const processUserMessage = (userInput: string, currentState: Conversation
     return { text: responseText, suggestions: responseSuggestions, newState };
 };
 
-const filterRecipes = (allRecipes: Recipe[], prefs: UserPreferences): Recipe[] => {
+const filterRecipes = (allRecipes: Recipe[], prefs: RecipePreferences): Recipe[] => {
     return allRecipes.filter(recipe => {
         const tasteMatch = !prefs.taste || 
                            (Array.isArray(recipe.taste) ? recipe.taste.includes(prefs.taste) : recipe.taste === prefs.taste) ||

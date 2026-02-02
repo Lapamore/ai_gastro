@@ -49,7 +49,7 @@ function App() {
     const [isDiaryModalOpen, setIsDiaryModalOpen] = useState<boolean>(false);
     const [sessionsList, setSessionsList] = useState<SessionDisplayInfo[]>([]);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<boolean>(false);
-    const [preferencesLoaded, setPreferencesLoaded] = useState<boolean>(false);
+    const [, setPreferencesLoaded] = useState<boolean>(false);
     
     // User ID хранится локально
     const userId = useMemo(() => getUserId(), []);

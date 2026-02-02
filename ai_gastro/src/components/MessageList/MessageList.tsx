@@ -3,9 +3,7 @@ import React, { useRef, useLayoutEffect } from 'react'; // Добавляем us
 import './MessageList.css';
 import MessageItem from '../MessageItem/MessageItem';
 import TypingIndicator from '../TypingIndicator/TypingIndicator';
-// Убедись, что тип Message (или FrontendMessage) включает поле videos
-// import type { Message } from '../../types'; // Если у тебя есть types.ts
-import type { FrontendMessage as Message } from '../../App'; // Если тип определен в App.tsx
+import type { FrontendMessage as Message } from '../../types';
 
 interface MessageListProps {
     messages: Message[]; // Этот тип Message ДОЛЖЕН включать опциональное поле videos

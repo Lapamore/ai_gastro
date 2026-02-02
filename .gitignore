@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+venv/
+env/
+.venv/
+
+# Environment files with secrets
+.env
+backend/.env
+ai_gastro/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes data
+mysql_data/
+
+# Test and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+
+# Build outputs
+ai_gastro/dist/
+
+# Temporary files
+*.tmp
+*.temp
