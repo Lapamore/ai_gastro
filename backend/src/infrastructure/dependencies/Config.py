@@ -25,3 +25,11 @@ class AppConfig:
         self.mysql_database: str = os.getenv("MYSQL_DATABASE", "gastro_ai")
 
         self.youtube_api_key: str = os.getenv("YOUTUBE_API_KEY", "")
+        
+        # Mattermost настройки
+        self.mattermost_webhook_token: str = os.getenv("MATTERMOST_WEBHOOK_TOKEN", "")
+        self.mattermost_url: str = os.getenv("MATTERMOST_URL", "")
+        self.mattermost_bot_token: str = os.getenv("MATTERMOST_BOT_TOKEN", "")
+        self.mattermost_prompt_file: str = os.getenv(
+            "MATTERMOST_PROMPT_FILE", "./src/core/prompts/mattermost_bot_prompt.txt"
+        )

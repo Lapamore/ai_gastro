@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.api.routes import chat_routes, session_routes
 from src.api.routes.diary_routes import router as diary_router
+from src.api.routes.mattermost_routes import router as mattermost_router
 from src.api.dependencies import set_db_service
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ def create_app():
     app.include_router(chat_routes.router, prefix="/api")
     app.include_router(session_routes.router, prefix="/api/sessions")
     app.include_router(diary_router, prefix="/api")
+    app.include_router(mattermost_router, prefix="/api")
 
     return app
 

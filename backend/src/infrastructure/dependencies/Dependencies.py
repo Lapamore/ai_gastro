@@ -10,6 +10,7 @@ from src.infrastructure.interfaces.IService import AbstractAIService
 from src.infrastructure.impl.mysql_client.MySQLImpl import MySQLService
 from src.infrastructure.impl.openai_client.OpenAIClient import OpenAIAITunnelService
 from src.infrastructure.impl.youtube.YoutubeService import YouTubeService
+from src.infrastructure.impl.mattermost.MattermostBotService import MattermostBotService
 
 
 logger = logging.getLogger(__name__)
@@ -68,3 +69,31 @@ async def close_db_connection():
 @lru_cache()
 def get_youtube_service(config: AppConfig = Depends(get_app_config)) -> YouTubeService:
     return YouTubeService(api_key=config.youtube_api_key)
+
+
+# Синглтон для Mattermost сервиса
+_mattermost_service_instance: Optional[MattermostBotService] = None
+
+
+def get_mattermost_service(
+    config: AppConfig = Depends(get_app_config),
+) -> MattermostBotService:
+    """Получает или создаёт экземпляр MattermostBotService"""
+    global _mattermost_service_instance
+    
+    if _mattermost_service_instance is None:
+        if not config.mattermost_webhook_token:
+            logger.warning("MATTERMOST_WEBHOOK_TOKEN не установлен!")
+        
+        _mattermost_service_instance = MattermostBotService(
+            api_key=config.aitunnel_api_key,
+            base_url=config.aitunnel_base_url,
+            model_name=config.aitunnel_model_name,
+            webhook_token=config.mattermost_webhook_token,
+            mattermost_url=config.mattermost_url or None,
+            bot_token=config.mattermost_bot_token or None,
+            system_prompt_file=config.mattermost_prompt_file,
+        )
+        logger.info("MattermostBotService создан")
+    
+    return _mattermost_service_instance
