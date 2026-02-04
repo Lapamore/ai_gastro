@@ -2,9 +2,10 @@
 Сервис для интеграции с Mattermost ботом.
 Предоставляет функционал:
 - Получение рецептов через AI
-- Хранение аллергий пользователей
+- Хранение аллергий пользователей в MySQL
 """
 import os
+import json
 import logging
 import httpx
 from typing import Optional, List, Dict
@@ -34,6 +35,7 @@ class MattermostBotService:
         mattermost_url: Optional[str] = None,
         bot_token: Optional[str] = None,
         system_prompt_file: Optional[str] = None,
+        mysql_connection = None,
     ):
         """
         Инициализация сервиса Mattermost бота.
@@ -46,19 +48,21 @@ class MattermostBotService:
             mattermost_url: URL Mattermost сервера (опционально, для отправки сообщений)
             bot_token: Токен бота Mattermost (опционально, для API)
             system_prompt_file: Путь к файлу с системным промптом
+            mysql_connection: Соединение с MySQL (опционально)
         """
         self.model_name = model_name
         self.webhook_token = webhook_token
         self.mattermost_url = mattermost_url
         self.bot_token = bot_token
+        self.mysql_connection = mysql_connection
         
         self.async_client = AsyncOpenAI(
             api_key=api_key,
             base_url=base_url,
         )
         
-        # Хранилище аллергий пользователей (в памяти, можно заменить на БД)
-        self._user_allergies: Dict[str, MattermostUserAllergies] = {}
+        # Кэш аллергий (для быстрого доступа)
+        self._user_allergies_cache: Dict[str, List[str]] = {}
         
         # Загружаем системный промпт
         self.base_system_prompt = self._load_system_prompt(system_prompt_file)
@@ -86,14 +90,34 @@ class MattermostBotService:
         return token == self.webhook_token
     
     def get_user_allergies(self, user_id: str) -> List[str]:
-        """Получает список аллергий пользователя"""
-        if user_id in self._user_allergies:
-            return self._user_allergies[user_id].allergies
+        """Получает список аллергий пользователя из MySQL"""
+        # Проверяем кэш
+        if user_id in self._user_allergies_cache:
+            return self._user_allergies_cache[user_id]
+        
+        # Загружаем из БД
+        if self.mysql_connection:
+            try:
+                cursor = self.mysql_connection.cursor()
+                cursor.execute(
+                    "SELECT allergies FROM mattermost_allergies WHERE user_id = %s",
+                    (user_id,)
+                )
+                result = cursor.fetchone()
+                cursor.close()
+                
+                if result:
+                    allergies = json.loads(result[0]) if isinstance(result[0], str) else result[0]
+                    self._user_allergies_cache[user_id] = allergies
+                    return allergies
+            except Exception as e:
+                logger.error(f"Ошибка получения аллергий из БД: {e}")
+        
         return []
     
     def set_user_allergies(self, user_id: str, allergies: List[str]) -> MattermostUserAllergies:
         """
-        Устанавливает список аллергий для пользователя.
+        Устанавливает список аллергий для пользователя и сохраняет в MySQL.
         
         Args:
             user_id: ID пользователя Mattermost
@@ -104,12 +128,35 @@ class MattermostBotService:
         """
         cleaned_allergies = [a.strip().lower() for a in allergies if a.strip()]
         
+        # Сохраняем в MySQL
+        print(f"DEBUG: mysql_connection = {self.mysql_connection}")
+        if self.mysql_connection:
+            try:
+                cursor = self.mysql_connection.cursor()
+                cursor.execute(
+                    """INSERT INTO mattermost_allergies (user_id, allergies) 
+                       VALUES (%s, %s) 
+                       ON DUPLICATE KEY UPDATE allergies = %s""",
+                    (user_id, json.dumps(cleaned_allergies), json.dumps(cleaned_allergies))
+                )
+                self.mysql_connection.commit()
+                cursor.close()
+                print(f"DEBUG: Saved to DB: {user_id} -> {cleaned_allergies}")
+                logger.info(f"Аллергии пользователя {user_id} сохранены в БД: {cleaned_allergies}")
+            except Exception as e:
+                print(f"DEBUG: DB Error: {e}")
+                logger.error(f"Ошибка сохранения аллергий в БД: {e}")
+        else:
+            print("DEBUG: mysql_connection is None!")
+        
+        # Обновляем кэш
+        self._user_allergies_cache[user_id] = cleaned_allergies
+        
         user_allergies = MattermostUserAllergies(
             user_id=user_id,
             allergies=cleaned_allergies,
             updated_at=datetime.now(timezone.utc)
         )
-        self._user_allergies[user_id] = user_allergies
         
         logger.info(f"Аллергии пользователя {user_id} обновлены: {cleaned_allergies}")
         return user_allergies
@@ -130,9 +177,18 @@ class MattermostBotService:
     
     def clear_user_allergies(self, user_id: str) -> None:
         """Очищает все аллергии пользователя"""
-        if user_id in self._user_allergies:
-            del self._user_allergies[user_id]
-            logger.info(f"Аллергии пользователя {user_id} очищены")
+        if self.mysql_connection:
+            try:
+                cursor = self.mysql_connection.cursor()
+                cursor.execute("DELETE FROM mattermost_allergies WHERE user_id = %s", (user_id,))
+                self.mysql_connection.commit()
+                cursor.close()
+            except Exception as e:
+                logger.error(f"Ошибка удаления аллергий из БД: {e}")
+        
+        if user_id in self._user_allergies_cache:
+            del self._user_allergies_cache[user_id]
+        logger.info(f"Аллергии пользователя {user_id} очищены")
     
     def _build_system_prompt_with_allergies(self, user_id: str) -> str:
         """Формирует системный промпт с учётом аллергий пользователя"""
@@ -250,11 +306,29 @@ class MattermostBotService:
                 text="👋 Привет! Я **Гастро-Помощник**!\n\n"
                      "Спроси меня о любом рецепте, и я с радостью помогу! 🍳\n\n"
                      "**Команды:**\n"
-                     "• `/recipe [название блюда]` — получить рецепт\n"
-                     "• `/allergies [список]` — указать аллергии\n"
-                     "• `/allergies` — посмотреть свои аллергии",
+                     "• `gastro /allergies орехи, молоко` — указать аллергии\n"
+                     "• `gastro /allergies` — посмотреть свои аллергии\n"
+                     "• `gastro /allergies clear` — очистить аллергии\n"
+                     "• `gastro [блюдо]` — получить рецепт",
                 response_type="in_channel"
             )
+        
+        # Обработка команды /allergies
+        if clean_text.startswith("/allergies"):
+            allergy_text = clean_text[len("/allergies"):].strip()
+            
+            if not allergy_text:
+                # Показать текущие аллергии
+                return self.format_allergies_response(user_id, "list")
+            elif allergy_text.lower() == "clear":
+                # Очистить аллергии
+                self.clear_user_allergies(user_id)
+                return self.format_allergies_response(user_id, "clear")
+            else:
+                # Установить аллергии
+                allergies = [a.strip() for a in allergy_text.replace(",", " ").split() if a.strip()]
+                self.set_user_allergies(user_id, allergies)
+                return self.format_allergies_response(user_id, "set")
         
         # Получаем ответ от AI
         ai_response = await self.get_recipe_response(user_id, clean_text, user_name)

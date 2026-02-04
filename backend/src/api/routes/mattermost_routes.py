@@ -29,14 +29,8 @@ async def handle_webhook(
 ):
     """
     Обработка Outgoing Webhook от Mattermost.
+    Отправляет ответ через Bot API - сообщение приходит от настоящего бота.
     """
-    content_type = request.headers.get("content-type", "")
-    logger.info(f"Content-Type: {content_type}")
-    
-    # Получаем тело запроса
-    body = await request.body()
-    logger.info(f"Raw body: {body.decode()[:500]}")
-    
     # Пробуем как JSON
     try:
         data = await request.json()
@@ -44,13 +38,12 @@ async def handle_webhook(
         # Пробуем как form
         data = dict(await request.form())
     
-    logger.info(f"Parsed data: {data}")
-    
     token = data.get("token", "")
     user_id = data.get("user_id", "")
     user_name = data.get("user_name", "unknown")
     text = data.get("text", "")
     trigger_word = data.get("trigger_word", "")
+    channel_id = data.get("channel_id", "")
     
     logger.info(f"Получен webhook от {user_name}: {text[:100] if text else 'empty'}")
     
@@ -70,7 +63,20 @@ async def handle_webhook(
         trigger_word=trigger_word
     )
     
-    return response
+    # Отправляем ответ через Bot API (от настоящего бота)
+    success = await mm_service.send_message_to_channel(
+        channel_id=channel_id,
+        message=response.text
+    )
+    
+    if success:
+        logger.info(f"Ответ отправлен через Bot API в канал {channel_id}")
+    else:
+        logger.error(f"Не удалось отправить через Bot API, возвращаем в webhook response")
+        return response  # Fallback на webhook response
+    
+    # Возвращаем пустой ответ (сообщение уже отправлено через Bot API)
+    return {}
 
 
 @router.post("/slash/recipe", response_model=MattermostBotResponse)

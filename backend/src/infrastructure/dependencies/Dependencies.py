@@ -73,17 +73,34 @@ def get_youtube_service(config: AppConfig = Depends(get_app_config)) -> YouTubeS
 
 # Синглтон для Mattermost сервиса
 _mattermost_service_instance: Optional[MattermostBotService] = None
+_mattermost_mysql_connection = None
 
 
 def get_mattermost_service(
     config: AppConfig = Depends(get_app_config),
 ) -> MattermostBotService:
     """Получает или создаёт экземпляр MattermostBotService"""
-    global _mattermost_service_instance
+    global _mattermost_service_instance, _mattermost_mysql_connection
     
     if _mattermost_service_instance is None:
         if not config.mattermost_webhook_token:
             logger.warning("MATTERMOST_WEBHOOK_TOKEN не установлен!")
+        
+        # Создаём отдельное соединение MySQL для Mattermost (используем PyMySQL)
+        try:
+            import pymysql
+            _mattermost_mysql_connection = pymysql.connect(
+                host=config.mysql_host,
+                port=config.mysql_port,
+                user=config.mysql_user,
+                password=config.mysql_password,
+                database=config.mysql_database,
+                autocommit=True,
+            )
+            logger.info("MySQL соединение для Mattermost создано")
+        except Exception as e:
+            logger.error(f"Ошибка подключения MySQL для Mattermost: {e}")
+            _mattermost_mysql_connection = None
         
         _mattermost_service_instance = MattermostBotService(
             api_key=config.aitunnel_api_key,
@@ -93,6 +110,7 @@ def get_mattermost_service(
             mattermost_url=config.mattermost_url or None,
             bot_token=config.mattermost_bot_token or None,
             system_prompt_file=config.mattermost_prompt_file,
+            mysql_connection=_mattermost_mysql_connection,
         )
         logger.info("MattermostBotService создан")
     
