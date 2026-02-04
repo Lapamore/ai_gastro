@@ -12,7 +12,7 @@ class MattermostWebhookRequest(BaseModel):
     team_id: str = Field(..., description="ID команды")
     team_domain: Optional[str] = Field(None, description="Домен команды")
     channel_id: str = Field(..., description="ID канала")
-    channel_name: str = Field(..., description="Имя канала")
+    channel_name: Optional[str] = Field(None, description="Имя канала")
     timestamp: Optional[str] = Field(None, description="Временная метка сообщения")
     user_id: str = Field(..., description="ID пользователя")
     user_name: str = Field(..., description="Имя пользователя")
@@ -20,6 +20,9 @@ class MattermostWebhookRequest(BaseModel):
     text: str = Field(..., description="Текст сообщения")
     trigger_word: Optional[str] = Field(None, description="Триггерное слово")
     file_ids: Optional[str] = Field(None, description="ID файлов")
+    
+    class Config:
+        extra = "allow"  # Разрешаем дополнительные поля
 
 
 class MattermostSlashCommandRequest(BaseModel):
@@ -44,9 +47,11 @@ class MattermostBotResponse(BaseModel):
         default="in_channel",
         description="Тип ответа: 'in_channel' (виден всем) или 'ephemeral' (виден только пользователю)"
     )
-    username: str = Field(default="🍳 Гастро-Помощник", description="Имя бота")
-    icon_emoji: str = Field(default=":chef:", description="Эмодзи иконки бота")
-    icon_url: Optional[str] = Field(None, description="URL иконки бота")
+    username: str = Field(default="gastro_bot", description="Имя бота (должно совпадать с Bot Account)")
+    icon_url: Optional[str] = Field(
+        default="https://cdn-icons-png.flaticon.com/512/1830/1830839.png",
+        description="URL иконки бота"
+    )
 
 
 class MattermostUserAllergies(BaseModel):

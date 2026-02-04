@@ -7,7 +7,7 @@ API роуты для интеграции с Mattermost ботом.
 - POST /api/mattermost/slash/allergies - slash-команда /allergies
 """
 import logging
-from fastapi import APIRouter, HTTPException, status, Depends, Form
+from fastapi import APIRouter, HTTPException, status, Depends, Form, Request
 from typing import Optional
 
 from src.core.models.mattermost.MattermostModels import (
@@ -22,22 +22,41 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/mattermost", tags=["Mattermost Bot"])
 
 
-@router.post("/webhook", response_model=MattermostBotResponse)
+@router.post("/webhook")
 async def handle_webhook(
-    request: MattermostWebhookRequest,
+    request: Request,
     mm_service: MattermostBotService = Depends(get_mattermost_service)
 ):
     """
     Обработка Outgoing Webhook от Mattermost.
-    
-    Этот эндпоинт вызывается Mattermost при отправке сообщения,
-    начинающегося с триггерного слова (например, "@gastrobot" или "рецепт").
     """
-    logger.info(f"Получен webhook от {request.user_name}: {request.text[:100]}")
+    content_type = request.headers.get("content-type", "")
+    logger.info(f"Content-Type: {content_type}")
+    
+    # Получаем тело запроса
+    body = await request.body()
+    logger.info(f"Raw body: {body.decode()[:500]}")
+    
+    # Пробуем как JSON
+    try:
+        data = await request.json()
+    except:
+        # Пробуем как form
+        data = dict(await request.form())
+    
+    logger.info(f"Parsed data: {data}")
+    
+    token = data.get("token", "")
+    user_id = data.get("user_id", "")
+    user_name = data.get("user_name", "unknown")
+    text = data.get("text", "")
+    trigger_word = data.get("trigger_word", "")
+    
+    logger.info(f"Получен webhook от {user_name}: {text[:100] if text else 'empty'}")
     
     # Проверяем токен
-    if not mm_service.verify_webhook_token(request.token):
-        logger.warning(f"Неверный токен webhook от {request.user_name}")
+    if not mm_service.verify_webhook_token(token):
+        logger.warning(f"Неверный токен webhook: {token}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid webhook token"
@@ -45,10 +64,10 @@ async def handle_webhook(
     
     # Обрабатываем сообщение
     response = await mm_service.process_message(
-        user_id=request.user_id,
-        text=request.text,
-        user_name=request.user_name,
-        trigger_word=request.trigger_word
+        user_id=user_id,
+        text=text,
+        user_name=user_name,
+        trigger_word=trigger_word
     )
     
     return response
