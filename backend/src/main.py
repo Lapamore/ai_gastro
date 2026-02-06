@@ -1,4 +1,6 @@
+import asyncio
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.services.api.ChatRouter import router as chat_router
@@ -8,8 +10,36 @@ from src.api.routes.mattermost_routes import router as mattermost_router
 
 logger = logging.getLogger(__name__)
 
+# Глобальная переменная для WebSocket задачи
+_websocket_task = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Управление жизненным циклом приложения"""
+    global _websocket_task
+    
+    logger.info("Запуск приложения...")
+    
+    # Запускаем WebSocket бота
+    from src.infrastructure.impl.mattermost.MattermostWebSocketBot import start_websocket_bot
+    _websocket_task = asyncio.create_task(start_websocket_bot())
+    logger.info("WebSocket бот запущен")
+    
+    yield
+    
+    # Останавливаем WebSocket
+    logger.info("Выключение приложения...")
+    if _websocket_task:
+        _websocket_task.cancel()
+        try:
+            await _websocket_task
+        except asyncio.CancelledError:
+            pass
+
+
 def create_app():
-    app = FastAPI()
+    app = FastAPI(lifespan=lifespan)
 
     # Добавляем CORS middleware
     app.add_middleware(
@@ -30,21 +60,6 @@ def create_app():
 
 app = create_app()
 
-@app.on_event("startup")
-async def startup_event():
-    # Здесь можно инициализировать соединение с БД и другими сервисами
-    logger.info("Запуск приложения...")
-    # Пример инициализации БД:
-    # app.state.db_service = MongoDBService(...)
-    # await app.state.db_service.connect()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    # Здесь можно закрыть соединения и освободить ресурсы
-    logger.info("Выключение приложения...")
-    # Пример закрытия соединения с БД:
-    # await app.state.db_service.close()
-    # del app.state.db_service
 
 # Пример эндпоинта
 @app.get("/")
