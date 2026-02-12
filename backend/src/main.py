@@ -8,6 +8,11 @@ from src.api.routes.diary_routes import router as diary_router
 from src.api.routes.user_routes import router as user_router
 from src.api.routes.mattermost_routes import router as mattermost_router
 
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Глобальная переменная для WebSocket задачи

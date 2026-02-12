@@ -1,13 +1,14 @@
 """
 WebSocket бот для Mattermost.
-Слушает все сообщения и отвечает в личных сообщениях и каналах.
+Слушает все сообщения и отвечает в личных сообщениях.
+История чата сохраняется в MySQL.
 """
 import os
 import asyncio
 import logging
 import httpx
+import pymysql
 from typing import Optional, Dict, List
-from collections import defaultdict
 
 from openai import AsyncOpenAI
 
@@ -21,11 +22,91 @@ _config: Optional[AppConfig] = None
 _ai_client: Optional[AsyncOpenAI] = None
 _bot_user_id: Optional[str] = None
 _system_prompt: str = ""
+_mysql_connection = None
 
-# История чатов для каждого пользователя
-# Формат: {user_id: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]}
-_chat_history: Dict[str, List[dict]] = defaultdict(list)
-MAX_HISTORY_LENGTH = 20  # Максимальное количество сообщений в истории
+# Максимальное количество сообщений для контекста AI (чтобы не превысить лимит токенов)
+MAX_CONTEXT_MESSAGES = 50
+
+
+def _get_mysql_connection():
+    """Получает или создаёт подключение к MySQL"""
+    global _mysql_connection
+    
+    if _mysql_connection is None or not _mysql_connection.open:
+        try:
+            _mysql_connection = pymysql.connect(
+                host=_config.mysql_host,
+                port=_config.mysql_port,
+                user=_config.mysql_user,
+                password=_config.mysql_password,
+                database=_config.mysql_database,
+                autocommit=True,
+                charset='utf8mb4'
+            )
+            logger.info("MySQL подключение для чата создано")
+        except Exception as e:
+            logger.error(f"Ошибка подключения к MySQL: {e}")
+            return None
+    
+    return _mysql_connection
+
+
+def save_message_to_db(user_id: str, role: str, content: str):
+    """Сохраняет сообщение в MySQL"""
+    conn = _get_mysql_connection()
+    if not conn:
+        return
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO mattermost_chat_history (user_id, role, content) VALUES (%s, %s, %s)",
+            (user_id, role, content)
+        )
+        cursor.close()
+    except Exception as e:
+        logger.error(f"Ошибка сохранения сообщения в БД: {e}")
+
+
+def get_chat_history_from_db(user_id: str, limit: int = MAX_CONTEXT_MESSAGES) -> List[dict]:
+    """Загружает историю чата из MySQL"""
+    conn = _get_mysql_connection()
+    if not conn:
+        return []
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """SELECT role, content FROM mattermost_chat_history 
+               WHERE user_id = %s 
+               ORDER BY created_at DESC 
+               LIMIT %s""",
+            (user_id, limit)
+        )
+        rows = cursor.fetchall()
+        cursor.close()
+        
+        # Переворачиваем чтобы старые были первыми
+        history = [{"role": row[0], "content": row[1]} for row in reversed(rows)]
+        return history
+    except Exception as e:
+        logger.error(f"Ошибка загрузки истории из БД: {e}")
+        return []
+
+
+def clear_chat_history_in_db(user_id: str):
+    """Очищает историю чата в MySQL"""
+    conn = _get_mysql_connection()
+    if not conn:
+        return
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM mattermost_chat_history WHERE user_id = %s", (user_id,))
+        cursor.close()
+        logger.info(f"История чата пользователя {user_id} очищена")
+    except Exception as e:
+        logger.error(f"Ошибка очистки истории в БД: {e}")
 
 
 def _load_system_prompt(file_path: Optional[str]) -> str:
@@ -82,20 +163,18 @@ async def send_message(channel_id: str, message: str) -> bool:
 
 
 async def get_ai_response(user_id: str, user_message: str) -> str:
-    """Получает ответ от AI с учётом истории чата"""
-    global _chat_history
+    """Получает ответ от AI с учётом истории чата из MySQL"""
     
-    # Добавляем сообщение пользователя в историю
-    _chat_history[user_id].append({"role": "user", "content": user_message})
+    # Сохраняем сообщение пользователя в БД
+    save_message_to_db(user_id, "user", user_message)
     
-    # Ограничиваем историю
-    if len(_chat_history[user_id]) > MAX_HISTORY_LENGTH:
-        _chat_history[user_id] = _chat_history[user_id][-MAX_HISTORY_LENGTH:]
+    # Загружаем историю из БД (последние MAX_CONTEXT_MESSAGES сообщений)
+    chat_history = get_chat_history_from_db(user_id, MAX_CONTEXT_MESSAGES)
     
     try:
         # Формируем сообщения с историей
         messages = [{"role": "system", "content": _system_prompt}]
-        messages.extend(_chat_history[user_id])
+        messages.extend(chat_history)
         
         response = await _ai_client.chat.completions.create(
             model=_config.aitunnel_model_name,
@@ -107,8 +186,8 @@ async def get_ai_response(user_id: str, user_message: str) -> str:
         if response.choices and response.choices[0].message.content:
             assistant_response = response.choices[0].message.content.strip()
             
-            # Добавляем ответ бота в историю
-            _chat_history[user_id].append({"role": "assistant", "content": assistant_response})
+            # Сохраняем ответ бота в БД
+            save_message_to_db(user_id, "assistant", assistant_response)
             
             return assistant_response
         
@@ -136,8 +215,7 @@ async def handle_message(event: dict):
     
     # Команда очистки истории
     if message.strip().lower() in ["/clear", "/reset", "очистить", "сброс"]:
-        global _chat_history
-        _chat_history[user_id] = []
+        clear_chat_history_in_db(user_id)
         response_text = "🔄 История чата очищена! Начнём сначала."
     elif not message.strip():
         # Приветствие
