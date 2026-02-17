@@ -69,28 +69,32 @@ def save_message_to_db(user_id: str, role: str, content: str):
         logger.error(f"Ошибка сохранения сообщения в БД: {e}")
 
 def save_user_allergies(user_id: str, allergy_list: List[str]):
-    """Сохраняет или обновляет список аллергий пользователя в MySQL"""
+    """Сохраняет аллергии или удаляет их, если пользователь написал 'нет'"""
     conn = _get_mysql_connection()
-    if not conn:
-        return False
+    if not conn: return False
     
     try:
-        # Превращаем список в JSON-строку
-        allergies_json = json.dumps(allergy_list, ensure_ascii=False)
-        
         cursor = conn.cursor()
-        # Если user_id уже есть, обновим поле allergies
+        
+        # Проверяем, не хочет ли пользователь сбросить аллергии
+        # (если список пуст или первое слово "нет", "очистить", "none")
+        stop_words = ["нет", "очистить", "none", "no", "ничего", "empty"]
+        if not allergy_list or (len(allergy_list) == 1 and allergy_list[0].lower() in stop_words):
+            cursor.execute("DELETE FROM mattermost_allergies WHERE user_id = %s", (user_id,))
+            logger.info(f"Аллергии пользователя {user_id} полностью удалены.")
+            return "deleted"
+        
+        # Иначе сохраняем как обычно
+        allergies_json = json.dumps(allergy_list, ensure_ascii=False)
         sql = """
             INSERT INTO mattermost_allergies (user_id, allergies) 
             VALUES (%s, %s) 
             ON DUPLICATE KEY UPDATE allergies = VALUES(allergies)
         """
         cursor.execute(sql, (user_id, allergies_json))
-        cursor.close()
-        logger.info(f"Аллергии пользователя {user_id} обновлены: {allergy_list}")
-        return True
+        return "saved"
     except Exception as e:
-        logger.error(f"Ошибка сохранения аллергий в БД: {e}")
+        logger.error(f"Ошибка БД: {e}")
         return False
 
 def get_user_allergies(user_id: str) -> List[str]:
@@ -212,7 +216,20 @@ async def send_message(channel_id: str, message: str) -> bool:
         logger.error(f"Ошибка отправки сообщения: {e}")
         return False
 
-
+def delete_user_allergies(user_id: str):
+    """Полностью удаляет данные об аллергиях пользователя из БД"""
+    conn = _get_mysql_connection()
+    if not conn:
+        return
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM mattermost_allergies WHERE user_id = %s", (user_id,))
+        cursor.close()
+        logger.info(f"Данные об аллергиях пользователя {user_id} удалены.")
+    except Exception as e:
+        logger.error(f"Ошибка при удалении аллергий пользователя {user_id}: {e}")
+        
 async def get_ai_response(user_id: str, user_message: str) -> str:
     """Получает ответ от AI с учётом истории чата и аллергий"""
     
@@ -271,29 +288,28 @@ async def handle_message(event: dict):
 
     # --- НОВАЯ ЛОГИКА ДЛЯ АЛЛЕРГИЙ ---
     if message.lower().startswith("/allergies"):
-        # Отрезаем саму команду, оставляем только список
-        # Пример: "/allergies орехи, молоко" -> "орехи, молоко"
-        raw_list = message[len("/allergies"):].strip()
-        
-        if not raw_list:
-            response_text = "⚠️ Пожалуйста, перечислите аллергии через запятую.\nПример: `/allergies орехи, мед, клубника`"
-        else:
-            # Разбиваем строку по запятой и чистим пробелы
+            raw_list = message[len("/allergies"):].strip()
             allergy_items = [item.strip() for item in raw_list.split(",") if item.strip()]
             
-            if save_user_allergies(user_id, allergy_items):
-                response_text = f"✅ Понял! Я запомнил ваши аллергии: **{', '.join(allergy_items)}**. Теперь рецепты будут безопасными! 🍳"
+            result = save_user_allergies(user_id, allergy_items)
+            
+            if result == "deleted":
+                response_text = "🗑️ Ваши аллергии удалены из базы. Теперь я буду предлагать любые рецепты!"
+            elif result == "saved":
+                response_text = f"✅ Запомнил! Ваши аллергии: **{', '.join(allergy_items)}**."
             else:
-                response_text = "❌ Произошла ошибка при сохранении данных. Попробуйте позже."
-        
-        await send_message(channel_id, response_text)
-        return # Завершаем обработку, чтобы бот не пошел в AI
+                response_text = "❌ Ошибка при сохранении."
+            
+            await send_message(channel_id, response_text)
+            return
     # --------------------------------
 
     # Команда очистки истории
     if message.lower() in ["/clear", "/reset", "очистить", "сброс"]:
         clear_chat_history_in_db(user_id)
-        response_text = "🔄 История чата очищена! Начнём сначала."
+        delete_user_allergies(user_id)
+        response_text = "🔄 **Всё очищено!**\nИстория чата и ваши данные об аллергиях удалены. Теперь я снова буду предлагать любые рецепты. Начнём сначала! 😊"
+
     elif not message:
         response_text = (
             "👋 Привет! Я **Гастро-Помощник**!\n\n"
