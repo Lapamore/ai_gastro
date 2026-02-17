@@ -4,6 +4,7 @@ WebSocket бот для Mattermost.
 История чата сохраняется в MySQL.
 """
 import os
+import json
 import asyncio
 import logging
 import httpx
@@ -67,6 +68,56 @@ def save_message_to_db(user_id: str, role: str, content: str):
     except Exception as e:
         logger.error(f"Ошибка сохранения сообщения в БД: {e}")
 
+def save_user_allergies(user_id: str, allergy_list: List[str]):
+    """Сохраняет или обновляет список аллергий пользователя в MySQL"""
+    conn = _get_mysql_connection()
+    if not conn:
+        return False
+    
+    try:
+        # Превращаем список в JSON-строку
+        allergies_json = json.dumps(allergy_list, ensure_ascii=False)
+        
+        cursor = conn.cursor()
+        # Если user_id уже есть, обновим поле allergies
+        sql = """
+            INSERT INTO mattermost_allergies (user_id, allergies) 
+            VALUES (%s, %s) 
+            ON DUPLICATE KEY UPDATE allergies = VALUES(allergies)
+        """
+        cursor.execute(sql, (user_id, allergies_json))
+        cursor.close()
+        logger.info(f"Аллергии пользователя {user_id} обновлены: {allergy_list}")
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка сохранения аллергий в БД: {e}")
+        return False
+
+def get_user_allergies(user_id: str) -> List[str]:
+    """Загружает список аллергий пользователя из MySQL"""
+    conn = _get_mysql_connection()
+    if not conn:
+        return []
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT allergies FROM mattermost_allergies WHERE user_id = %s",
+            (user_id,)
+        )
+        row = cursor.fetchone()
+        cursor.close()
+        
+        if row and row[0]:
+            # Если данные в БД хранятся как JSON-строка, декодируем её
+            allergies = row[0]
+            if isinstance(allergies, str):
+                return json.loads(allergies)
+            return allergies # Если драйвер сам сконвертировал в список
+        return []
+    except Exception as e:
+        logger.error(f"Ошибка загрузки аллергий из БД: {e}")
+        return []
 
 def get_chat_history_from_db(user_id: str, limit: int = MAX_CONTEXT_MESSAGES) -> List[dict]:
     """Загружает историю чата из MySQL"""
@@ -163,17 +214,29 @@ async def send_message(channel_id: str, message: str) -> bool:
 
 
 async def get_ai_response(user_id: str, user_message: str) -> str:
-    """Получает ответ от AI с учётом истории чата из MySQL"""
+    """Получает ответ от AI с учётом истории чата и аллергий"""
     
-    # Сохраняем сообщение пользователя в БД
+    # Сохраняем сообщение пользователя
     save_message_to_db(user_id, "user", user_message)
     
-    # Загружаем историю из БД (последние MAX_CONTEXT_MESSAGES сообщений)
+    # 1. Загружаем аллергии
+    user_allergies = get_user_allergies(user_id)
+    
+    # 2. Формируем специальную вставку про аллергии
+    allergy_context = ""
+    if user_allergies:
+        allergy_context = f"\n\nВНИМАНИЕ: У пользователя аллергия на следующие продукты: {', '.join(user_allergies)}. " \
+                          f"КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО предлагать рецепты, содержащие эти ингредиенты!"
+
+    # Загружаем историю из БД
     chat_history = get_chat_history_from_db(user_id, MAX_CONTEXT_MESSAGES)
     
     try:
-        # Формируем сообщения с историей
-        messages = [{"role": "system", "content": _system_prompt}]
+        # 3. Формируем сообщения. 
+        # Добавляем аллергии к системному промпту, чтобы AI всегда о них помнил.
+        current_system_prompt = _system_prompt + allergy_context
+        
+        messages = [{"role": "system", "content": current_system_prompt}]
         messages.extend(chat_history)
         
         response = await _ai_client.chat.completions.create(
@@ -185,58 +248,64 @@ async def get_ai_response(user_id: str, user_message: str) -> str:
         
         if response.choices and response.choices[0].message.content:
             assistant_response = response.choices[0].message.content.strip()
-            
-            # Сохраняем ответ бота в БД
             save_message_to_db(user_id, "assistant", assistant_response)
-            
             return assistant_response
         
-        return "Извините, не удалось получить ответ. Попробуйте ещё раз!"
+        return "Извините, не удалось получить ответ."
         
     except Exception as e:
         logger.error(f"Ошибка AI: {e}")
-        return "Извините, сервис временно недоступен. Попробуйте позже! 🙏"
+        return "Извините, сервис временно недоступен. 🙏"
 
 
 async def handle_message(event: dict):
-    """Обрабатывает входящее сообщение — только в личных сообщениях"""
+    """Обрабатывает входящее сообщение"""
     user_id = event.get("user_id", "")
-    message = event.get("message", "")
+    message = event.get("message", "").strip()
     channel_id = event.get("channel_id", "")
     channel_type = event.get("channel_type", "")
-    sender_name = event.get("sender_name", "")
     
-    # Отвечаем ТОЛЬКО в личных сообщениях (DM)
-    is_dm = channel_type == "D"
-    
-    if not is_dm:
-        # Игнорируем все сообщения из каналов
+    # Отвечаем ТОЛЬКО в личных сообщениях
+    if channel_type != "D":
         return
-    
+
+    # --- НОВАЯ ЛОГИКА ДЛЯ АЛЛЕРГИЙ ---
+    if message.lower().startswith("/allergies"):
+        # Отрезаем саму команду, оставляем только список
+        # Пример: "/allergies орехи, молоко" -> "орехи, молоко"
+        raw_list = message[len("/allergies"):].strip()
+        
+        if not raw_list:
+            response_text = "⚠️ Пожалуйста, перечислите аллергии через запятую.\nПример: `/allergies орехи, мед, клубника`"
+        else:
+            # Разбиваем строку по запятой и чистим пробелы
+            allergy_items = [item.strip() for item in raw_list.split(",") if item.strip()]
+            
+            if save_user_allergies(user_id, allergy_items):
+                response_text = f"✅ Понял! Я запомнил ваши аллергии: **{', '.join(allergy_items)}**. Теперь рецепты будут безопасными! 🍳"
+            else:
+                response_text = "❌ Произошла ошибка при сохранении данных. Попробуйте позже."
+        
+        await send_message(channel_id, response_text)
+        return # Завершаем обработку, чтобы бот не пошел в AI
+    # --------------------------------
+
     # Команда очистки истории
-    if message.strip().lower() in ["/clear", "/reset", "очистить", "сброс"]:
+    if message.lower() in ["/clear", "/reset", "очистить", "сброс"]:
         clear_chat_history_in_db(user_id)
         response_text = "🔄 История чата очищена! Начнём сначала."
-    elif not message.strip():
-        # Приветствие
+    elif not message:
         response_text = (
             "👋 Привет! Я **Гастро-Помощник**!\n\n"
-            "Спроси меня о любом рецепте, и я с радостью помогу! 🍳\n\n"
-            "Просто напиши название блюда, например: *борщ*, *карбонара*, *тирамису*\n\n"
-            "💡 Напиши `/clear` чтобы очистить историю чата."
+            "Спроси меня о любом рецепте! 🍳\n\n"
+            "💡 Чтобы я не предлагал опасные продукты, напиши свои аллергии вот так:\n"
+            "`/allergies орехи, мед, молоко`"
         )
     else:
-        # Получаем ответ AI с учётом истории
-        logger.info(f"Запрос от {sender_name}: {message[:50]}...")
+        # Обычный запрос к AI
         response_text = await get_ai_response(user_id, message)
     
-    # Отправляем ответ
-    success = await send_message(channel_id, response_text)
-    if success:
-        logger.info(f"Ответ отправлен в канал {channel_id}")
-    else:
-        logger.error(f"Не удалось отправить ответ в канал {channel_id}")
-
+    await send_message(channel_id, response_text)
 
 async def start_websocket_bot():
     """Запускает WebSocket бота"""
