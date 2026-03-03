@@ -203,67 +203,107 @@ async def handle_chat_request(
     )
     user_message = ChatMessage(sender="user", text=chat_request.prompt)
 
-    # Получаем данные дневника за СЕГОДНЯ
-    today_entries = await db_service.get_today_diary_entries(user_id)
-    daily_summary = await db_service.get_daily_summary(user_id)
-    diary_context = build_diary_context(today_entries, daily_summary)
-
-    # Получаем профиль пользователя (вес, рост, цель и т.д.)
-    user_prefs = await db_service.get_user_preferences(user_id)
-    profile_context = build_user_profile_context(user_prefs)
-
-    # Получаем любимые рецепты пользователя
-    favorite_recipes = await db_service.get_favorite_recipes(user_id)
-    favorites_context = ""
-    if favorite_recipes:
-        fav_lines = ["""
-╔══════════════════════════════════════════════════════════════╗
-║  ⭐ ЛЮБИМЫЕ РЕЦЕПТЫ ПОЛЬЗОВАТЕЛЯ                             ║
-╠══════════════════════════════════════════════════════════════╣"""]
-        for i, recipe in enumerate(favorite_recipes[:10], 1):
-            # Берём первые 150 символов текста рецепта для краткости
-            short_text = recipe.message_text[:150].replace('\n', ' ')
-            fav_lines.append(f"║  {i}. {short_text}...")
-        fav_lines.append("╚══════════════════════════════════════════════════════════════╝")
-        favorites_context = "\n".join(fav_lines)
+    # Определяем режим готовки
+    is_group_mode = chat_request.cooking_mode == "group"
 
     # Добавляем текущую дату в контекст
     current_date_context = f"Сегодняшняя дата: {datetime.now(timezone.utc).strftime('%d.%m.%Y')}.\n"
 
-    # Формируем realtime контекст (дневник + профиль + любимые рецепты) - передаётся прямо в сообщение пользователя
-    realtime_context = current_date_context + profile_context + diary_context + favorites_context
+    if is_group_mode:
+        # === РЕЖИМ КОМПАНИИ ===
+        # Не используем дневник, профиль и персональные настройки
+        group_context_parts = [current_date_context]
+        
+        group_context_parts.append("""
+╔══════════════════════════════════════════════════════════════╗
+║  👨‍👩‍👧‍👦 РЕЖИМ ГОТОВКИ ДЛЯ КОМПАНИИ                              ║
+╠══════════════════════════════════════════════════════════════╣""")
+        
+        gs = chat_request.group_settings
+        guest_count = gs.guest_count if gs else 2
+        group_context_parts.append(f"║  Количество человек: {guest_count}")
+
+        # Собственные аллергии пользователя тоже учитываем (он тоже ест)
+        user_prefs = await db_service.get_user_preferences(user_id)
+        own_allergies = []
+        if user_prefs and user_prefs.allergies:
+            own_allergies = user_prefs.allergies if isinstance(user_prefs.allergies, list) else []
+        
+        group_allergies = (gs.allergies if gs else []) 
+        all_allergies = list(set(own_allergies + group_allergies))
+        if all_allergies:
+            group_context_parts.append(f"║  🚫 Аллергии (включая хозяина): {', '.join(all_allergies)}")
+        
+        group_restrictions = gs.restrictions if gs else []
+        if group_restrictions:
+            group_context_parts.append(f"║  🥗 Ограничения группы: {', '.join(group_restrictions)}")
+        
+        group_context_parts.append(f"""╠══════════════════════════════════════════════════════════════╣
+║  ⚠️ ВАЖНО: Рассчитывай порции на {guest_count} человек!         ║
+║  Не веди дневник калорий. Не используй теги ADD_FOOD.         ║
+╚══════════════════════════════════════════════════════════════╝""")
+        
+        realtime_context = "\n".join(group_context_parts)
+        preferences_prompt_text = ""
+        
+    else:
+        # === РЕЖИМ ДЛЯ СЕБЯ (как раньше) ===
+        # Получаем данные дневника за СЕГОДНЯ
+        today_entries = await db_service.get_today_diary_entries(user_id)
+        daily_summary = await db_service.get_daily_summary(user_id)
+        diary_context = build_diary_context(today_entries, daily_summary)
+
+        # Получаем профиль пользователя (вес, рост, цель и т.д.)
+        user_prefs = await db_service.get_user_preferences(user_id)
+        profile_context = build_user_profile_context(user_prefs)
+
+        # Получаем любимые рецепты пользователя
+        favorite_recipes = await db_service.get_favorite_recipes(user_id)
+        favorites_context = ""
+        if favorite_recipes:
+            fav_lines = ["""
+╔══════════════════════════════════════════════════════════════╗
+║  ⭐ ЛЮБИМЫЕ РЕЦЕПТЫ ПОЛЬЗОВАТЕЛЯ                             ║
+╠══════════════════════════════════════════════════════════════╣"""]
+            for i, recipe in enumerate(favorite_recipes[:10], 1):
+                short_text = recipe.message_text[:150].replace('\n', ' ')
+                fav_lines.append(f"║  {i}. {short_text}...")
+            fav_lines.append("╚══════════════════════════════════════════════════════════════╝")
+            favorites_context = "\n".join(fav_lines)
+
+        realtime_context = current_date_context + profile_context + diary_context + favorites_context
     
-    # Остальные предпочтения (аллергии, кухни и т.д.) - можно оставить в системном промпте
-    preferences_prompt_text = ""
-    if chat_request.preferences:
-        prefs = chat_request.preferences
-        pref_parts = []
-        if prefs.allergies:
-            pref_parts.append(f"- Аллергии: {', '.join(prefs.allergies)}.")
-        if prefs.dietary_restrictions:
-            pref_parts.append(
-                f"- Диетические ограничения: {', '.join(prefs.dietary_restrictions)}."
-            )
-        if prefs.favorite_cuisines:
-            pref_parts.append(f"- Любимые кухни: {', '.join(prefs.favorite_cuisines)}.")
-        if prefs.disliked_cuisines:
-            pref_parts.append(
-                f"- Нелюбимые кухни: {', '.join(prefs.disliked_cuisines)}."
-            )
-        if prefs.favorite_ingredients:
-            pref_parts.append(
-                f"- Любимые ингредиенты: {', '.join(prefs.favorite_ingredients)}."
-            )
-        if prefs.disliked_ingredients:
-            pref_parts.append(
-                f"- Нелюбимые ингредиенты: {', '.join(prefs.disliked_ingredients)}."
-            )
-        if prefs.preferred_difficulty:
-            pref_parts.append(f"- Сложность: {prefs.preferred_difficulty}.")
-        if prefs.available_time:
-            pref_parts.append(f"- Время на готовку: {prefs.available_time}.")
-        if pref_parts:
-            preferences_prompt_text = "Учти мои предпочтения:\n" + "\n".join(pref_parts)
+        # Остальные предпочтения (аллергии, кухни и т.д.)
+        preferences_prompt_text = ""
+        if chat_request.preferences:
+            prefs = chat_request.preferences
+            pref_parts = []
+            if prefs.allergies:
+                pref_parts.append(f"- Аллергии: {', '.join(prefs.allergies)}.")
+            if prefs.dietary_restrictions:
+                pref_parts.append(
+                    f"- Диетические ограничения: {', '.join(prefs.dietary_restrictions)}."
+                )
+            if prefs.favorite_cuisines:
+                pref_parts.append(f"- Любимые кухни: {', '.join(prefs.favorite_cuisines)}.")
+            if prefs.disliked_cuisines:
+                pref_parts.append(
+                    f"- Нелюбимые кухни: {', '.join(prefs.disliked_cuisines)}."
+                )
+            if prefs.favorite_ingredients:
+                pref_parts.append(
+                    f"- Любимые ингредиенты: {', '.join(prefs.favorite_ingredients)}."
+                )
+            if prefs.disliked_ingredients:
+                pref_parts.append(
+                    f"- Нелюбимые ингредиенты: {', '.join(prefs.disliked_ingredients)}."
+                )
+            if prefs.preferred_difficulty:
+                pref_parts.append(f"- Сложность: {prefs.preferred_difficulty}.")
+            if prefs.available_time:
+                pref_parts.append(f"- Время на готовку: {prefs.available_time}.")
+            if pref_parts:
+                preferences_prompt_text = "Учти мои предпочтения:\n" + "\n".join(pref_parts)
 
     try:
         ai_provider_response = await ai_service.get_ai_response(
@@ -279,11 +319,19 @@ async def handle_chat_request(
 
         bot_message_text = ai_provider_response.reply
         
-        # Обрабатываем теги еды (добавление/удаление) и очищаем текст
-        bot_message_text, diary_changed = await process_food_tags(bot_message_text, user_id, db_service)
+        # Обрабатываем теги еды (добавление/удаление) — только в режиме "для себя"
+        diary_updated = None
+        diary_changed = False
+        if is_group_mode:
+            # В режиме компании просто убираем теги если AI их случайно добавил
+            add_food_pattern = r'\[ADD_FOOD:\s*\{.*?\}\]'
+            bot_message_text = re.sub(add_food_pattern, '', bot_message_text, flags=re.DOTALL)
+            bot_message_text = re.sub(r'\[DELETE_FOOD:\s*["\'][^"\']+["\']\]', '', bot_message_text)
+            bot_message_text = bot_message_text.strip()
+        else:
+            bot_message_text, diary_changed = await process_food_tags(bot_message_text, user_id, db_service)
         
         # Если дневник изменился, получаем обновлённые данные
-        diary_updated = None
         if diary_changed:
             daily_summary = await db_service.get_daily_summary(user_id)
             today_entries = await db_service.get_today_diary_entries(user_id)

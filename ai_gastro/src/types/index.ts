@@ -157,6 +157,15 @@ export interface RecipeDetailsResponse {
     suggestions: string[];
 }
 
+// --- Режим готовки ---
+export type CookingMode = 'solo' | 'group';
+
+export interface GroupSettings {
+    guestCount: number;
+    allergies: string[];
+    restrictions: string[];
+}
+
 // --- Сохранённые рецепты ---
 export interface SavedRecipe {
     id: number;

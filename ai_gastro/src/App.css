@@ -75,6 +75,10 @@
     right: 145px;
 }
 
+.favorites-toggle-button.solo-hidden {
+    right: 25px;
+}
+
 .favorites-toggle-button:hover {
     background: #f9a825;
 }
@@ -85,6 +89,10 @@
     top: 25px;
     right: 205px;
     z-index: 1001;
+}
+
+.user-avatar-menu-wrapper.group-mode {
+    right: 85px;
 }
 
 .user-avatar-button {
@@ -188,8 +196,16 @@
         right: 115px;
     }
 
+    .favorites-toggle-button.solo-hidden {
+        right: 15px;
+    }
+
     .user-avatar-menu-wrapper {
         top: 15px;
         right: 165px;
+    }
+
+    .user-avatar-menu-wrapper.group-mode {
+        right: 65px;
     }
 }

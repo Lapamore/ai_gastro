@@ -21,7 +21,9 @@ import type {
     SessionDisplayInfo, 
     BackendChatResponse, 
     BackendPersonalizedSuggestions,
-    DailyProgress 
+    DailyProgress,
+    CookingMode,
+    GroupSettings
 } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -42,6 +44,13 @@ function App() {
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
     const [isDiaryModalOpen, setIsDiaryModalOpen] = useState<boolean>(false);
     const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState<boolean>(false);
+    const [cookingMode, setCookingMode] = useState<CookingMode>(() => 
+        (localStorage.getItem('cookingMode') as CookingMode) || 'solo'
+    );
+    const [groupSettings, setGroupSettings] = useState<GroupSettings>(() => {
+        const stored = localStorage.getItem('groupSettings');
+        return stored ? JSON.parse(stored) : { guestCount: 2, allergies: [], restrictions: [] };
+    });
     const [sessionsList, setSessionsList] = useState<SessionDisplayInfo[]>([]);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<boolean>(false);
     const [, setPreferencesLoaded] = useState<boolean>(false);
@@ -127,6 +136,16 @@ function App() {
         setDailyProgress(prev => ({ ...prev, targetCalories: newPrefs.targetCalories || 2000 }));
     }, [savePreferencesToBackend]);
 
+    const handleCookingModeChange = useCallback((mode: CookingMode) => {
+        setCookingMode(mode);
+        localStorage.setItem('cookingMode', mode);
+    }, []);
+
+    const handleGroupSettingsChange = useCallback((settings: GroupSettings) => {
+        setGroupSettings(settings);
+        localStorage.setItem('groupSettings', JSON.stringify(settings));
+    }, []);
+
     // Загрузка прогресса калорий из БД
     const fetchDailyProgress = useCallback(async () => {
         try {
@@ -199,7 +218,9 @@ function App() {
             const res = await api.post<BackendChatResponse>('/chat', { 
                 prompt: text, 
                 session_id: activeSessionId, 
-                preferences: userPreferences 
+                preferences: cookingMode === 'solo' ? userPreferences : undefined,
+                cookingMode,
+                groupSettings: cookingMode === 'group' ? groupSettings : undefined
             });
 
             if (!activeSessionId) { 
@@ -269,12 +290,16 @@ function App() {
     return (
         <div className="chat-app-wrapper">
             <SidebarToggle onClick={() => setIsSidebarOpen(!isSidebarOpen)} isOpen={isSidebarOpen} />
-            <button className="settings-toggle-button top-right-button" onClick={() => setIsSettingsModalOpen(true)}>⚙️</button>
-            <button className="diary-toggle-button top-right-button" onClick={() => setIsDiaryModalOpen(true)}>📔</button>
-            <button className="favorites-toggle-button top-right-button" onClick={() => setIsFavoritesModalOpen(true)}>⭐</button>
+            {cookingMode === 'solo' && (
+                <>
+                    <button className="settings-toggle-button top-right-button" onClick={() => setIsSettingsModalOpen(true)}>⚙️</button>
+                    <button className="diary-toggle-button top-right-button" onClick={() => setIsDiaryModalOpen(true)}>📔</button>
+                </>
+            )}
+            <button className={`favorites-toggle-button top-right-button ${cookingMode === 'group' ? 'solo-hidden' : ''}`} onClick={() => setIsFavoritesModalOpen(true)}>⭐</button>
             
             {user && (
-                <div className="user-avatar-menu-wrapper">
+                <div className={`user-avatar-menu-wrapper ${cookingMode === 'group' ? 'group-mode' : ''}`}>
                     <button
                         className="user-avatar-button top-right-button"
                         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -303,7 +328,11 @@ function App() {
                 sessions={sessionsList} 
                 activeSessionId={activeSessionId} 
                 isLoadingSuggestions={isLoadingSuggestions}
-                dailyProgress={dailyProgress} // Передаем данные калорий
+                dailyProgress={dailyProgress}
+                cookingMode={cookingMode}
+                groupSettings={groupSettings}
+                onCookingModeChange={handleCookingModeChange}
+                onGroupSettingsChange={handleGroupSettingsChange}
                 onSelectSession={id => { setActiveSessionId(id); setIsSidebarOpen(false); }}
                 onNewChat={() => { setActiveSessionId(null); setIsSidebarOpen(false); }}
                 onDeleteSession={async id => { 
