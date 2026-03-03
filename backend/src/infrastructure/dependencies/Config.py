@@ -26,6 +26,12 @@ class AppConfig:
 
         self.youtube_api_key: str = os.getenv("YOUTUBE_API_KEY", "")
         
+        # Yandex OAuth
+        self.yandex_client_id: str = os.getenv("YANDEX_CLIENT_ID", "")
+        self.yandex_client_secret: str = os.getenv("YANDEX_CLIENT_SECRET", "")
+        self.jwt_secret: str = os.getenv("JWT_SECRET", "change-me-in-production")
+        self.frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:8889")
+
         # Mattermost настройки
         self.mattermost_webhook_token: str = os.getenv("MATTERMOST_WEBHOOK_TOKEN", "")
         self.mattermost_url: str = os.getenv("MATTERMOST_URL", "")

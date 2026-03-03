@@ -50,8 +50,8 @@
 
 .clear-chat-button:hover {
     opacity: 1;
-    transform: scale(1.2) rotate(10deg); /* Эффект при наведении */
-    color: var(--secondary-color); /* Меняем цвет при наведении */
+    transform: scale(1.2) rotate(10deg);
+    color: var(--secondary-color);
 }
 
 @media (max-width: 768px) {

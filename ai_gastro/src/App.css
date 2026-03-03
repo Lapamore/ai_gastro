@@ -70,6 +70,87 @@
     background: var(--accent-color);
 }
 
+/* Аватар пользователя */
+.user-avatar-menu-wrapper {
+    position: fixed;
+    top: 25px;
+    right: 145px;
+    z-index: 1001;
+}
+
+.user-avatar-button {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    overflow: hidden;
+    padding: 0;
+}
+
+.user-avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+}
+
+.user-menu-dropdown {
+    position: absolute;
+    top: 58px;
+    right: 0;
+    background: var(--container-bg);
+    border-radius: 12px;
+    box-shadow: 0 8px 30px var(--shadow-medium);
+    padding: 12px;
+    min-width: 160px;
+    z-index: 1002;
+    animation: menuSlideIn 0.15s ease-out;
+}
+
+@keyframes menuSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.user-menu-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary, #333);
+    padding: 4px 8px 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-menu-logout {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 10px;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #d32f2f;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.user-menu-logout:hover {
+    background: rgba(211, 47, 47, 0.08);
+}
+
 /* Мобильная адаптация */
 @media (max-width: 768px) {
     .chat-app-container {
@@ -92,5 +173,10 @@
     
     .diary-toggle-button {
         right: 65px;
+    }
+
+    .user-avatar-menu-wrapper {
+        top: 15px;
+        right: 115px;
     }
 }

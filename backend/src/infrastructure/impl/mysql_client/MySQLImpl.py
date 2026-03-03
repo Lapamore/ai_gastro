@@ -55,11 +55,27 @@ class MySQLService(AbstractDBService):
                 await cur.execute("""
                     CREATE TABLE IF NOT EXISTS users (
                         id VARCHAR(36) PRIMARY KEY,
+                        yandex_id VARCHAR(50) UNIQUE,
                         username VARCHAR(255),
+                        email VARCHAR(255),
+                        avatar_url VARCHAR(500),
                         created_at DATETIME NOT NULL,
-                        INDEX idx_username (username)
+                        INDEX idx_username (username),
+                        INDEX idx_yandex_id (yandex_id)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """)
+                
+                # Миграция: добавляем новые столбцы если их нет (для существующих БД)
+                for col, col_def in [
+                    ('yandex_id', 'VARCHAR(50) UNIQUE'),
+                    ('email', 'VARCHAR(255)'),
+                    ('avatar_url', 'VARCHAR(500)'),
+                ]:
+                    try:
+                        await cur.execute(f"ALTER TABLE users ADD COLUMN {col} {col_def}")
+                        logger.info(f"Добавлен столбец users.{col}")
+                    except Exception:
+                        pass  # столбец уже существует
                 
                 # 2. Таблица предпочтений пользователей
                 await cur.execute("""
@@ -149,7 +165,14 @@ class MySQLService(AbstractDBService):
                     row = await cur.fetchone()
                     
                     if row:
-                        return User(id=row['id'], username=row['username'], created_at=row['created_at'])
+                        return User(
+                            id=row['id'],
+                            yandex_id=row.get('yandex_id'),
+                            username=row.get('username'),
+                            email=row.get('email'),
+                            avatar_url=row.get('avatar_url'),
+                            created_at=row['created_at'],
+                        )
                     
                     # Создаём нового пользователя
                     now = datetime.now(timezone.utc)
@@ -160,6 +183,54 @@ class MySQLService(AbstractDBService):
                     return User(id=user_id, username=None, created_at=now)
         except Exception as e:
             logger.error(f"Ошибка get_or_create_user: {e}")
+            raise
+
+    async def get_or_create_user_by_yandex(
+        self, yandex_id: str, display_name: str, email: str, avatar_id: str
+    ) -> User:
+        """Получить или создать пользователя по Yandex ID"""
+        await self._ensure_pool()
+        avatar_url = f"https://avatars.yandex.net/get-yapic/{avatar_id}/islands-200" if avatar_id else None
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    # Ищем по yandex_id
+                    await cur.execute("SELECT * FROM users WHERE yandex_id = %s", (yandex_id,))
+                    row = await cur.fetchone()
+                    
+                    if row:
+                        # Обновляем имя/email/аватар на случай если они изменились
+                        await cur.execute(
+                            "UPDATE users SET username = %s, email = %s, avatar_url = %s WHERE yandex_id = %s",
+                            (display_name, email, avatar_url, yandex_id)
+                        )
+                        return User(
+                            id=row['id'],
+                            yandex_id=row.get('yandex_id'),
+                            username=display_name,
+                            email=email,
+                            avatar_url=avatar_url,
+                            created_at=row['created_at'],
+                        )
+                    
+                    # Создаём нового
+                    import uuid
+                    user_id = str(uuid.uuid4())
+                    now = datetime.now(timezone.utc)
+                    await cur.execute(
+                        "INSERT INTO users (id, yandex_id, username, email, avatar_url, created_at) VALUES (%s, %s, %s, %s, %s, %s)",
+                        (user_id, yandex_id, display_name, email, avatar_url, now)
+                    )
+                    return User(
+                        id=user_id,
+                        yandex_id=yandex_id,
+                        username=display_name,
+                        email=email,
+                        avatar_url=avatar_url,
+                        created_at=now,
+                    )
+        except Exception as e:
+            logger.error(f"Ошибка get_or_create_user_by_yandex: {e}")
             raise
 
     # ==================== МЕТОДЫ ПРЕДПОЧТЕНИЙ ====================

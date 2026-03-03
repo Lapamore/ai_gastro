@@ -2,7 +2,7 @@ import logging
 import uuid
 import re
 import json
-from fastapi import APIRouter, HTTPException, Depends, status, Header
+from fastapi import APIRouter, HTTPException, Depends, status
 from typing import List, Optional
 from datetime import datetime, timezone
 
@@ -29,14 +29,10 @@ from src.infrastructure.dependencies.Dependencies import (
     get_db_service_dependency,
     get_youtube_service,
 )
+from src.api.auth_dependency import get_current_user_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["Chat & Sessions"])
-
-
-def get_user_id(x_user_id: str = Header(..., alias="X-User-ID")) -> str:
-    """Получаем user_id из заголовка запроса"""
-    return x_user_id
 
 
 def generate_session_title(prompt: str) -> str:
@@ -177,7 +173,7 @@ async def process_food_tags(bot_message_text: str, user_id: str, db_service: Abs
 @router.post("/chat", response_model=APIChatResponseWithVideos)
 async def handle_chat_request(
     chat_request: UserChatRequest,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(get_current_user_id),
     ai_service: AbstractAIService = Depends(get_ai_service_dependency),
     db_service: AbstractDBService = Depends(get_db_service_dependency),
     youtube_service: YouTubeService = Depends(get_youtube_service),
@@ -320,7 +316,7 @@ async def handle_chat_request(
 
 @router.get("/sessions", response_model=List[SessionMetadataListResponse])
 async def list_user_sessions(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(get_current_user_id),
     db_service: AbstractDBService = Depends(get_db_service_dependency),
     limit: int = 50,
     skip: int = 0,

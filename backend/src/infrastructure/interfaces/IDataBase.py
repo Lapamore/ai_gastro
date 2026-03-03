@@ -17,6 +17,13 @@ class AbstractDBService(ABC):
         """Получить пользователя или создать нового"""
         raise NotImplementedError()
 
+    @abstractmethod
+    async def get_or_create_user_by_yandex(
+        self, yandex_id: str, display_name: str, email: str, avatar_id: str
+    ) -> User:
+        """Получить или создать пользователя по Yandex ID"""
+        raise NotImplementedError()
+
     # ==================== ПРЕДПОЧТЕНИЯ ====================
     
     @abstractmethod

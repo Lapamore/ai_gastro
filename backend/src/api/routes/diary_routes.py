@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from datetime import datetime, timezone
 import uuid
@@ -7,6 +7,7 @@ import logging
 from src.core.models.diary.DiaryEntryModel import DiaryEntry
 from src.infrastructure.interfaces.IDataBase import AbstractDBService
 from src.infrastructure.dependencies.Dependencies import get_db_service_dependency
+from src.api.auth_dependency import get_current_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +23,9 @@ class DiaryEntryInput(BaseModel):
     mealType: str = "snack"
 
 
-def get_user_id(x_user_id: str = Header(..., alias="X-User-ID")) -> str:
-    """Получаем user_id из заголовка запроса"""
-    return x_user_id
-
-
 @router.get("/daily-summary")
 async def get_daily_summary(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(get_current_user_id),
     db_service: AbstractDBService = Depends(get_db_service_dependency)
 ):
     """Получить суммарные данные калорий за сегодня"""
@@ -38,7 +34,7 @@ async def get_daily_summary(
 
 @router.get("/entries")
 async def get_today_entries(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(get_current_user_id),
     db_service: AbstractDBService = Depends(get_db_service_dependency)
 ):
     """Получить все записи дневника за сегодня"""
@@ -61,7 +57,7 @@ async def get_today_entries(
 @router.post("/add")
 async def add_diary_entry(
     entry: DiaryEntryInput,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(get_current_user_id),
     db_service: AbstractDBService = Depends(get_db_service_dependency)
 ):
     """Добавить запись в дневник вручную"""
@@ -87,7 +83,7 @@ async def add_diary_entry(
 @router.delete("/delete/{name}")
 async def delete_diary_entry(
     name: str,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(get_current_user_id),
     db_service: AbstractDBService = Depends(get_db_service_dependency)
 ):
     """Удалить запись из дневника по названию"""

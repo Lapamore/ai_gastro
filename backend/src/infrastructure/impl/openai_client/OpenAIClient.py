@@ -95,6 +95,10 @@ class OpenAIAITunnelService(AbstractAIService):
             logger.warning("Итоговый системный промпт пуст!")
             effective_system_prompt = "Ты полезный ассистент."
 
+        # Добавляем предпочтения пользователя (аллергии, кухни и т.д.) в системный промпт
+        if preferences_text:
+            effective_system_prompt += f"\n\n{preferences_text}"
+
         openai_messages = self._convert_history_to_openai_format(
             effective_system_prompt, conversation_history, user_prompt, realtime_context
         )

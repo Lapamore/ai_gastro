@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional, Literal
 from pydantic import BaseModel
 from typing import List
@@ -8,6 +8,7 @@ from src.core.models.users.UserModel import User
 from src.core.models.users.UserPreferencesModel import UserPreferences
 from src.infrastructure.interfaces.IDataBase import AbstractDBService
 from src.infrastructure.dependencies.Dependencies import get_db_service_dependency
+from src.api.auth_dependency import get_current_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -57,14 +58,9 @@ class PreferencesResponse(BaseModel):
     targetCarbs: Optional[float] = None
 
 
-def get_user_id(x_user_id: str = Header(..., alias="X-User-ID")) -> str:
-    """Получаем user_id из заголовка запроса"""
-    return x_user_id
-
-
 @router.get("/me")
 async def get_current_user(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(get_current_user_id),
     db_service: AbstractDBService = Depends(get_db_service_dependency)
 ):
     """Получить или создать пользователя"""
@@ -74,7 +70,7 @@ async def get_current_user(
 
 @router.get("/preferences", response_model=PreferencesResponse)
 async def get_preferences(
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(get_current_user_id),
     db_service: AbstractDBService = Depends(get_db_service_dependency)
 ):
     """Получить предпочтения пользователя"""
@@ -108,7 +104,7 @@ async def get_preferences(
 @router.post("/preferences", response_model=PreferencesResponse)
 async def save_preferences(
     prefs_input: PreferencesInput,
-    user_id: str = Depends(get_user_id),
+    user_id: str = Depends(get_current_user_id),
     db_service: AbstractDBService = Depends(get_db_service_dependency)
 ):
     """Сохранить предпочтения пользователя"""

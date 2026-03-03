@@ -12,6 +12,7 @@ import Sidebar from './components/Sidebar/Sidebar';
 import QuickActions from './components/QuickActions/QuickActions';
 import SettingsModal from './components/SettingsModal/SettingsModal';
 import DiaryModal from './components/DiaryModal/DiaryModal';
+import { useAuth } from './contexts/AuthContext';
 
 import type { 
     FrontendMessage, 
@@ -22,7 +23,7 @@ import type {
     DailyProgress 
 } from './types';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const initialUserPreferences: UserPreferences = {
     allergies: [], dietaryRestrictions: [], favoriteCuisines: [], dislikedCuisines: [],
@@ -30,17 +31,9 @@ const initialUserPreferences: UserPreferences = {
     targetCalories: 2000
 };
 
-// Получаем или создаём user_id
-const getUserId = (): string => {
-    let userId = localStorage.getItem('gastro_user_id');
-    if (!userId) {
-        userId = uuidv4();
-        localStorage.setItem('gastro_user_id', userId);
-    }
-    return userId;
-};
-
 function App() {
+    const { token, user, logout } = useAuth();
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
     const [messages, setMessages] = useState<FrontendMessage[]>([]);
     const [isBotTyping, setIsBotTyping] = useState<boolean>(false);
     const [userInput, setUserInput] = useState<string>('');
@@ -51,14 +44,24 @@ function App() {
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<boolean>(false);
     const [, setPreferencesLoaded] = useState<boolean>(false);
     
-    // User ID хранится локально
-    const userId = useMemo(() => getUserId(), []);
-    
-    // Axios instance с заголовком X-User-ID
-    const api: AxiosInstance = useMemo(() => axios.create({
-        baseURL: API_BASE_URL,
-        headers: { 'X-User-ID': userId }
-    }), [userId]);
+    // Axios instance с JWT авторизацией
+    const api: AxiosInstance = useMemo(() => {
+        const instance = axios.create({
+            baseURL: API_BASE_URL,
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        // Если получим 401 — разлогиниваем
+        instance.interceptors.response.use(
+            (res) => res,
+            (err) => {
+                if (err.response?.status === 401) {
+                    logout();
+                }
+                return Promise.reject(err);
+            }
+        );
+        return instance;
+    }, [token, logout]);
     
     // Состояние дневника калорий
     const [dailyProgress, setDailyProgress] = useState<DailyProgress>({
@@ -247,6 +250,31 @@ function App() {
             <SidebarToggle onClick={() => setIsSidebarOpen(!isSidebarOpen)} isOpen={isSidebarOpen} />
             <button className="settings-toggle-button top-right-button" onClick={() => setIsSettingsModalOpen(true)}>⚙️</button>
             <button className="diary-toggle-button top-right-button" onClick={() => setIsDiaryModalOpen(true)}>📔</button>
+            
+            {user && (
+                <div className="user-avatar-menu-wrapper">
+                    <button
+                        className="user-avatar-button top-right-button"
+                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                        title={user.display_name}
+                    >
+                        {user.avatar_url ? (
+                            <img src={user.avatar_url} alt="" className="user-avatar-img" />
+                        ) : (
+                            <span>👤</span>
+                        )}
+                    </button>
+                    {isUserMenuOpen && (
+                        <>
+                            <div className="user-menu-overlay" onClick={() => setIsUserMenuOpen(false)} />
+                            <div className="user-menu-dropdown">
+                                <div className="user-menu-name">{user.display_name}</div>
+                                <button className="user-menu-logout" onClick={logout}>🚪 Выйти</button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
             
             <Sidebar 
                 isOpen={isSidebarOpen} 
