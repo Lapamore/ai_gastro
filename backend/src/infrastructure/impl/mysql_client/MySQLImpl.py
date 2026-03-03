@@ -9,6 +9,7 @@ from src.core.models.chatting.ChatMessageModel import ChatMessage
 from src.core.models.diary.DiaryEntryModel import DiaryEntry
 from src.core.models.users.UserModel import User
 from src.core.models.users.UserPreferencesModel import UserPreferences
+from src.core.models.recipes.SavedRecipeModel import SavedRecipe
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +153,22 @@ class MySQLService(AbstractDBService):
                 """)
                 
                 logger.info("Все 5 таблиц MySQL успешно созданы/проверены")
+
+                # 6. Таблица сохранённых рецептов
+                await cur.execute("""
+                    CREATE TABLE IF NOT EXISTS saved_recipes (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        user_id VARCHAR(36) NOT NULL,
+                        message_text TEXT NOT NULL,
+                        rating VARCHAR(20) NOT NULL DEFAULT 'liked',
+                        created_at DATETIME NOT NULL,
+                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                        INDEX idx_user_id (user_id),
+                        INDEX idx_rating (rating)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """)
+                
+                logger.info("Таблица saved_recipes создана/проверена")
 
     # ==================== МЕТОДЫ ПОЛЬЗОВАТЕЛЕЙ ====================
 
@@ -628,4 +645,76 @@ class MySQLService(AbstractDBService):
                         return False
         except Exception as e:
             logger.error(f"Ошибка удаления записи из дневника в MySQL: {e}", exc_info=True)
+            return False
+
+    # ==================== СОХРАНЁННЫЕ РЕЦЕПТЫ ====================
+
+    async def save_recipe(self, user_id: str, message_text: str, rating: str) -> SavedRecipe:
+        """Сохранить рецепт (liked/disliked)"""
+        await self._ensure_pool()
+        now = datetime.now(timezone.utc)
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    await cur.execute(
+                        """INSERT INTO saved_recipes (user_id, message_text, rating, created_at)
+                           VALUES (%s, %s, %s, %s)""",
+                        (user_id, message_text, rating, now)
+                    )
+                    recipe_id = cur.lastrowid
+                    logger.info(f"Рецепт сохранён: id={recipe_id}, rating={rating}, user={user_id}")
+                    return SavedRecipe(
+                        id=recipe_id,
+                        user_id=user_id,
+                        message_text=message_text,
+                        rating=rating,
+                        created_at=now
+                    )
+        except Exception as e:
+            logger.error(f"Ошибка сохранения рецепта в MySQL: {e}", exc_info=True)
+            raise
+
+    async def get_favorite_recipes(self, user_id: str) -> List[SavedRecipe]:
+        """Получить любимые рецепты (rating='liked')"""
+        await self._ensure_pool()
+        recipes = []
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    await cur.execute(
+                        """SELECT id, user_id, message_text, rating, created_at
+                           FROM saved_recipes
+                           WHERE user_id = %s AND rating = 'liked'
+                           ORDER BY created_at DESC""",
+                        (user_id,)
+                    )
+                    rows = await cur.fetchall()
+                    for row in rows:
+                        recipes.append(SavedRecipe(
+                            id=row['id'],
+                            user_id=row['user_id'],
+                            message_text=row['message_text'],
+                            rating=row['rating'],
+                            created_at=row['created_at']
+                        ))
+        except Exception as e:
+            logger.error(f"Ошибка получения любимых рецептов из MySQL: {e}", exc_info=True)
+        return recipes
+
+    async def delete_saved_recipe(self, recipe_id: int, user_id: str) -> bool:
+        """Удалить сохранённый рецепт"""
+        await self._ensure_pool()
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "DELETE FROM saved_recipes WHERE id = %s AND user_id = %s",
+                        (recipe_id, user_id)
+                    )
+                    deleted = cur.rowcount > 0
+                    if deleted:
+                        logger.info(f"Рецепт id={recipe_id} удалён для пользователя {user_id}")
+                    return deleted
+        except Exception as e:
+            logger.error(f"Ошибка удаления рецепта из MySQL: {e}", exc_info=True)
             return False

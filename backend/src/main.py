@@ -8,6 +8,7 @@ from src.api.routes.diary_routes import router as diary_router
 from src.api.routes.user_routes import router as user_router
 from src.api.routes.mattermost_routes import router as mattermost_router
 from src.api.routes.auth_routes import router as auth_router
+from src.api.routes.recipe_routes import router as recipe_router
 
 # Настройка логирования
 logging.basicConfig(
@@ -62,6 +63,7 @@ def create_app():
     app.include_router(user_router, prefix="/api")
     app.include_router(mattermost_router, prefix="/api")
     app.include_router(auth_router, prefix="/api")
+    app.include_router(recipe_router, prefix="/api")
 
     return app
 

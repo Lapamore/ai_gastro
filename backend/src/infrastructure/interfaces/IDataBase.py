@@ -6,6 +6,7 @@ from src.core.models.sessions.SessionMetadataModel import SessionMetadata
 from src.core.models.diary.DiaryEntryModel import DiaryEntry
 from src.core.models.users.UserModel import User
 from src.core.models.users.UserPreferencesModel import UserPreferences
+from src.core.models.recipes.SavedRecipeModel import SavedRecipe
 
 
 class AbstractDBService(ABC):
@@ -90,6 +91,23 @@ class AbstractDBService(ABC):
     @abstractmethod
     async def delete_diary_entry_by_name(self, user_id: str, name: str) -> bool:
         """Удалить запись из дневника за сегодня по названию"""
+        raise NotImplementedError()
+
+    # ==================== СОХРАНЁННЫЕ РЕЦЕПТЫ ====================
+
+    @abstractmethod
+    async def save_recipe(self, user_id: str, message_text: str, rating: str) -> SavedRecipe:
+        """Сохранить рецепт (liked/disliked)"""
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def get_favorite_recipes(self, user_id: str) -> List[SavedRecipe]:
+        """Получить любимые рецепты (rating='liked')"""
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def delete_saved_recipe(self, recipe_id: int, user_id: str) -> bool:
+        """Удалить сохранённый рецепт"""
         raise NotImplementedError()
     
     # ==================== УПРАВЛЕНИЕ СОЕДИНЕНИЕМ ====================

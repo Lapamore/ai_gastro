@@ -9,9 +9,10 @@ interface MessageListProps {
     messages: Message[]; // Этот тип Message ДОЛЖЕН включать опциональное поле videos
     isBotTyping: boolean;
     onSuggestionClick: (suggestionText: string) => void;
+    onRateRecipe?: (messageId: string, rating: 'liked' | 'disliked') => void;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages, isBotTyping, onSuggestionClick }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, isBotTyping, onSuggestionClick, onRateRecipe }) => {
     // Используем улучшенную логику скролла, которую обсуждали
     const chatMessagesContainerRef = useRef<HTMLDivElement>(null);
     const prevMessagesLengthRef = useRef(messages.length);
@@ -46,7 +47,13 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isBotTyping, onSugg
                     timestamp={msg.timestamp}
                     suggestions={msg.suggestions}
                     videos={msg.videos} // <--- ВОТ ВАЖНОЕ ДОБАВЛЕНИЕ!
+                    recipeRating={msg.recipeRating}
                     onSuggestionClick={onSuggestionClick}
+                    onRateRecipe={
+                        msg.sender === 'bot' || (msg.sender as string) === 'assistant'
+                            ? (rating) => onRateRecipe?.(msg.id, rating)
+                            : undefined
+                    }
                 />
             ))}
             {isBotTyping && <TypingIndicator />}

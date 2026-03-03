@@ -12,6 +12,7 @@ import Sidebar from './components/Sidebar/Sidebar';
 import QuickActions from './components/QuickActions/QuickActions';
 import SettingsModal from './components/SettingsModal/SettingsModal';
 import DiaryModal from './components/DiaryModal/DiaryModal';
+import FavoritesModal from './components/FavoritesModal/FavoritesModal';
 import { useAuth } from './contexts/AuthContext';
 
 import type { 
@@ -40,6 +41,7 @@ function App() {
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
     const [isDiaryModalOpen, setIsDiaryModalOpen] = useState<boolean>(false);
+    const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState<boolean>(false);
     const [sessionsList, setSessionsList] = useState<SessionDisplayInfo[]>([]);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState<boolean>(false);
     const [, setPreferencesLoaded] = useState<boolean>(false);
@@ -245,11 +247,31 @@ function App() {
         } finally { setIsLoadingSuggestions(false); }
     };
 
+    const handleRateRecipe = async (messageId: string, rating: 'liked' | 'disliked') => {
+        // Найти сообщение по id
+        const msg = messages.find(m => m.id === messageId);
+        if (!msg) return;
+
+        try {
+            await api.post('/recipes', {
+                message_text: msg.text,
+                rating,
+            });
+            // Обновляем состояние сообщения
+            setMessages(prev => prev.map(m => 
+                m.id === messageId ? { ...m, recipeRating: rating } : m
+            ));
+        } catch (e) {
+            console.error('Ошибка сохранения оценки рецепта', e);
+        }
+    };
+
     return (
         <div className="chat-app-wrapper">
             <SidebarToggle onClick={() => setIsSidebarOpen(!isSidebarOpen)} isOpen={isSidebarOpen} />
             <button className="settings-toggle-button top-right-button" onClick={() => setIsSettingsModalOpen(true)}>⚙️</button>
             <button className="diary-toggle-button top-right-button" onClick={() => setIsDiaryModalOpen(true)}>📔</button>
+            <button className="favorites-toggle-button top-right-button" onClick={() => setIsFavoritesModalOpen(true)}>⭐</button>
             
             {user && (
                 <div className="user-avatar-menu-wrapper">
@@ -298,7 +320,7 @@ function App() {
                         api.delete(`/sessions/${activeSessionId}`).then(() => setActiveSessionId(null));
                     }
                 }} />
-                <MessageList messages={messages} isBotTyping={isBotTyping} onSuggestionClick={handleSendMessage} />
+                <MessageList messages={messages} isBotTyping={isBotTyping} onSuggestionClick={handleSendMessage} onRateRecipe={handleRateRecipe} />
                 <ChatInput userInput={userInput} setUserInput={setUserInput} onSendMessage={handleSendMessage} isBotTyping={isBotTyping} />
                 <QuickActions onActionClick={handleSendMessage} />
             </div>
@@ -312,6 +334,11 @@ function App() {
                 api={api}
                 preferences={userPreferences}
                 onPreferencesChange={handlePreferencesChange}
+            />
+            <FavoritesModal 
+                isOpen={isFavoritesModalOpen} 
+                onClose={() => setIsFavoritesModalOpen(false)} 
+                api={api}
             />
         </div>
     );

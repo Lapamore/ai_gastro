@@ -212,11 +212,26 @@ async def handle_chat_request(
     user_prefs = await db_service.get_user_preferences(user_id)
     profile_context = build_user_profile_context(user_prefs)
 
+    # Получаем любимые рецепты пользователя
+    favorite_recipes = await db_service.get_favorite_recipes(user_id)
+    favorites_context = ""
+    if favorite_recipes:
+        fav_lines = ["""
+╔══════════════════════════════════════════════════════════════╗
+║  ⭐ ЛЮБИМЫЕ РЕЦЕПТЫ ПОЛЬЗОВАТЕЛЯ                             ║
+╠══════════════════════════════════════════════════════════════╣"""]
+        for i, recipe in enumerate(favorite_recipes[:10], 1):
+            # Берём первые 150 символов текста рецепта для краткости
+            short_text = recipe.message_text[:150].replace('\n', ' ')
+            fav_lines.append(f"║  {i}. {short_text}...")
+        fav_lines.append("╚══════════════════════════════════════════════════════════════╝")
+        favorites_context = "\n".join(fav_lines)
+
     # Добавляем текущую дату в контекст
     current_date_context = f"Сегодняшняя дата: {datetime.now(timezone.utc).strftime('%d.%m.%Y')}.\n"
 
-    # Формируем realtime контекст (дневник + профиль) - передаётся прямо в сообщение пользователя
-    realtime_context = current_date_context + profile_context + diary_context
+    # Формируем realtime контекст (дневник + профиль + любимые рецепты) - передаётся прямо в сообщение пользователя
+    realtime_context = current_date_context + profile_context + diary_context + favorites_context
     
     # Остальные предпочтения (аллергии, кухни и т.д.) - можно оставить в системном промпте
     preferences_prompt_text = ""

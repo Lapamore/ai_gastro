@@ -278,6 +278,64 @@
     opacity: 0.9;
 }
 
+/* --- КНОПКИ ОЦЕНКИ РЕЦЕПТА --- */
+.recipe-rating-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.rate-btn {
+    background: none;
+    border: 1.5px solid var(--border-color, #ddd);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.rate-btn:hover:not(:disabled) {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+.rate-btn:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+.rate-btn.active {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.like-btn.active {
+    border-color: #4caf50;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.dislike-btn.active {
+    border-color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+}
+
+.rate-label {
+    font-size: 0.78rem;
+    color: var(--text-color-light, #888);
+    margin-left: 4px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-5px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
 /* --- КНОПКИ-ПОДСКАЗКИ (SUGGESTIONS) --- */
 .suggestion-buttons-container {
     display: flex;

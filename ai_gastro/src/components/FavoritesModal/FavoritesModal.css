@@ -1,0 +1,211 @@
+/* --- Оверлей модального окна --- */
+.favorites-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(38, 70, 83, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.favorites-modal-content {
+    background: var(--container-bg);
+    border-radius: var(--border-radius-md);
+    width: 90%;
+    max-width: 650px;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px var(--shadow-medium);
+    border: 1px solid var(--border-color);
+}
+
+/* --- Заголовок --- */
+.favorites-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, #f9a825, #ff6f00);
+}
+
+.favorites-modal-header h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.4rem;
+    font-family: var(--font-display);
+}
+
+.favorites-modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.favorites-modal-close:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+/* --- Тело модального окна --- */
+.favorites-modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* --- Загрузка --- */
+.favorites-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-color-light);
+    font-size: 1rem;
+}
+
+/* --- Пусто --- */
+.favorites-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-color-light);
+}
+
+.favorites-empty-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.favorites-empty p {
+    margin: 4px 0;
+}
+
+.favorites-empty-hint {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+/* --- Карточка рецепта --- */
+.favorite-recipe-card {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+
+.favorite-recipe-card:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.favorite-recipe-header {
+    padding: 14px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    transition: background 0.15s;
+}
+
+.favorite-recipe-header:hover {
+    background: rgba(0,0,0,0.02);
+}
+
+.favorite-recipe-preview {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    line-height: 1.4;
+    flex: 1;
+}
+
+.favorite-recipe-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.favorite-recipe-date {
+    font-size: 0.75rem;
+    color: var(--text-color-light);
+    white-space: nowrap;
+}
+
+.favorite-recipe-expand {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    color: var(--text-color-light);
+}
+
+.favorite-recipe-expand.expanded {
+    transform: rotate(180deg);
+}
+
+/* --- Тело развёрнутого рецепта --- */
+.favorite-recipe-body {
+    padding: 0 16px 14px;
+    border-top: 1px solid var(--border-color);
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; max-height: 0; }
+    to { opacity: 1; max-height: 2000px; }
+}
+
+.favorite-recipe-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-top: 12px;
+}
+
+.favorite-recipe-text .markdown-content p {
+    margin-bottom: 0.5em;
+}
+
+.favorite-recipe-delete {
+    margin-top: 12px;
+    background: none;
+    border: 1px solid #f44336;
+    color: #f44336;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.favorite-recipe-delete:hover {
+    background: rgba(244, 67, 54, 0.08);
+}
+
+/* --- Адаптивность --- */
+@media (max-width: 768px) {
+    .favorites-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .favorites-modal-header {
+        padding: 16px 18px;
+    }
+
+    .favorites-modal-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .favorites-modal-body {
+        padding: 16px 18px;
+    }
+}

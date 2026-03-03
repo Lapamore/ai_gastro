@@ -70,11 +70,20 @@
     background: var(--accent-color);
 }
 
+/* Кнопка избранных рецептов */
+.favorites-toggle-button {
+    right: 145px;
+}
+
+.favorites-toggle-button:hover {
+    background: #f9a825;
+}
+
 /* Аватар пользователя */
 .user-avatar-menu-wrapper {
     position: fixed;
     top: 25px;
-    right: 145px;
+    right: 205px;
     z-index: 1001;
 }
 
@@ -175,8 +184,12 @@
         right: 65px;
     }
 
+    .favorites-toggle-button {
+        right: 115px;
+    }
+
     .user-avatar-menu-wrapper {
         top: 15px;
-        right: 115px;
+        right: 165px;
     }
 }

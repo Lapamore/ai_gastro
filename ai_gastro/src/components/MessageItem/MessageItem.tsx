@@ -11,7 +11,9 @@ interface MessageItemProps {
     timestamp: FrontendMessage['timestamp'];
     suggestions?: FrontendMessage['suggestions'];
     videos?: BackendVideoResult[];
+    recipeRating?: 'liked' | 'disliked' | null;
     onSuggestionClick: (suggestionText: string) => void;
+    onRateRecipe?: (rating: 'liked' | 'disliked') => void;
 }
 
 const MessageItem: React.FC<MessageItemProps> = ({ 
@@ -20,7 +22,9 @@ const MessageItem: React.FC<MessageItemProps> = ({
     timestamp, 
     suggestions, 
     videos, 
-    onSuggestionClick 
+    recipeRating,
+    onSuggestionClick,
+    onRateRecipe
 }) => {
     const formatTime = (date: Date): string => {
         return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -76,6 +80,29 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     )}
 
                     {timestamp && <div className="timestamp">{formatTime(timestamp)}</div>}
+
+                    {isBot && onRateRecipe && (
+                        <div className="recipe-rating-buttons">
+                            <button
+                                className={`rate-btn like-btn ${recipeRating === 'liked' ? 'active' : ''}`}
+                                onClick={() => onRateRecipe('liked')}
+                                disabled={recipeRating !== undefined && recipeRating !== null}
+                                title="Нравится"
+                            >
+                                👍
+                            </button>
+                            <button
+                                className={`rate-btn dislike-btn ${recipeRating === 'disliked' ? 'active' : ''}`}
+                                onClick={() => onRateRecipe('disliked')}
+                                disabled={recipeRating !== undefined && recipeRating !== null}
+                                title="Не нравится"
+                            >
+                                👎
+                            </button>
+                            {recipeRating === 'liked' && <span className="rate-label">Сохранено в избранное ⭐</span>}
+                            {recipeRating === 'disliked' && <span className="rate-label">Учтём 👌</span>}
+                        </div>
+                    )}
                 </div>
             </div>
             {suggestions && suggestions.length > 0 && (

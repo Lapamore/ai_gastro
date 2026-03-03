@@ -14,6 +14,7 @@ export interface FrontendMessage {
     suggestions?: string[];
     timestamp: Date;
     videos?: BackendVideoResult[];
+    recipeRating?: 'liked' | 'disliked' | null; // Пользователь оценил рецепт
 }
 
 // --- Профиль пользователя (Настройки) ---
@@ -154,4 +155,12 @@ export interface BotServiceResponse {
 export interface RecipeDetailsResponse {
     text: string;
     suggestions: string[];
+}
+
+// --- Сохранённые рецепты ---
+export interface SavedRecipe {
+    id: number;
+    message_text: string;
+    rating: string;
+    created_at: string;
 }
