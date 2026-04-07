@@ -23,11 +23,20 @@ interface MealPlanData {
     target_protein: number;
     target_fat: number;
     target_carbs: number;
+    daily_target_calories: number;
+    daily_target_protein: number;
+    daily_target_fat: number;
+    daily_target_carbs: number;
+    already_eaten_calories: number;
+    already_eaten_protein: number;
+    already_eaten_fat: number;
+    already_eaten_carbs: number;
     deviation_calories: number;
     deviation_protein: number;
     deviation_fat: number;
     deviation_carbs: number;
     solver_status: string;
+    solution_method: string;
 }
 
 interface MealPlanModalProps {
@@ -81,6 +90,10 @@ function MealPlanModal({ isOpen, onClose, api }: MealPlanModalProps) {
         return Math.round((deviation / target) * 100);
     };
 
+    const isSuccessfulPlan = Boolean(
+        plan && (plan.solver_status.startsWith('optimal') || plan.solver_status.startsWith('feasible'))
+    );
+
     return (
         <div className="mealplan-overlay" onClick={onClose}>
             <div className="mealplan-modal" onClick={e => e.stopPropagation()}>
@@ -92,9 +105,8 @@ function MealPlanModal({ isOpen, onClose, api }: MealPlanModalProps) {
                 <div className="mealplan-body">
                     <div className="mealplan-info">
                         <p>
-                            Алгоритм <strong>линейного программирования</strong> (симплекс-метод) 
-                            подбирает оптимальные порции продуктов, минимизируя отклонение от ваших 
-                            целевых калорий и БЖУ.
+                            Планировщик подбирает блюда так, чтобы попасть в калории и БЖУ,
+                            не повторять одно и то же без необходимости и по возможности учитывать ваши предпочтения.
                         </p>
                     </div>
 
@@ -118,11 +130,16 @@ function MealPlanModal({ isOpen, onClose, api }: MealPlanModalProps) {
 
                     {error && <div className="mealplan-error">{error}</div>}
 
-                    {plan && plan.solver_status === 'optimal' && (
+                    {plan && isSuccessfulPlan && (
                         <div className="mealplan-result">
                             {/* Сводка отклонений */}
                             <div className="mealplan-summary">
-                                <h3>📊 Результат оптимизации</h3>
+                                <h3>📊 {plan.already_eaten_calories > 0 ? 'План на оставшуюся часть дня' : 'План на день'}</h3>
+                                {plan.already_eaten_calories > 0 && (
+                                    <p>
+                                        Уже съедено: {plan.already_eaten_calories} ккал, Б {plan.already_eaten_protein}г, Ж {plan.already_eaten_fat}г, У {plan.already_eaten_carbs}г.
+                                    </p>
+                                )}
                                 <div className="mealplan-targets">
                                     <div className="mealplan-target-item">
                                         <span className="target-label">Калории</span>
@@ -186,22 +203,22 @@ function MealPlanModal({ isOpen, onClose, api }: MealPlanModalProps) {
                                 <details>
                                     <summary>📐 О методе оптимизации</summary>
                                     <p>
-                                        Используется <strong>метод линейного программирования</strong> (симплекс-метод, HiGHS solver).
-                                        Задача минимизирует взвешенную сумму отклонений фактических нутриентов от целевых:
+                                        Основной режим использует <strong>смешанно-целочисленную оптимизацию</strong>:
+                                        отдельно выбираются блюда и отдельно подбираются их порции.
                                     </p>
-                                    <code>
-                                        min w₁(δ_cal⁺+δ_cal⁻) + w₂(δ_prot⁺+δ_prot⁻) + w₃(δ_fat⁺+δ_fat⁻) + w₄(δ_carb⁺+δ_carb⁻)
-                                    </code>
                                     <p>
-                                        при ограничениях баланса по каждому нутриенту и допустимых порций продуктов.
-                                        Весовые коэффициенты нормализуют единицы измерения (ккал vs г).
+                                        Алгоритм учитывает минимальные и максимальные порции, запрет повторов одного блюда
+                                        в нескольких приёмах пищи, мягкий штраф за однообразие и отклонения от целей по БЖУ.
+                                    </p>
+                                    <p>
+                                        Текущий метод решения: <code>{plan.solution_method}</code>.
                                     </p>
                                 </details>
                             </div>
                         </div>
                     )}
 
-                    {plan && plan.solver_status !== 'optimal' && (
+                    {plan && !isSuccessfulPlan && (
                         <div className="mealplan-error">
                             Не удалось найти оптимальное решение ({plan.solver_status}). 
                             Попробуйте изменить параметры профиля или снять ограничения.

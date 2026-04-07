@@ -65,12 +65,21 @@ class MealPlanResult(BaseModel):
     total_protein: float
     total_fat: float
     total_carbs: float
-    target_calories: float
+    target_calories: float       # цель именно для построенного плана
     target_protein: float
     target_fat: float
     target_carbs: float
+    daily_target_calories: float
+    daily_target_protein: float
+    daily_target_fat: float
+    daily_target_carbs: float
+    already_eaten_calories: float
+    already_eaten_protein: float
+    already_eaten_fat: float
+    already_eaten_carbs: float
     deviation_calories: float   # |факт - цель|
     deviation_protein: float
     deviation_fat: float
     deviation_carbs: float
     solver_status: str          # optimal, infeasible, etc.
+    solution_method: str

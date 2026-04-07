@@ -39,11 +39,20 @@ class MealPlanResponse(BaseModel):
     target_protein: float
     target_fat: float
     target_carbs: float
+    daily_target_calories: float
+    daily_target_protein: float
+    daily_target_fat: float
+    daily_target_carbs: float
+    already_eaten_calories: float
+    already_eaten_protein: float
+    already_eaten_fat: float
+    already_eaten_carbs: float
     deviation_calories: float
     deviation_protein: float
     deviation_fat: float
     deviation_carbs: float
     solver_status: str
+    solution_method: str
 
 
 @router.post("/generate", response_model=MealPlanResponse)
@@ -53,8 +62,8 @@ async def generate_meal_plan(
     db_service: AbstractDBService = Depends(get_db_service_dependency),
 ):
     """
-    Генерирует оптимальный план питания на день, используя 
-    линейное программирование (симплекс-метод).
+    Генерирует план питания на день, используя оптимизационную модель
+    с учётом БЖУ, ограничений и пользовательских предпочтений.
     
     Учитывает:
     - Целевые калории и БЖУ пользователя (из профиля)
@@ -70,6 +79,10 @@ async def generate_meal_plan(
     target_carbs = 225.0
     excluded_allergens = []
     excluded_ingredients = []
+    favorite_ingredients = []
+    favorite_cuisines = []
+    disliked_cuisines = []
+    dietary_restrictions = []
     
     if prefs:
         target_cal = float(prefs.target_calories or 2000)
@@ -78,6 +91,10 @@ async def generate_meal_plan(
         target_carbs = float(prefs.target_carbs or 225)
         excluded_allergens = prefs.allergies or []
         excluded_ingredients = prefs.disliked_ingredients or []
+        favorite_ingredients = prefs.favorite_ingredients or []
+        favorite_cuisines = prefs.favorite_cuisines or []
+        disliked_cuisines = prefs.disliked_cuisines or []
+        dietary_restrictions = prefs.dietary_restrictions or []
     
     # 2. Получаем дневник за сегодня
     eaten_cal = 0.0
@@ -98,9 +115,9 @@ async def generate_meal_plan(
     if not food_items:
         raise HTTPException(status_code=404, detail="Нет доступных продуктов для планирования")
     
-    # 4. Запускаем оптимизатор (линейное программирование)
+    # 4. Запускаем оптимизатор
     logger.info(
-        f"Запуск ЛП-оптимизатора: цель={target_cal}ккал, "
+        f"Запуск mealplan-оптимизатора: цель={target_cal}ккал, "
         f"уже съедено={eaten_cal}ккал, продуктов={len(food_items)}"
     )
     
@@ -112,13 +129,17 @@ async def generate_meal_plan(
         target_carbs=target_carbs,
         excluded_allergens=excluded_allergens,
         excluded_ingredients=excluded_ingredients,
+        favorite_ingredients=favorite_ingredients,
+        favorite_cuisines=favorite_cuisines,
+        disliked_cuisines=disliked_cuisines,
+        dietary_restrictions=dietary_restrictions,
         already_eaten_calories=eaten_cal,
         already_eaten_protein=eaten_prot,
         already_eaten_fat=eaten_fat,
         already_eaten_carbs=eaten_carbs,
     )
     
-    logger.info(f"ЛП-результат: статус={result.solver_status}, блюд={len(result.meals)}")
+    logger.info(f"Mealplan-результат: статус={result.solver_status}, блюд={len(result.meals)}")
     
     return MealPlanResponse(
         meals=[
@@ -142,9 +163,18 @@ async def generate_meal_plan(
         target_protein=result.target_protein,
         target_fat=result.target_fat,
         target_carbs=result.target_carbs,
+        daily_target_calories=result.daily_target_calories,
+        daily_target_protein=result.daily_target_protein,
+        daily_target_fat=result.daily_target_fat,
+        daily_target_carbs=result.daily_target_carbs,
+        already_eaten_calories=result.already_eaten_calories,
+        already_eaten_protein=result.already_eaten_protein,
+        already_eaten_fat=result.already_eaten_fat,
+        already_eaten_carbs=result.already_eaten_carbs,
         deviation_calories=result.deviation_calories,
         deviation_protein=result.deviation_protein,
         deviation_fat=result.deviation_fat,
         deviation_carbs=result.deviation_carbs,
         solver_status=result.solver_status,
+        solution_method=result.solution_method,
     )
