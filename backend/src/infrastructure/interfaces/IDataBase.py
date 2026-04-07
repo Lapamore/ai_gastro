@@ -7,6 +7,7 @@ from src.core.models.diary.DiaryEntryModel import DiaryEntry
 from src.core.models.users.UserModel import User
 from src.core.models.users.UserPreferencesModel import UserPreferences
 from src.core.models.recipes.SavedRecipeModel import SavedRecipe
+from src.core.models.mealplan.MealPlanModels import FoodItem
 
 
 class AbstractDBService(ABC):
@@ -108,6 +109,13 @@ class AbstractDBService(ABC):
     @abstractmethod
     async def delete_saved_recipe(self, recipe_id: int, user_id: str) -> bool:
         """Удалить сохранённый рецепт"""
+        raise NotImplementedError()
+
+    # ==================== ПРОДУКТЫ ДЛЯ ПЛАНИРОВАНИЯ ====================
+
+    @abstractmethod
+    async def get_all_food_items(self) -> List[FoodItem]:
+        """Получить все продукты из справочника"""
         raise NotImplementedError()
     
     # ==================== УПРАВЛЕНИЕ СОЕДИНЕНИЕМ ====================

@@ -10,6 +10,7 @@ from src.core.models.diary.DiaryEntryModel import DiaryEntry
 from src.core.models.users.UserModel import User
 from src.core.models.users.UserPreferencesModel import UserPreferences
 from src.core.models.recipes.SavedRecipeModel import SavedRecipe
+from src.core.models.mealplan.MealPlanModels import FoodItem
 
 logger = logging.getLogger(__name__)
 
@@ -169,6 +170,98 @@ class MySQLService(AbstractDBService):
                 """)
                 
                 logger.info("Таблица saved_recipes создана/проверена")
+
+                # 7. Справочник продуктов для ЛП-оптимизатора
+                await cur.execute("""
+                    CREATE TABLE IF NOT EXISTS food_items (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL,
+                        calories FLOAT NOT NULL,
+                        protein FLOAT NOT NULL,
+                        fat FLOAT NOT NULL,
+                        carbs FLOAT NOT NULL,
+                        category VARCHAR(50) NOT NULL DEFAULT 'universal',
+                        tags JSON,
+                        allergens JSON,
+                        min_portion FLOAT NOT NULL DEFAULT 50,
+                        max_portion FLOAT NOT NULL DEFAULT 500,
+                        INDEX idx_category (category)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """)
+
+                # Заполняем справочник если он пуст
+                await cur.execute("SELECT COUNT(*) as cnt FROM food_items")
+                row = await cur.fetchone()
+                if row[0] == 0:
+                    await self._seed_food_items(cur)
+                
+                logger.info("Таблица food_items создана/проверена")
+
+    async def _seed_food_items(self, cur):
+        """Заполняет справочник продуктов начальными данными (нутриенты на 100г)"""
+        import json
+        items = [
+            # === ЗАВТРАКИ ===
+            ("Овсянка на воде", 88, 3.0, 1.5, 15.5, "breakfast", ["каша","злаки"], ["глютен"], 150, 400),
+            ("Яичница (2 яйца)", 196, 13.6, 15.3, 1.0, "breakfast", ["яйца"], ["яйца"], 100, 200),
+            ("Творог 5%", 121, 17.2, 5.0, 1.8, "breakfast", ["молочное"], ["лактоза"], 100, 300),
+            ("Йогурт натуральный", 60, 4.0, 1.5, 7.0, "breakfast", ["молочное"], ["лактоза"], 100, 300),
+            ("Тост цельнозерновой", 247, 8.0, 2.5, 46.0, "breakfast", ["хлеб","злаки"], ["глютен"], 30, 120),
+            ("Банан", 89, 1.1, 0.3, 22.8, "breakfast", ["фрукт"], [], 80, 200),
+            ("Сырники", 183, 15.0, 8.0, 12.0, "breakfast", ["молочное","творог"], ["лактоза","яйца","глютен"], 100, 300),
+            ("Блины на молоке", 170, 5.0, 3.0, 30.0, "breakfast", ["мучное"], ["глютен","лактоза","яйца"], 100, 300),
+            
+            # === ОБЕДЫ ===
+            ("Куриная грудка варёная", 137, 29.8, 1.8, 0.5, "lunch", ["мясо","курица"], [], 100, 300),
+            ("Гречка отварная", 110, 4.2, 1.1, 21.3, "lunch", ["крупа","гарнир"], [], 100, 350),
+            ("Рис отварной", 116, 2.2, 0.5, 25.0, "lunch", ["крупа","гарнир"], [], 100, 350),
+            ("Борщ со сметаной", 49, 1.1, 2.2, 6.7, "lunch", ["суп","овощи"], ["лактоза"], 250, 500),
+            ("Котлета куриная", 167, 17.5, 8.1, 5.2, "lunch", ["мясо","курица"], ["глютен","яйца"], 80, 200),
+            ("Салат из свежих овощей", 20, 1.0, 0.1, 4.0, "lunch", ["овощи","салат"], [], 100, 300),
+            ("Макароны твёрдых сортов", 138, 5.0, 1.1, 27.0, "lunch", ["гарнир","мучное"], ["глютен"], 100, 300),
+            ("Рыба запечённая (треска)", 82, 17.8, 0.7, 0.0, "lunch", ["рыба","морепродукты"], ["морепродукты"], 100, 300),
+            ("Суп куриный с лапшой", 36, 2.4, 1.1, 3.9, "lunch", ["суп","курица"], ["глютен"], 250, 500),
+            ("Говядина тушёная", 232, 16.8, 18.3, 0.0, "lunch", ["мясо"], [], 100, 250),
+            
+            # === УЖИНЫ ===
+            ("Омлет с овощами", 130, 9.5, 9.0, 2.5, "dinner", ["яйца","овощи"], ["яйца","лактоза"], 150, 350),
+            ("Лосось на пару", 153, 20.0, 8.1, 0.0, "dinner", ["рыба","морепродукты"], ["морепродукты"], 100, 250),
+            ("Овощное рагу", 30, 0.8, 0.1, 6.5, "dinner", ["овощи","тушёное"], [], 200, 500),
+            ("Куриный стейк", 150, 27.0, 4.0, 0.5, "dinner", ["мясо","курица"], [], 100, 250),
+            ("Салат Цезарь", 74, 6.0, 4.2, 3.0, "dinner", ["салат","курица"], ["глютен","яйца","лактоза"], 150, 350),
+            ("Тефтели в соусе", 138, 11.0, 6.0, 10.0, "dinner", ["мясо"], ["глютен","яйца"], 100, 300),
+            ("Брокколи на пару", 34, 2.8, 0.4, 6.6, "dinner", ["овощи"], [], 100, 300),
+            ("Индейка запечённая", 134, 22.0, 5.0, 0.0, "dinner", ["мясо","индейка"], [], 100, 300),
+            
+            # === ПЕРЕКУСЫ ===
+            ("Яблоко", 52, 0.3, 0.2, 13.8, "snack", ["фрукт"], [], 100, 250),
+            ("Орехи грецкие", 654, 15.2, 65.2, 7.0, "snack", ["орехи"], ["орехи"], 20, 60),
+            ("Кефир 1%", 40, 3.0, 1.0, 4.0, "snack", ["молочное"], ["лактоза"], 150, 400),
+            ("Протеиновый батончик", 350, 30.0, 8.0, 40.0, "snack", ["спортпит"], ["глютен","лактоза"], 30, 60),
+            ("Сухофрукты (курага)", 215, 5.2, 0.3, 51.0, "snack", ["сухофрукт"], [], 20, 80),
+            ("Хумус", 166, 7.9, 9.6, 14.3, "snack", ["бобовые"], [], 30, 100),
+            ("Морковные палочки", 35, 0.9, 0.2, 6.9, "snack", ["овощи"], [], 50, 200),
+            ("Арахисовая паста", 588, 25.0, 50.0, 20.0, "snack", ["орехи"], ["орехи"], 15, 40),
+            
+            # === УНИВЕРСАЛЬНЫЕ ===
+            ("Картофель отварной", 82, 2.0, 0.4, 16.7, "universal", ["гарнир","овощи"], [], 100, 350),
+            ("Сыр твёрдый", 350, 25.0, 27.0, 0.0, "universal", ["молочное","сыр"], ["лактоза"], 20, 80),
+            ("Хлеб чёрный", 201, 6.6, 1.2, 40.9, "universal", ["хлеб","злаки"], ["глютен"], 25, 100),
+            ("Авокадо", 160, 2.0, 14.7, 8.5, "universal", ["фрукт","жирное"], [], 50, 200),
+        ]
+        
+        sql = """INSERT INTO food_items (name, calories, protein, fat, carbs, category, tags, allergens, min_portion, max_portion) 
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        
+        for item in items:
+            await cur.execute(sql, (
+                item[0], item[1], item[2], item[3], item[4], item[5],
+                json.dumps(item[6], ensure_ascii=False),
+                json.dumps(item[7], ensure_ascii=False),
+                item[8], item[9]
+            ))
+        
+        logger.info(f"Справочник продуктов заполнен: {len(items)} записей")
 
     # ==================== МЕТОДЫ ПОЛЬЗОВАТЕЛЕЙ ====================
 
@@ -534,6 +627,21 @@ class MySQLService(AbstractDBService):
             await self.pool.wait_closed()
             self.pool = None
             logger.info("MySQL пул соединений закрыт")
+
+    # ==================== ПРОДУКТЫ ДЛЯ ПЛАНИРОВАНИЯ ====================
+
+    async def get_all_food_items(self) -> List[FoodItem]:
+        """Получить все продукты из справочника"""
+        await self._ensure_pool()
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    await cur.execute("SELECT * FROM food_items ORDER BY category, name")
+                    rows = await cur.fetchall()
+                    return [FoodItem.from_db_row(row) for row in rows]
+        except Exception as e:
+            logger.error(f"Ошибка получения продуктов: {e}")
+            return []
 
     # ==================== МЕТОДЫ ДНЕВНИКА КАЛОРИЙ ====================
 

@@ -13,6 +13,7 @@ import QuickActions from './components/QuickActions/QuickActions';
 import SettingsModal from './components/SettingsModal/SettingsModal';
 import DiaryModal from './components/DiaryModal/DiaryModal';
 import FavoritesModal from './components/FavoritesModal/FavoritesModal';
+import MealPlanModal from './components/MealPlanModal/MealPlanModal';
 import { useAuth } from './contexts/AuthContext';
 
 import type { 
@@ -44,6 +45,7 @@ function App() {
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
     const [isDiaryModalOpen, setIsDiaryModalOpen] = useState<boolean>(false);
     const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState<boolean>(false);
+    const [isMealPlanModalOpen, setIsMealPlanModalOpen] = useState<boolean>(false);
     const [cookingMode, setCookingMode] = useState<CookingMode>(() => 
         (localStorage.getItem('cookingMode') as CookingMode) || 'solo'
     );
@@ -121,7 +123,14 @@ function App() {
     // Сохранение предпочтений на бэкенд
     const savePreferencesToBackend = useCallback(async (prefs: UserPreferences) => {
         try {
-            await api.post('/user/preferences', prefs);
+            // Конвертируем availableTime в int для бэкенда
+            const prefsToSend = {
+                ...prefs,
+                availableTime: prefs.availableTime != null
+                    ? (typeof prefs.availableTime === 'number' ? prefs.availableTime : parseInt(String(prefs.availableTime), 10) || null)
+                    : null
+            };
+            await api.post('/user/preferences', prefsToSend);
             localStorage.setItem('userGastronomicPreferences', JSON.stringify(prefs));
         } catch (error) {
             console.error("Не удалось сохранить предпочтения");
@@ -132,8 +141,14 @@ function App() {
     const handlePreferencesChange = useCallback((newPrefs: UserPreferences) => {
         setUserPreferences(newPrefs);
         savePreferencesToBackend(newPrefs);
-        // Обновляем targetCalories в dailyProgress
-        setDailyProgress(prev => ({ ...prev, targetCalories: newPrefs.targetCalories || 2000 }));
+        // Обновляем целевые значения в dailyProgress
+        setDailyProgress(prev => ({
+            ...prev,
+            targetCalories: newPrefs.targetCalories || 2000,
+            targetProtein: newPrefs.targetProtein ?? prev.targetProtein,
+            targetFat: newPrefs.targetFat ?? prev.targetFat,
+            targetCarbs: newPrefs.targetCarbs ?? prev.targetCarbs
+        }));
     }, [savePreferencesToBackend]);
 
     const handleCookingModeChange = useCallback((mode: CookingMode) => {
@@ -151,7 +166,11 @@ function App() {
         try {
             const res = await api.get('/diary/daily-summary');
             setDailyProgress(prev => ({
-                ...res.data,
+                ...prev,
+                totalCalories: res.data.totalCalories ?? prev.totalCalories,
+                protein: res.data.protein ?? prev.protein,
+                fat: res.data.fat ?? prev.fat,
+                carbs: res.data.carbs ?? prev.carbs,
                 targetCalories: prev.targetCalories || userPreferences.targetCalories || 2000
             }));
         } catch (error) {
@@ -294,6 +313,7 @@ function App() {
                 <>
                     <button className="settings-toggle-button top-right-button" onClick={() => setIsSettingsModalOpen(true)}>⚙️</button>
                     <button className="diary-toggle-button top-right-button" onClick={() => setIsDiaryModalOpen(true)}>📔</button>
+                    <button className="mealplan-toggle-button top-right-button" onClick={() => setIsMealPlanModalOpen(true)}>🧮</button>
                 </>
             )}
             <button className={`favorites-toggle-button top-right-button ${cookingMode === 'group' ? 'solo-hidden' : ''}`} onClick={() => setIsFavoritesModalOpen(true)}>⭐</button>
@@ -367,6 +387,11 @@ function App() {
             <FavoritesModal 
                 isOpen={isFavoritesModalOpen} 
                 onClose={() => setIsFavoritesModalOpen(false)} 
+                api={api}
+            />
+            <MealPlanModal
+                isOpen={isMealPlanModalOpen}
+                onClose={() => setIsMealPlanModalOpen(false)}
                 api={api}
             />
         </div>

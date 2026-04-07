@@ -70,9 +70,18 @@
     background: var(--accent-color);
 }
 
+/* Кнопка плана питания */
+.mealplan-toggle-button {
+    right: 145px;
+}
+
+.mealplan-toggle-button:hover {
+    background: #6366f1;
+}
+
 /* Кнопка избранных рецептов */
 .favorites-toggle-button {
-    right: 145px;
+    right: 205px;
 }
 
 .favorites-toggle-button.solo-hidden {
@@ -87,7 +96,7 @@
 .user-avatar-menu-wrapper {
     position: fixed;
     top: 25px;
-    right: 205px;
+    right: 265px;
     z-index: 1001;
 }
 
@@ -192,8 +201,12 @@
         right: 65px;
     }
 
-    .favorites-toggle-button {
+    .mealplan-toggle-button {
         right: 115px;
+    }
+
+    .favorites-toggle-button {
+        right: 165px;
     }
 
     .favorites-toggle-button.solo-hidden {
@@ -202,7 +215,7 @@
 
     .user-avatar-menu-wrapper {
         top: 15px;
-        right: 165px;
+        right: 215px;
     }
 
     .user-avatar-menu-wrapper.group-mode {

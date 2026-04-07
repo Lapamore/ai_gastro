@@ -78,42 +78,29 @@ def build_diary_context(entries: List[DiaryEntry], daily_summary: dict) -> str:
 
 
 def build_user_profile_context(prefs) -> str:
-    """Формирует контекст профиля пользователя для ИИ"""
+    """Формирует контекст профиля пользователя для ИИ.
+    Не передаём персональные данные (вес, рост, возраст, пол) — только рассчитанные целевые значения и цель.
+    """
     if not prefs:
         return ""
     
-    # Если пользователь не заполнил данные тела, не добавляем контекст
-    if not (prefs.weight and prefs.height and prefs.age and prefs.gender):
+    # Если нет рассчитанных значений, не добавляем контекст
+    if not (prefs.target_calories and prefs.target_protein):
         return ""
     
     goal_labels = {
-        'lose': 'похудеть',
-        'maintain': 'поддерживать вес',
-        'gain': 'набрать мышечную массу'
+        'lose': 'снижение веса (дефицит калорий)',
+        'maintain': 'поддержание веса',
+        'gain': 'набор массы (профицит калорий)'
     }
     
-    activity_labels = {
-        'sedentary': 'сидячий образ жизни',
-        'light': 'лёгкая активность',
-        'moderate': 'умеренная активность',
-        'active': 'высокая активность',
-        'very_active': 'очень высокая активность'
-    }
-    
-    gender_label = 'мужчина' if prefs.gender == 'male' else 'женщина'
     goal_label = goal_labels.get(prefs.goal, 'не указана')
-    activity_label = activity_labels.get(prefs.activity_level, 'не указан')
     
     profile_text = f"""
 ╔══════════════════════════════════════════════════════════════╗
-║  👤 ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ                                      ║
+║  📊 СУТОЧНАЯ НОРМА ПОЛЬЗОВАТЕЛЯ                               ║
 ╠══════════════════════════════════════════════════════════════╣
-║  Пол: {gender_label}, Возраст: {prefs.age} лет
-║  Вес: {prefs.weight} кг, Рост: {prefs.height} см
-║  Активность: {activity_label}
 ║  🎯 Цель: {goal_label}
-╠══════════════════════════════════════════════════════════════╣
-║  📊 Рассчитанная норма:
 ║  • Калории: {prefs.target_calories} ккал/день
 ║  • Белки: {prefs.target_protein}г | Жиры: {prefs.target_fat}г | Углеводы: {prefs.target_carbs}г
 ╚══════════════════════════════════════════════════════════════╝
@@ -232,7 +219,7 @@ async def handle_chat_request(
         group_allergies = (gs.allergies if gs else []) 
         all_allergies = list(set(own_allergies + group_allergies))
         if all_allergies:
-            group_context_parts.append(f"║  🚫 Аллергии (включая хозяина): {', '.join(all_allergies)}")
+            group_context_parts.append(f"║  🚫 Исключить ингредиенты (противопоказания): {', '.join(all_allergies)}")
         
         group_restrictions = gs.restrictions if gs else []
         if group_restrictions:
@@ -279,10 +266,10 @@ async def handle_chat_request(
             prefs = chat_request.preferences
             pref_parts = []
             if prefs.allergies:
-                pref_parts.append(f"- Аллергии: {', '.join(prefs.allergies)}.")
+                pref_parts.append(f"- Исключить ингредиенты (противопоказания): {', '.join(prefs.allergies)}.")
             if prefs.dietary_restrictions:
                 pref_parts.append(
-                    f"- Диетические ограничения: {', '.join(prefs.dietary_restrictions)}."
+                    f"- Ограничения в питании: {', '.join(prefs.dietary_restrictions)}."
                 )
             if prefs.favorite_cuisines:
                 pref_parts.append(f"- Любимые кухни: {', '.join(prefs.favorite_cuisines)}.")

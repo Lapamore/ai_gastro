@@ -146,14 +146,22 @@ function DiaryModal({ isOpen, onClose, dailyProgress, onProgressUpdate, api, pre
     const handleSaveProfile = async () => {
         setIsSaving(true);
         try {
+            // Конвертируем availableTime из строки в число (бэкенд ожидает int)
+            let availableTimeInt: number | null = null;
+            if (preferences.availableTime != null) {
+                const parsed = parseInt(String(preferences.availableTime), 10);
+                availableTimeInt = isNaN(parsed) ? null : parsed;
+            }
+
             const updatedPrefs: UserPreferences = {
                 ...preferences,
+                availableTime: availableTimeInt as any,
                 weight: bodyParams.weight ? Number(bodyParams.weight) : undefined,
                 height: bodyParams.height ? Number(bodyParams.height) : undefined,
                 age: bodyParams.age ? Number(bodyParams.age) : undefined,
-                gender: bodyParams.gender as 'male' | 'female' | undefined,
-                activityLevel: bodyParams.activityLevel as UserPreferences['activityLevel'],
-                goal: bodyParams.goal as 'lose' | 'maintain' | 'gain' | undefined
+                gender: bodyParams.gender ? bodyParams.gender as 'male' | 'female' : undefined,
+                activityLevel: bodyParams.activityLevel ? bodyParams.activityLevel as UserPreferences['activityLevel'] : undefined,
+                goal: bodyParams.goal ? bodyParams.goal as 'lose' | 'maintain' | 'gain' : undefined
             };
             
             const res = await api.post('/user/preferences', updatedPrefs);

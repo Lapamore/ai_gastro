@@ -4,11 +4,9 @@ services:
     image: mysql:8.0
     container_name: ai_gastro_mysql
     restart: unless-stopped
-    env_file:
-      - ./backend/.env
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rhenjq098}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-gastro_ai}
     ports:
       - "3308:3306"
     volumes:
@@ -16,7 +14,7 @@ services:
     networks:
       - ai_gastro_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rhenjq098}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,7 +42,7 @@ services:
     volumes:
       - ./backend/src:/app/src:ro
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/api/mattermost/health')"]
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:3001/api/mattermost/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
