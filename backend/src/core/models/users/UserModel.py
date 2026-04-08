@@ -10,6 +10,8 @@ class User(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
     avatar_url: Optional[str] = None
+    password_hash: Optional[str] = Field(default=None, exclude=True, repr=False)
+    auth_provider: str = "local"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:

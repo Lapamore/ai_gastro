@@ -31,6 +31,24 @@ class AppConfig:
         self.yandex_client_secret: str = os.getenv("YANDEX_CLIENT_SECRET", "")
         self.jwt_secret: str = os.getenv("JWT_SECRET", "change-me-in-production")
         self.frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:8889")
+        self.access_token_expire_minutes: int = int(
+            os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
+        )
+        self.refresh_token_expire_days: int = int(
+            os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "30")
+        )
+        self.refresh_cookie_name: str = os.getenv(
+            "REFRESH_COOKIE_NAME", "gastro_refresh_token"
+        )
+        self.cookie_secure: bool = os.getenv(
+            "COOKIE_SECURE",
+            "true" if self.frontend_url.startswith("https://") else "false",
+        ).lower() in {"1", "true", "yes", "on"}
+        self.cookie_samesite: str = os.getenv("COOKIE_SAMESITE", "lax").lower()
+        self.cors_origins = self._parse_cors_origins(
+            os.getenv("CORS_ORIGINS", ""),
+            self.frontend_url,
+        )
 
         # Mattermost настройки
         self.mattermost_webhook_token: str = os.getenv("MATTERMOST_WEBHOOK_TOKEN", "")
@@ -39,3 +57,10 @@ class AppConfig:
         self.mattermost_prompt_file: str = os.getenv(
             "MATTERMOST_PROMPT_FILE", "./src/core/prompts/mattermost_bot_prompt.txt"
         )
+
+    @staticmethod
+    def _parse_cors_origins(raw_value: str, frontend_url: str) -> list[str]:
+        origins = [value.strip() for value in raw_value.split(",") if value.strip()]
+        if not origins:
+            origins = [frontend_url]
+        return list(dict.fromkeys(origins))

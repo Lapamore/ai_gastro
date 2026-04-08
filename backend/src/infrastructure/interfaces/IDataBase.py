@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import List, Optional
 
 from src.core.models.chatting.ChatMessageModel import ChatMessage
@@ -20,10 +21,52 @@ class AbstractDBService(ABC):
         raise NotImplementedError()
 
     @abstractmethod
+    async def get_user_by_id(self, user_id: str) -> Optional[User]:
+        """Получить пользователя по id"""
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def get_user_by_email(self, email: str) -> Optional[User]:
+        """Получить пользователя по email"""
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def create_local_user(self, username: str, email: str, password_hash: str) -> User:
+        """Создать локального пользователя"""
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def set_local_credentials(self, user_id: str, username: str, password_hash: str) -> User:
+        """Добавить локальные учётные данные существующему пользователю"""
+        raise NotImplementedError()
+
+    @abstractmethod
     async def get_or_create_user_by_yandex(
         self, yandex_id: str, display_name: str, email: str, avatar_id: str
     ) -> User:
         """Получить или создать пользователя по Yandex ID"""
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def store_refresh_token(
+        self,
+        user_id: str,
+        token_hash: str,
+        expires_at: datetime,
+        user_agent: Optional[str] = None,
+        ip_address: Optional[str] = None,
+    ) -> None:
+        """Сохранить refresh token"""
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def get_user_by_refresh_token(self, token_hash: str) -> Optional[User]:
+        """Получить пользователя по refresh token"""
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def revoke_refresh_token(self, token_hash: str) -> bool:
+        """Отозвать refresh token"""
         raise NotImplementedError()
 
     # ==================== ПРЕДПОЧТЕНИЯ ====================

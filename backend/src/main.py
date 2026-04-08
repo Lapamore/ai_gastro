@@ -10,6 +10,7 @@ from src.api.routes.mattermost_routes import router as mattermost_router
 from src.api.routes.auth_routes import router as auth_router
 from src.api.routes.recipe_routes import router as recipe_router
 from src.api.routes.mealplan_routes import router as mealplan_router
+from src.infrastructure.dependencies.Config import AppConfig
 
 # Настройка логирования
 logging.basicConfig(
@@ -47,12 +48,13 @@ async def lifespan(app: FastAPI):
 
 
 def create_app():
+    config = AppConfig()
     app = FastAPI(lifespan=lifespan)
 
     # Добавляем CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=config.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

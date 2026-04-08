@@ -36,7 +36,7 @@ const initialUserPreferences: UserPreferences = {
 };
 
 function App() {
-    const { token, user, logout } = useAuth();
+    const { token, user, logout, refreshSession } = useAuth();
     const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
     const [messages, setMessages] = useState<FrontendMessage[]>([]);
     const [isBotTyping, setIsBotTyping] = useState<boolean>(false);
@@ -61,20 +61,33 @@ function App() {
     const api: AxiosInstance = useMemo(() => {
         const instance = axios.create({
             baseURL: API_BASE_URL,
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        // Если получим 401 — разлогиниваем
+
         instance.interceptors.response.use(
             (res) => res,
-            (err) => {
-                if (err.response?.status === 401) {
-                    logout();
+            async (err) => {
+                const originalRequest = err.config as { _retry?: boolean; headers?: Record<string, string> } | undefined;
+
+                if (err.response?.status === 401 && originalRequest && !originalRequest._retry) {
+                    originalRequest._retry = true;
+                    const nextToken = await refreshSession();
+
+                    if (nextToken) {
+                        originalRequest.headers = {
+                            ...(originalRequest.headers || {}),
+                            Authorization: `Bearer ${nextToken}`,
+                        };
+                        return instance(originalRequest);
+                    }
+
+                    await logout();
                 }
                 return Promise.reject(err);
             }
         );
         return instance;
-    }, [token, logout]);
+    }, [token, logout, refreshSession]);
     
     // Состояние дневника калорий
     const [dailyProgress, setDailyProgress] = useState<DailyProgress>({

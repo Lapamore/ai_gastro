@@ -60,10 +60,13 @@ class MySQLService(AbstractDBService):
                         yandex_id VARCHAR(50) UNIQUE,
                         username VARCHAR(255),
                         email VARCHAR(255),
+                        password_hash TEXT,
+                        auth_provider VARCHAR(20) NOT NULL DEFAULT 'local',
                         avatar_url VARCHAR(500),
                         created_at DATETIME NOT NULL,
                         INDEX idx_username (username),
-                        INDEX idx_yandex_id (yandex_id)
+                        INDEX idx_yandex_id (yandex_id),
+                        INDEX idx_auth_provider (auth_provider)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """)
                 
@@ -71,6 +74,8 @@ class MySQLService(AbstractDBService):
                 for col, col_def in [
                     ('yandex_id', 'VARCHAR(50) UNIQUE'),
                     ('email', 'VARCHAR(255)'),
+                    ('password_hash', 'TEXT'),
+                    ('auth_provider', "VARCHAR(20) NOT NULL DEFAULT 'local'"),
                     ('avatar_url', 'VARCHAR(500)'),
                 ]:
                     try:
@@ -78,6 +83,41 @@ class MySQLService(AbstractDBService):
                         logger.info(f"Добавлен столбец users.{col}")
                     except Exception:
                         pass  # столбец уже существует
+
+                try:
+                    await cur.execute("UPDATE users SET email = NULL WHERE email = ''")
+                except Exception:
+                    pass
+
+                try:
+                    await cur.execute(
+                        "CREATE UNIQUE INDEX idx_users_email_unique ON users (email)"
+                    )
+                except Exception:
+                    pass
+
+                try:
+                    await cur.execute(
+                        "CREATE INDEX idx_users_auth_provider ON users (auth_provider)"
+                    )
+                except Exception:
+                    pass
+
+                await cur.execute("""
+                    CREATE TABLE IF NOT EXISTS auth_refresh_tokens (
+                        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                        user_id VARCHAR(36) NOT NULL,
+                        token_hash CHAR(64) NOT NULL UNIQUE,
+                        expires_at DATETIME NOT NULL,
+                        created_at DATETIME NOT NULL,
+                        revoked_at DATETIME NULL,
+                        user_agent VARCHAR(500),
+                        ip_address VARCHAR(64),
+                        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                        INDEX idx_refresh_user_id (user_id),
+                        INDEX idx_refresh_expires_at (expires_at)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """)
                 
                 # 2. Таблица предпочтений пользователей
                 await cur.execute("""
@@ -329,36 +369,125 @@ class MySQLService(AbstractDBService):
             f"добавлено={added_count}, пропущено={skipped_count}"
         )
 
+    @staticmethod
+    def _map_user_row(row: dict) -> User:
+        return User(
+            id=row["id"],
+            yandex_id=row.get("yandex_id"),
+            username=row.get("username"),
+            email=row.get("email"),
+            avatar_url=row.get("avatar_url"),
+            password_hash=row.get("password_hash"),
+            auth_provider=row.get("auth_provider") or "local",
+            created_at=row["created_at"],
+        )
+
     # ==================== МЕТОДЫ ПОЛЬЗОВАТЕЛЕЙ ====================
 
     async def get_or_create_user(self, user_id: str) -> User:
         """Получить пользователя или создать нового"""
+        existing_user = await self.get_user_by_id(user_id)
+        if existing_user:
+            return existing_user
+
+        await self._ensure_pool()
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    now = datetime.now(timezone.utc)
+                    await cur.execute(
+                        """
+                        INSERT INTO users (id, username, email, auth_provider, created_at)
+                        VALUES (%s, %s, %s, %s, %s)
+                        """,
+                        (user_id, None, None, "local", now)
+                    )
+                    return User(
+                        id=user_id,
+                        username=None,
+                        email=None,
+                        auth_provider="local",
+                        created_at=now,
+                    )
+        except Exception as e:
+            logger.error(f"Ошибка get_or_create_user: {e}")
+            raise
+
+    async def get_user_by_id(self, user_id: str) -> Optional[User]:
         await self._ensure_pool()
         try:
             async with self.pool.acquire() as conn:
                 async with conn.cursor(aiomysql.DictCursor) as cur:
                     await cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
                     row = await cur.fetchone()
-                    
                     if row:
-                        return User(
-                            id=row['id'],
-                            yandex_id=row.get('yandex_id'),
-                            username=row.get('username'),
-                            email=row.get('email'),
-                            avatar_url=row.get('avatar_url'),
-                            created_at=row['created_at'],
-                        )
-                    
-                    # Создаём нового пользователя
-                    now = datetime.now(timezone.utc)
-                    await cur.execute(
-                        "INSERT INTO users (id, username, created_at) VALUES (%s, %s, %s)",
-                        (user_id, None, now)
-                    )
-                    return User(id=user_id, username=None, created_at=now)
+                        return self._map_user_row(row)
         except Exception as e:
-            logger.error(f"Ошибка get_or_create_user: {e}")
+            logger.error(f"Ошибка get_user_by_id: {e}")
+        return None
+
+    async def get_user_by_email(self, email: str) -> Optional[User]:
+        await self._ensure_pool()
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    await cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+                    row = await cur.fetchone()
+                    if row:
+                        return self._map_user_row(row)
+        except Exception as e:
+            logger.error(f"Ошибка get_user_by_email: {e}")
+        return None
+
+    async def create_local_user(self, username: str, email: str, password_hash: str) -> User:
+        await self._ensure_pool()
+        try:
+            import uuid
+
+            user_id = str(uuid.uuid4())
+            now = datetime.now(timezone.utc)
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        """
+                        INSERT INTO users (
+                            id, username, email, password_hash, auth_provider, created_at
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                        """,
+                        (user_id, username, email, password_hash, "local", now)
+                    )
+            return User(
+                id=user_id,
+                username=username,
+                email=email,
+                password_hash=password_hash,
+                auth_provider="local",
+                created_at=now,
+            )
+        except Exception as e:
+            logger.error(f"Ошибка create_local_user: {e}")
+            raise
+
+    async def set_local_credentials(self, user_id: str, username: str, password_hash: str) -> User:
+        await self._ensure_pool()
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        """
+                        UPDATE users
+                        SET username = %s, password_hash = %s, auth_provider = %s
+                        WHERE id = %s
+                        """,
+                        (username, password_hash, "local", user_id),
+                    )
+            user = await self.get_user_by_id(user_id)
+            if not user:
+                raise ValueError("Пользователь не найден после обновления локальных данных")
+            return user
+        except Exception as e:
+            logger.error(f"Ошибка set_local_credentials: {e}")
             raise
 
     async def get_or_create_user_by_yandex(
@@ -377,37 +506,118 @@ class MySQLService(AbstractDBService):
                     if row:
                         # Обновляем имя/email/аватар на случай если они изменились
                         await cur.execute(
-                            "UPDATE users SET username = %s, email = %s, avatar_url = %s WHERE yandex_id = %s",
-                            (display_name, email, avatar_url, yandex_id)
+                            """
+                            UPDATE users
+                            SET username = %s, email = %s, avatar_url = %s, auth_provider = %s
+                            WHERE yandex_id = %s
+                            """,
+                            (display_name, email or None, avatar_url, "yandex", yandex_id)
                         )
-                        return User(
-                            id=row['id'],
-                            yandex_id=row.get('yandex_id'),
-                            username=display_name,
-                            email=email,
-                            avatar_url=avatar_url,
-                            created_at=row['created_at'],
-                        )
+                        row["username"] = display_name
+                        row["email"] = email or None
+                        row["avatar_url"] = avatar_url
+                        row["auth_provider"] = "yandex"
+                        return self._map_user_row(row)
                     
                     # Создаём нового
                     import uuid
                     user_id = str(uuid.uuid4())
                     now = datetime.now(timezone.utc)
                     await cur.execute(
-                        "INSERT INTO users (id, yandex_id, username, email, avatar_url, created_at) VALUES (%s, %s, %s, %s, %s, %s)",
-                        (user_id, yandex_id, display_name, email, avatar_url, now)
+                        """
+                        INSERT INTO users (
+                            id, yandex_id, username, email, avatar_url, auth_provider, created_at
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (user_id, yandex_id, display_name, email or None, avatar_url, "yandex", now)
                     )
                     return User(
                         id=user_id,
                         yandex_id=yandex_id,
                         username=display_name,
-                        email=email,
+                        email=email or None,
                         avatar_url=avatar_url,
+                        auth_provider="yandex",
                         created_at=now,
                     )
         except Exception as e:
             logger.error(f"Ошибка get_or_create_user_by_yandex: {e}")
             raise
+
+    async def store_refresh_token(
+        self,
+        user_id: str,
+        token_hash: str,
+        expires_at: datetime,
+        user_agent: Optional[str] = None,
+        ip_address: Optional[str] = None,
+    ) -> None:
+        await self._ensure_pool()
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        """
+                        INSERT INTO auth_refresh_tokens (
+                            user_id, token_hash, expires_at, created_at, user_agent, ip_address
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            user_id,
+                            token_hash,
+                            expires_at,
+                            datetime.now(timezone.utc),
+                            user_agent,
+                            ip_address,
+                        ),
+                    )
+        except Exception as e:
+            logger.error(f"Ошибка store_refresh_token: {e}")
+            raise
+
+    async def get_user_by_refresh_token(self, token_hash: str) -> Optional[User]:
+        await self._ensure_pool()
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    await cur.execute(
+                        """
+                        SELECT u.*
+                        FROM auth_refresh_tokens t
+                        JOIN users u ON u.id = t.user_id
+                        WHERE t.token_hash = %s
+                          AND t.revoked_at IS NULL
+                          AND t.expires_at > %s
+                        LIMIT 1
+                        """,
+                        (token_hash, datetime.now(timezone.utc)),
+                    )
+                    row = await cur.fetchone()
+                    if row:
+                        return self._map_user_row(row)
+        except Exception as e:
+            logger.error(f"Ошибка get_user_by_refresh_token: {e}")
+        return None
+
+    async def revoke_refresh_token(self, token_hash: str) -> bool:
+        await self._ensure_pool()
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        """
+                        UPDATE auth_refresh_tokens
+                        SET revoked_at = %s
+                        WHERE token_hash = %s AND revoked_at IS NULL
+                        """,
+                        (datetime.now(timezone.utc), token_hash),
+                    )
+                    return cur.rowcount > 0
+        except Exception as e:
+            logger.error(f"Ошибка revoke_refresh_token: {e}")
+        return False
 
     # ==================== МЕТОДЫ ПРЕДПОЧТЕНИЙ ====================
 
