@@ -1,0 +1,1677 @@
+[
+  {
+    "name": "Омлет со шпинатом",
+    "calories": 121,
+    "protein": 9.1,
+    "fat": 8.8,
+    "carbs": 2.0,
+    "category": "breakfast",
+    "tags": [
+      "яйца",
+      "шпинат"
+    ],
+    "allergens": [
+      "яйца"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Омлет с болгарским перцем",
+    "calories": 123,
+    "protein": 8.9,
+    "fat": 8.9,
+    "carbs": 2.3,
+    "category": "breakfast",
+    "tags": [
+      "яйца",
+      "овощи"
+    ],
+    "allergens": [
+      "яйца"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Омлет с ветчиной",
+    "calories": 162,
+    "protein": 12.2,
+    "fat": 11.5,
+    "carbs": 1.8,
+    "category": "breakfast",
+    "tags": [
+      "яйца",
+      "ветчина"
+    ],
+    "allergens": [
+      "яйца"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Яичница со шпинатом",
+    "calories": 138,
+    "protein": 9.3,
+    "fat": 10.5,
+    "carbs": 1.9,
+    "category": "breakfast",
+    "tags": [
+      "яйца",
+      "шпинат"
+    ],
+    "allergens": [
+      "яйца"
+    ],
+    "min_portion": 120,
+    "max_portion": 220
+  },
+  {
+    "name": "Яичница с болгарским перцем",
+    "calories": 140,
+    "protein": 9.1,
+    "fat": 10.7,
+    "carbs": 2.1,
+    "category": "breakfast",
+    "tags": [
+      "яйца",
+      "овощи"
+    ],
+    "allergens": [
+      "яйца"
+    ],
+    "min_portion": 120,
+    "max_portion": 220
+  },
+  {
+    "name": "Скрамбл из яиц",
+    "calories": 149,
+    "protein": 10.2,
+    "fat": 11.8,
+    "carbs": 1.5,
+    "category": "breakfast",
+    "tags": [
+      "яйца",
+      "простое"
+    ],
+    "allergens": [
+      "яйца",
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 240
+  },
+  {
+    "name": "Скрамбл с помидорами",
+    "calories": 136,
+    "protein": 9.5,
+    "fat": 10.0,
+    "carbs": 2.7,
+    "category": "breakfast",
+    "tags": [
+      "яйца",
+      "помидоры"
+    ],
+    "allergens": [
+      "яйца"
+    ],
+    "min_portion": 120,
+    "max_portion": 240
+  },
+  {
+    "name": "Скрамбл с сыром",
+    "calories": 171,
+    "protein": 11.6,
+    "fat": 13.2,
+    "carbs": 1.6,
+    "category": "breakfast",
+    "tags": [
+      "яйца",
+      "сыр"
+    ],
+    "allergens": [
+      "яйца",
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 240
+  },
+  {
+    "name": "Овсянка с грушей",
+    "calories": 102,
+    "protein": 3.1,
+    "fat": 1.7,
+    "carbs": 18.8,
+    "category": "breakfast",
+    "tags": [
+      "каша",
+      "груша"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Овсянка с киви",
+    "calories": 104,
+    "protein": 3.2,
+    "fat": 1.7,
+    "carbs": 19.0,
+    "category": "breakfast",
+    "tags": [
+      "каша",
+      "киви"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Овсянка с корицей",
+    "calories": 94,
+    "protein": 3.0,
+    "fat": 1.6,
+    "carbs": 16.8,
+    "category": "breakfast",
+    "tags": [
+      "каша",
+      "специи"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Мюсли с йогуртом",
+    "calories": 132,
+    "protein": 4.4,
+    "fat": 3.5,
+    "carbs": 20.8,
+    "category": "breakfast",
+    "tags": [
+      "мюсли",
+      "йогурт"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 280
+  },
+  {
+    "name": "Йогурт с мюсли",
+    "calories": 128,
+    "protein": 4.3,
+    "fat": 3.2,
+    "carbs": 20.0,
+    "category": "breakfast",
+    "tags": [
+      "йогурт",
+      "мюсли"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 280
+  },
+  {
+    "name": "Тост с ветчиной",
+    "calories": 246,
+    "protein": 11.2,
+    "fat": 8.0,
+    "carbs": 31.0,
+    "category": "breakfast",
+    "tags": [
+      "тост",
+      "ветчина"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 60,
+    "max_portion": 180
+  },
+  {
+    "name": "Тост с плавленым сыром",
+    "calories": 258,
+    "protein": 8.5,
+    "fat": 9.8,
+    "carbs": 33.0,
+    "category": "breakfast",
+    "tags": [
+      "тост",
+      "сыр"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 60,
+    "max_portion": 180
+  },
+  {
+    "name": "Бутерброд с помидором и сыром",
+    "calories": 232,
+    "protein": 8.8,
+    "fat": 7.5,
+    "carbs": 30.5,
+    "category": "breakfast",
+    "tags": [
+      "бутерброд",
+      "сыр",
+      "овощи"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 60,
+    "max_portion": 180
+  },
+  {
+    "name": "Бутерброд с творожным сыром и огурцом",
+    "calories": 214,
+    "protein": 7.0,
+    "fat": 6.8,
+    "carbs": 31.0,
+    "category": "breakfast",
+    "tags": [
+      "бутерброд",
+      "сыр",
+      "овощи"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 60,
+    "max_portion": 180
+  },
+  {
+    "name": "Лаваш с помидором и сыром",
+    "calories": 238,
+    "protein": 8.4,
+    "fat": 7.8,
+    "carbs": 33.0,
+    "category": "breakfast",
+    "tags": [
+      "лаваш",
+      "сыр",
+      "овощи"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 70,
+    "max_portion": 180
+  },
+  {
+    "name": "Творог с корицей",
+    "calories": 124,
+    "protein": 13.5,
+    "fat": 4.2,
+    "carbs": 5.0,
+    "category": "breakfast",
+    "tags": [
+      "творог",
+      "специи"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 280
+  },
+  {
+    "name": "Творог с грушей и мёдом",
+    "calories": 134,
+    "protein": 12.8,
+    "fat": 4.0,
+    "carbs": 10.0,
+    "category": "breakfast",
+    "tags": [
+      "творог",
+      "груша",
+      "сладкое"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 280
+  },
+  {
+    "name": "Паста с овощами",
+    "calories": 144,
+    "protein": 4.8,
+    "fat": 2.6,
+    "carbs": 25.5,
+    "category": "lunch",
+    "tags": [
+      "паста",
+      "овощи"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Паста с сыром и помидорами",
+    "calories": 178,
+    "protein": 7.0,
+    "fat": 5.8,
+    "carbs": 24.5,
+    "category": "lunch",
+    "tags": [
+      "паста",
+      "сыр",
+      "овощи"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Паста с индейкой",
+    "calories": 170,
+    "protein": 12.0,
+    "fat": 4.2,
+    "carbs": 20.8,
+    "category": "lunch",
+    "tags": [
+      "паста",
+      "индейка"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Паста с ветчиной",
+    "calories": 182,
+    "protein": 8.8,
+    "fat": 6.5,
+    "carbs": 22.8,
+    "category": "lunch",
+    "tags": [
+      "паста",
+      "ветчина"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Рис с индейкой",
+    "calories": 148,
+    "protein": 12.2,
+    "fat": 3.2,
+    "carbs": 17.0,
+    "category": "lunch",
+    "tags": [
+      "рис",
+      "индейка"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Рис с яйцом и кукурузой",
+    "calories": 152,
+    "protein": 5.2,
+    "fat": 4.0,
+    "carbs": 22.0,
+    "category": "lunch",
+    "tags": [
+      "рис",
+      "яйца",
+      "кукуруза"
+    ],
+    "allergens": [
+      "яйца"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Гречка с индейкой",
+    "calories": 146,
+    "protein": 12.5,
+    "fat": 3.4,
+    "carbs": 15.8,
+    "category": "lunch",
+    "tags": [
+      "гречка",
+      "индейка"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Гречка с сосиской",
+    "calories": 176,
+    "protein": 7.0,
+    "fat": 8.2,
+    "carbs": 18.0,
+    "category": "lunch",
+    "tags": [
+      "гречка",
+      "сосиски"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Булгур с грибами",
+    "calories": 118,
+    "protein": 3.6,
+    "fat": 1.7,
+    "carbs": 21.0,
+    "category": "lunch",
+    "tags": [
+      "булгур",
+      "грибы"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Булгур с индейкой",
+    "calories": 150,
+    "protein": 12.0,
+    "fat": 3.2,
+    "carbs": 18.0,
+    "category": "lunch",
+    "tags": [
+      "булгур",
+      "индейка"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Кускус с грибами",
+    "calories": 120,
+    "protein": 3.5,
+    "fat": 1.8,
+    "carbs": 21.5,
+    "category": "lunch",
+    "tags": [
+      "кускус",
+      "грибы"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Кускус с индейкой",
+    "calories": 151,
+    "protein": 11.8,
+    "fat": 3.3,
+    "carbs": 18.5,
+    "category": "lunch",
+    "tags": [
+      "кускус",
+      "индейка"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Перловка с грибами",
+    "calories": 112,
+    "protein": 3.2,
+    "fat": 1.4,
+    "carbs": 21.5,
+    "category": "lunch",
+    "tags": [
+      "перловка",
+      "грибы"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Перловка с индейкой",
+    "calories": 144,
+    "protein": 11.0,
+    "fat": 3.1,
+    "carbs": 17.0,
+    "category": "lunch",
+    "tags": [
+      "перловка",
+      "индейка"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Картофель с индейкой",
+    "calories": 146,
+    "protein": 11.0,
+    "fat": 3.8,
+    "carbs": 16.8,
+    "category": "lunch",
+    "tags": [
+      "картофель",
+      "индейка"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Картофель с курицей и грибами",
+    "calories": 132,
+    "protein": 9.8,
+    "fat": 3.8,
+    "carbs": 14.5,
+    "category": "lunch",
+    "tags": [
+      "картофель",
+      "курица",
+      "грибы"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Картофельное пюре с курицей",
+    "calories": 150,
+    "protein": 10.5,
+    "fat": 4.5,
+    "carbs": 16.0,
+    "category": "lunch",
+    "tags": [
+      "пюре",
+      "курица"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Картофельное пюре с сосиской",
+    "calories": 180,
+    "protein": 6.5,
+    "fat": 8.8,
+    "carbs": 18.2,
+    "category": "lunch",
+    "tags": [
+      "пюре",
+      "сосиски"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Вермишель с курицей",
+    "calories": 166,
+    "protein": 11.5,
+    "fat": 3.8,
+    "carbs": 21.0,
+    "category": "lunch",
+    "tags": [
+      "вермишель",
+      "курица"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Вермишель с сыром",
+    "calories": 176,
+    "protein": 6.8,
+    "fat": 5.5,
+    "carbs": 25.2,
+    "category": "lunch",
+    "tags": [
+      "вермишель",
+      "сыр"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Чечевица с курицей",
+    "calories": 142,
+    "protein": 12.0,
+    "fat": 2.4,
+    "carbs": 16.5,
+    "category": "lunch",
+    "tags": [
+      "чечевица",
+      "курица"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Чечевица с индейкой",
+    "calories": 144,
+    "protein": 12.2,
+    "fat": 2.5,
+    "carbs": 16.8,
+    "category": "lunch",
+    "tags": [
+      "чечевица",
+      "индейка"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Фасоль с курицей",
+    "calories": 136,
+    "protein": 11.0,
+    "fat": 2.2,
+    "carbs": 17.0,
+    "category": "lunch",
+    "tags": [
+      "фасоль",
+      "курица"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Нут с курицей",
+    "calories": 148,
+    "protein": 11.2,
+    "fat": 2.8,
+    "carbs": 18.0,
+    "category": "lunch",
+    "tags": [
+      "нут",
+      "курица"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Овощной суп с рисом",
+    "calories": 45,
+    "protein": 1.5,
+    "fat": 1.0,
+    "carbs": 7.2,
+    "category": "lunch",
+    "tags": [
+      "суп",
+      "овощи",
+      "рис"
+    ],
+    "allergens": [],
+    "min_portion": 250,
+    "max_portion": 500
+  },
+  {
+    "name": "Овощной суп с гречкой",
+    "calories": 47,
+    "protein": 1.7,
+    "fat": 1.0,
+    "carbs": 7.0,
+    "category": "lunch",
+    "tags": [
+      "суп",
+      "овощи",
+      "гречка"
+    ],
+    "allergens": [],
+    "min_portion": 250,
+    "max_portion": 500
+  },
+  {
+    "name": "Суп с индейкой и рисом",
+    "calories": 54,
+    "protein": 4.0,
+    "fat": 1.8,
+    "carbs": 5.2,
+    "category": "lunch",
+    "tags": [
+      "суп",
+      "индейка",
+      "рис"
+    ],
+    "allergens": [],
+    "min_portion": 250,
+    "max_portion": 500
+  },
+  {
+    "name": "Суп с индейкой и вермишелью",
+    "calories": 58,
+    "protein": 4.2,
+    "fat": 1.9,
+    "carbs": 6.5,
+    "category": "lunch",
+    "tags": [
+      "суп",
+      "индейка",
+      "вермишель"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 250,
+    "max_portion": 500
+  },
+  {
+    "name": "Грибной суп простой",
+    "calories": 41,
+    "protein": 1.7,
+    "fat": 1.2,
+    "carbs": 5.8,
+    "category": "lunch",
+    "tags": [
+      "суп",
+      "грибы"
+    ],
+    "allergens": [],
+    "min_portion": 250,
+    "max_portion": 500
+  },
+  {
+    "name": "Суп с цветной капустой",
+    "calories": 39,
+    "protein": 1.5,
+    "fat": 1.0,
+    "carbs": 5.8,
+    "category": "lunch",
+    "tags": [
+      "суп",
+      "капуста"
+    ],
+    "allergens": [],
+    "min_portion": 250,
+    "max_portion": 500
+  },
+  {
+    "name": "Омлет с грибами и сыром",
+    "calories": 146,
+    "protein": 10.2,
+    "fat": 10.8,
+    "carbs": 2.0,
+    "category": "dinner",
+    "tags": [
+      "яйца",
+      "грибы",
+      "сыр"
+    ],
+    "allergens": [
+      "яйца",
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Омлет со шпинатом и сыром",
+    "calories": 142,
+    "protein": 10.0,
+    "fat": 10.5,
+    "carbs": 2.1,
+    "category": "dinner",
+    "tags": [
+      "яйца",
+      "шпинат",
+      "сыр"
+    ],
+    "allergens": [
+      "яйца",
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Скрамбл со шпинатом",
+    "calories": 132,
+    "protein": 9.0,
+    "fat": 10.0,
+    "carbs": 1.8,
+    "category": "dinner",
+    "tags": [
+      "яйца",
+      "шпинат"
+    ],
+    "allergens": [
+      "яйца"
+    ],
+    "min_portion": 120,
+    "max_portion": 240
+  },
+  {
+    "name": "Творог с персиком",
+    "calories": 119,
+    "protein": 12.6,
+    "fat": 4.0,
+    "carbs": 7.5,
+    "category": "dinner",
+    "tags": [
+      "творог",
+      "персик"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 280
+  },
+  {
+    "name": "Творог с ягодами",
+    "calories": 117,
+    "protein": 12.5,
+    "fat": 4.0,
+    "carbs": 7.0,
+    "category": "dinner",
+    "tags": [
+      "творог",
+      "ягоды"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 280
+  },
+  {
+    "name": "Йогурт с персиком",
+    "calories": 73,
+    "protein": 3.8,
+    "fat": 1.7,
+    "carbs": 10.5,
+    "category": "dinner",
+    "tags": [
+      "йогурт",
+      "персик"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 280
+  },
+  {
+    "name": "Йогурт с ягодами",
+    "calories": 71,
+    "protein": 3.8,
+    "fat": 1.7,
+    "carbs": 10.0,
+    "category": "dinner",
+    "tags": [
+      "йогурт",
+      "ягоды"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 280
+  },
+  {
+    "name": "Кефир с киви",
+    "calories": 62,
+    "protein": 2.8,
+    "fat": 1.0,
+    "carbs": 9.5,
+    "category": "dinner",
+    "tags": [
+      "кефир",
+      "киви"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Кефир с мандарином",
+    "calories": 59,
+    "protein": 2.8,
+    "fat": 1.0,
+    "carbs": 9.0,
+    "category": "dinner",
+    "tags": [
+      "кефир",
+      "мандарин"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Рис с брокколи",
+    "calories": 122,
+    "protein": 3.0,
+    "fat": 1.6,
+    "carbs": 22.0,
+    "category": "dinner",
+    "tags": [
+      "рис",
+      "брокколи"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Рис с цветной капустой",
+    "calories": 120,
+    "protein": 2.9,
+    "fat": 1.5,
+    "carbs": 21.8,
+    "category": "dinner",
+    "tags": [
+      "рис",
+      "капуста"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Гречка со шпинатом",
+    "calories": 116,
+    "protein": 4.2,
+    "fat": 1.5,
+    "carbs": 20.0,
+    "category": "dinner",
+    "tags": [
+      "гречка",
+      "шпинат"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Гречка с брокколи",
+    "calories": 118,
+    "protein": 4.4,
+    "fat": 1.6,
+    "carbs": 20.2,
+    "category": "dinner",
+    "tags": [
+      "гречка",
+      "брокколи"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Картофель с брокколи",
+    "calories": 88,
+    "protein": 2.4,
+    "fat": 1.4,
+    "carbs": 16.2,
+    "category": "dinner",
+    "tags": [
+      "картофель",
+      "брокколи"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Картофель с цветной капустой",
+    "calories": 86,
+    "protein": 2.3,
+    "fat": 1.3,
+    "carbs": 16.0,
+    "category": "dinner",
+    "tags": [
+      "картофель",
+      "капуста"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Паста с брокколи",
+    "calories": 142,
+    "protein": 5.0,
+    "fat": 2.4,
+    "carbs": 25.0,
+    "category": "dinner",
+    "tags": [
+      "паста",
+      "брокколи"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Паста с цветной капустой",
+    "calories": 140,
+    "protein": 4.8,
+    "fat": 2.3,
+    "carbs": 24.8,
+    "category": "dinner",
+    "tags": [
+      "паста",
+      "капуста"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Булгур с брокколи",
+    "calories": 116,
+    "protein": 3.5,
+    "fat": 1.5,
+    "carbs": 21.0,
+    "category": "dinner",
+    "tags": [
+      "булгур",
+      "брокколи"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Кускус с брокколи",
+    "calories": 118,
+    "protein": 3.4,
+    "fat": 1.5,
+    "carbs": 21.3,
+    "category": "dinner",
+    "tags": [
+      "кускус",
+      "брокколи"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Рыба с булгуром",
+    "calories": 140,
+    "protein": 11.4,
+    "fat": 2.8,
+    "carbs": 17.5,
+    "category": "dinner",
+    "tags": [
+      "рыба",
+      "булгур"
+    ],
+    "allergens": [
+      "морепродукты",
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Рыба с кускусом",
+    "calories": 142,
+    "protein": 11.2,
+    "fat": 2.9,
+    "carbs": 17.8,
+    "category": "dinner",
+    "tags": [
+      "рыба",
+      "кускус"
+    ],
+    "allergens": [
+      "морепродукты",
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Курица с перловкой",
+    "calories": 145,
+    "protein": 11.2,
+    "fat": 3.4,
+    "carbs": 17.2,
+    "category": "dinner",
+    "tags": [
+      "курица",
+      "перловка"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Индейка с перловкой",
+    "calories": 146,
+    "protein": 11.5,
+    "fat": 3.2,
+    "carbs": 17.0,
+    "category": "dinner",
+    "tags": [
+      "индейка",
+      "перловка"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Курица со шпинатом",
+    "calories": 108,
+    "protein": 12.0,
+    "fat": 3.0,
+    "carbs": 4.2,
+    "category": "dinner",
+    "tags": [
+      "курица",
+      "шпинат"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Индейка со шпинатом",
+    "calories": 106,
+    "protein": 12.2,
+    "fat": 2.8,
+    "carbs": 4.0,
+    "category": "dinner",
+    "tags": [
+      "индейка",
+      "шпинат"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Курица с цветной капустой",
+    "calories": 100,
+    "protein": 9.5,
+    "fat": 3.0,
+    "carbs": 5.0,
+    "category": "dinner",
+    "tags": [
+      "курица",
+      "капуста"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Индейка с цветной капустой",
+    "calories": 99,
+    "protein": 9.8,
+    "fat": 2.8,
+    "carbs": 4.8,
+    "category": "dinner",
+    "tags": [
+      "индейка",
+      "капуста"
+    ],
+    "allergens": [],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Запечённая цветная капуста с сыром",
+    "calories": 90,
+    "protein": 4.9,
+    "fat": 5.2,
+    "carbs": 6.0,
+    "category": "dinner",
+    "tags": [
+      "капуста",
+      "сыр"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Запечённая брокколи с сыром",
+    "calories": 92,
+    "protein": 5.0,
+    "fat": 5.3,
+    "carbs": 6.2,
+    "category": "dinner",
+    "tags": [
+      "брокколи",
+      "сыр"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 150,
+    "max_portion": 320
+  },
+  {
+    "name": "Персик",
+    "calories": 39,
+    "protein": 0.9,
+    "fat": 0.3,
+    "carbs": 9.5,
+    "category": "snack",
+    "tags": [
+      "фрукт"
+    ],
+    "allergens": [],
+    "min_portion": 80,
+    "max_portion": 250
+  },
+  {
+    "name": "Нектарин",
+    "calories": 44,
+    "protein": 1.1,
+    "fat": 0.3,
+    "carbs": 10.6,
+    "category": "snack",
+    "tags": [
+      "фрукт"
+    ],
+    "allergens": [],
+    "min_portion": 80,
+    "max_portion": 250
+  },
+  {
+    "name": "Слива",
+    "calories": 46,
+    "protein": 0.8,
+    "fat": 0.3,
+    "carbs": 11.4,
+    "category": "snack",
+    "tags": [
+      "фрукт"
+    ],
+    "allergens": [],
+    "min_portion": 80,
+    "max_portion": 250
+  },
+  {
+    "name": "Абрикос",
+    "calories": 44,
+    "protein": 0.9,
+    "fat": 0.1,
+    "carbs": 10.4,
+    "category": "snack",
+    "tags": [
+      "фрукт"
+    ],
+    "allergens": [],
+    "min_portion": 80,
+    "max_portion": 250
+  },
+  {
+    "name": "Персик с йогуртом",
+    "calories": 72,
+    "protein": 3.8,
+    "fat": 1.7,
+    "carbs": 10.2,
+    "category": "snack",
+    "tags": [
+      "персик",
+      "йогурт"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Нектарин с йогуртом",
+    "calories": 74,
+    "protein": 3.8,
+    "fat": 1.7,
+    "carbs": 10.8,
+    "category": "snack",
+    "tags": [
+      "нектарин",
+      "йогурт"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Слива с йогуртом",
+    "calories": 75,
+    "protein": 3.8,
+    "fat": 1.7,
+    "carbs": 11.0,
+    "category": "snack",
+    "tags": [
+      "слива",
+      "йогурт"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Абрикос с йогуртом",
+    "calories": 73,
+    "protein": 3.8,
+    "fat": 1.7,
+    "carbs": 10.5,
+    "category": "snack",
+    "tags": [
+      "абрикос",
+      "йогурт"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Персик с творогом",
+    "calories": 118,
+    "protein": 12.4,
+    "fat": 4.0,
+    "carbs": 7.4,
+    "category": "snack",
+    "tags": [
+      "персик",
+      "творог"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Нектарин с творогом",
+    "calories": 120,
+    "protein": 12.4,
+    "fat": 4.0,
+    "carbs": 7.8,
+    "category": "snack",
+    "tags": [
+      "нектарин",
+      "творог"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Слива с творогом",
+    "calories": 121,
+    "protein": 12.3,
+    "fat": 4.0,
+    "carbs": 8.0,
+    "category": "snack",
+    "tags": [
+      "слива",
+      "творог"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Абрикос с творогом",
+    "calories": 119,
+    "protein": 12.3,
+    "fat": 4.0,
+    "carbs": 7.6,
+    "category": "snack",
+    "tags": [
+      "абрикос",
+      "творог"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 120,
+    "max_portion": 250
+  },
+  {
+    "name": "Ряженка",
+    "calories": 67,
+    "protein": 2.8,
+    "fat": 4.0,
+    "carbs": 4.2,
+    "category": "snack",
+    "tags": [
+      "молочное",
+      "напиток"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Ряженка с бананом",
+    "calories": 81,
+    "protein": 2.7,
+    "fat": 3.0,
+    "carbs": 11.0,
+    "category": "snack",
+    "tags": [
+      "ряженка",
+      "банан"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Ряженка с яблоком",
+    "calories": 72,
+    "protein": 2.7,
+    "fat": 3.0,
+    "carbs": 8.5,
+    "category": "snack",
+    "tags": [
+      "ряженка",
+      "яблоко"
+    ],
+    "allergens": [
+      "лактоза"
+    ],
+    "min_portion": 150,
+    "max_portion": 350
+  },
+  {
+    "name": "Хлебцы с помидором и сыром",
+    "calories": 210,
+    "protein": 8.5,
+    "fat": 7.8,
+    "carbs": 25.0,
+    "category": "snack",
+    "tags": [
+      "хлебцы",
+      "сыр",
+      "овощи"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 40,
+    "max_portion": 140
+  },
+  {
+    "name": "Хлебцы с огурцом и творожным сыром",
+    "calories": 198,
+    "protein": 7.0,
+    "fat": 7.0,
+    "carbs": 24.0,
+    "category": "snack",
+    "tags": [
+      "хлебцы",
+      "сыр",
+      "овощи"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 40,
+    "max_portion": 140
+  },
+  {
+    "name": "Крекеры с творожным сыром",
+    "calories": 286,
+    "protein": 8.2,
+    "fat": 11.0,
+    "carbs": 36.0,
+    "category": "snack",
+    "tags": [
+      "крекеры",
+      "сыр"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 30,
+    "max_portion": 120
+  },
+  {
+    "name": "Булочка с творожным сыром",
+    "calories": 304,
+    "protein": 7.5,
+    "fat": 8.8,
+    "carbs": 47.0,
+    "category": "snack",
+    "tags": [
+      "выпечка",
+      "сыр"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 40,
+    "max_portion": 120
+  },
+  {
+    "name": "Батон с плавленым сыром",
+    "calories": 274,
+    "protein": 8.0,
+    "fat": 9.0,
+    "carbs": 39.0,
+    "category": "snack",
+    "tags": [
+      "батон",
+      "сыр"
+    ],
+    "allergens": [
+      "глютен",
+      "лактоза"
+    ],
+    "min_portion": 40,
+    "max_portion": 120
+  },
+  {
+    "name": "Бутерброд с ветчиной и огурцом",
+    "calories": 226,
+    "protein": 9.4,
+    "fat": 7.2,
+    "carbs": 30.0,
+    "category": "breakfast",
+    "tags": [
+      "бутерброд",
+      "ветчина",
+      "овощи"
+    ],
+    "allergens": [
+      "глютен"
+    ],
+    "min_portion": 60,
+    "max_portion": 180
+  }
+]

@@ -1,7 +1,9 @@
-import logging
-from typing import List, Optional
-from datetime import datetime, timezone
 import aiomysql
+import json
+import logging
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import List, Optional
 
 from src.infrastructure.interfaces.IDataBase import AbstractDBService
 from src.core.models.sessions.SessionMetadataModel import SessionMetadata
@@ -13,6 +15,21 @@ from src.core.models.recipes.SavedRecipeModel import SavedRecipe
 from src.core.models.mealplan.MealPlanModels import FoodItem
 
 logger = logging.getLogger(__name__)
+
+FOOD_DATA_DIR = Path(__file__).resolve().parents[4] / "data"
+ALLOWED_FOOD_CATEGORIES = {"breakfast", "lunch", "dinner", "snack", "universal"}
+REQUIRED_FOOD_ITEM_FIELDS = {
+    "name",
+    "calories",
+    "protein",
+    "fat",
+    "carbs",
+    "category",
+    "tags",
+    "allergens",
+    "min_portion",
+    "max_portion",
+}
 
 
 class MySQLService(AbstractDBService):
@@ -234,139 +251,227 @@ class MySQLService(AbstractDBService):
                 
                 logger.info("Таблица food_items создана/проверена")
 
+    @staticmethod
+    def _normalize_food_seed_item(raw_item: dict, source_name: str, item_index: int):
+        if not isinstance(raw_item, dict):
+            logger.warning(
+                "Файл %s: запись #%s пропущена, потому что она не является JSON-объектом",
+                source_name,
+                item_index,
+            )
+            return None
+
+        missing_fields = sorted(REQUIRED_FOOD_ITEM_FIELDS - raw_item.keys())
+        if missing_fields:
+            logger.warning(
+                "Файл %s: запись #%s пропущена, отсутствуют поля: %s",
+                source_name,
+                item_index,
+                ", ".join(missing_fields),
+            )
+            return None
+
+        try:
+            name = str(raw_item["name"]).strip()
+            calories = float(raw_item["calories"])
+            protein = float(raw_item["protein"])
+            fat = float(raw_item["fat"])
+            carbs = float(raw_item["carbs"])
+            category = str(raw_item["category"]).strip()
+            min_portion = float(raw_item["min_portion"])
+            max_portion = float(raw_item["max_portion"])
+        except (TypeError, ValueError) as exc:
+            logger.warning(
+                "Файл %s: запись #%s пропущена из-за невалидных числовых значений: %s",
+                source_name,
+                item_index,
+                exc,
+            )
+            return None
+
+        if not name:
+            logger.warning("Файл %s: запись #%s пропущена, потому что name пустой", source_name, item_index)
+            return None
+
+        if category not in ALLOWED_FOOD_CATEGORIES:
+            logger.warning(
+                "Файл %s: запись '%s' пропущена, неизвестная категория '%s'",
+                source_name,
+                name,
+                category,
+            )
+            return None
+
+        if min_portion <= 0 or max_portion <= 0 or min_portion > max_portion:
+            logger.warning(
+                "Файл %s: запись '%s' пропущена из-за некорректных порций min=%s max=%s",
+                source_name,
+                name,
+                min_portion,
+                max_portion,
+            )
+            return None
+
+        tags = raw_item.get("tags") or []
+        allergens = raw_item.get("allergens") or []
+        if not isinstance(tags, list):
+            tags = [tags]
+        if not isinstance(allergens, list):
+            allergens = [allergens]
+
+        normalized_tags = [str(tag).strip() for tag in tags if str(tag).strip()]
+        normalized_allergens = [str(allergen).strip() for allergen in allergens if str(allergen).strip()]
+
+        return (
+            name,
+            calories,
+            protein,
+            fat,
+            carbs,
+            category,
+            normalized_tags,
+            normalized_allergens,
+            min_portion,
+            max_portion,
+        )
+
+    def _load_food_seed_items(self) -> List[tuple]:
+        if not FOOD_DATA_DIR.exists():
+            logger.warning("Каталог с блюдами не найден: %s", FOOD_DATA_DIR)
+            return []
+
+        items_by_name = {}
+        duplicate_names = set()
+        loaded_files = 0
+
+        for json_path in sorted(FOOD_DATA_DIR.glob("*.json")):
+            try:
+                raw_data = json.loads(json_path.read_text(encoding="utf-8"))
+            except Exception as exc:
+                logger.warning("Не удалось прочитать файл %s: %s", json_path.name, exc)
+                continue
+
+            if not isinstance(raw_data, list):
+                logger.info("Файл %s пропущен: ожидается JSON-массив блюд", json_path.name)
+                continue
+
+            loaded_files += 1
+            valid_count = 0
+            invalid_count = 0
+
+            for item_index, raw_item in enumerate(raw_data, start=1):
+                normalized = self._normalize_food_seed_item(raw_item, json_path.name, item_index)
+                if normalized is None:
+                    invalid_count += 1
+                    continue
+
+                item_name = normalized[0]
+                if item_name in items_by_name:
+                    duplicate_names.add(item_name)
+                    continue
+
+                items_by_name[item_name] = normalized
+                valid_count += 1
+
+            logger.info(
+                "Загружен файл блюд %s: валидных=%s, невалидных=%s",
+                json_path.name,
+                valid_count,
+                invalid_count,
+            )
+
+        if duplicate_names:
+            logger.warning(
+                "При загрузке блюд найдены дубликаты по name. Будет использована первая запись. Примеры: %s",
+                ", ".join(sorted(duplicate_names)[:10]),
+            )
+
+        logger.info(
+            "Итоговая загрузка блюд из JSON: файлов=%s, уникальных блюд=%s, каталог=%s",
+            loaded_files,
+            len(items_by_name),
+            FOOD_DATA_DIR,
+        )
+        return list(items_by_name.values())
+
     async def _seed_food_items(self, cur):
-        """Заполняет справочник продуктов начальными данными (нутриенты на 100г)"""
-        import json
-        items = [
-            # === ЗАВТРАКИ ===
-            ("Овсянка на воде", 88, 3.0, 1.5, 15.5, "breakfast", ["каша","злаки"], ["глютен"], 150, 400),
-            ("Яичница (2 яйца)", 196, 13.6, 15.3, 1.0, "breakfast", ["яйца"], ["яйца"], 100, 200),
-            ("Творог 5%", 121, 17.2, 5.0, 1.8, "breakfast", ["молочное"], ["лактоза"], 100, 300),
-            ("Йогурт натуральный", 60, 4.0, 1.5, 7.0, "breakfast", ["молочное"], ["лактоза"], 100, 300),
-            ("Тост цельнозерновой", 247, 8.0, 2.5, 46.0, "breakfast", ["хлеб","злаки"], ["глютен"], 30, 120),
-            ("Банан", 89, 1.1, 0.3, 22.8, "breakfast", ["фрукт"], [], 80, 200),
-            ("Сырники", 183, 15.0, 8.0, 12.0, "breakfast", ["молочное","творог"], ["лактоза","яйца","глютен"], 100, 300),
-            ("Блины на молоке", 170, 5.0, 3.0, 30.0, "breakfast", ["мучное"], ["глютен","лактоза","яйца"], 100, 300),
-            ("Овсянка на молоке", 102, 4.0, 3.0, 16.0, "breakfast", ["каша","злаки","молочное"], ["глютен","лактоза"], 150, 400),
-            ("Гранола с йогуртом", 178, 6.0, 5.5, 26.0, "breakfast", ["гранола","злаки","молочное"], ["глютен","лактоза","орехи"], 120, 250),
-            ("Рисовая каша на молоке", 97, 2.6, 2.4, 17.0, "breakfast", ["каша","рис","молочное"], ["лактоза"], 150, 400),
-            ("Омлет с сыром", 176, 12.5, 13.0, 1.8, "breakfast", ["яйца","сыр"], ["яйца","лактоза"], 120, 250),
-            ("Творожная запеканка", 168, 14.0, 6.5, 14.0, "breakfast", ["творог","выпечка"], ["лактоза","яйца","глютен"], 120, 300),
-            ("Мюсли с молоком", 124, 4.2, 3.1, 19.5, "breakfast", ["злаки","молочное"], ["глютен","лактоза","орехи"], 120, 280),
-            ("Шакшука", 110, 6.5, 7.0, 5.0, "breakfast", ["яйца","овощи"], ["яйца"], 150, 300),
-            ("Бутерброд с авокадо и яйцом", 185, 7.0, 10.2, 15.5, "breakfast", ["хлеб","авокадо","яйца"], ["глютен","яйца"], 80, 200),
-            ("Сэндвич с индейкой", 210, 13.5, 5.5, 25.0, "breakfast", ["хлеб","индейка"], ["глютен"], 100, 220),
-            ("Пшённая каша с маслом", 119, 3.0, 3.8, 18.5, "breakfast", ["каша","крупа"], [], 150, 350),
-            
-            # === ОБЕДЫ ===
-            ("Куриная грудка варёная", 137, 29.8, 1.8, 0.5, "lunch", ["мясо","курица"], [], 100, 300),
-            ("Гречка отварная", 110, 4.2, 1.1, 21.3, "lunch", ["крупа","гарнир"], [], 100, 350),
-            ("Рис отварной", 116, 2.2, 0.5, 25.0, "lunch", ["крупа","гарнир"], [], 100, 350),
-            ("Борщ со сметаной", 49, 1.1, 2.2, 6.7, "lunch", ["суп","овощи"], ["лактоза"], 250, 500),
-            ("Котлета куриная", 167, 17.5, 8.1, 5.2, "lunch", ["мясо","курица"], ["глютен","яйца"], 80, 200),
-            ("Салат из свежих овощей", 20, 1.0, 0.1, 4.0, "lunch", ["овощи","салат"], [], 100, 300),
-            ("Макароны твёрдых сортов", 138, 5.0, 1.1, 27.0, "lunch", ["гарнир","мучное"], ["глютен"], 100, 300),
-            ("Рыба запечённая (треска)", 82, 17.8, 0.7, 0.0, "lunch", ["рыба","морепродукты"], ["морепродукты"], 100, 300),
-            ("Суп куриный с лапшой", 36, 2.4, 1.1, 3.9, "lunch", ["суп","курица"], ["глютен"], 250, 500),
-            ("Говядина тушёная", 232, 16.8, 18.3, 0.0, "lunch", ["мясо"], [], 100, 250),
-            ("Плов с курицей", 185, 8.5, 6.0, 24.0, "lunch", ["рис","курица","горячее"], [], 180, 400),
-            ("Паста болоньезе", 176, 8.0, 6.5, 22.0, "lunch", ["паста","говядина"], ["глютен"], 180, 350),
-            ("Булгур отварной", 123, 3.3, 0.3, 25.0, "lunch", ["крупа","гарнир"], ["глютен"], 100, 350),
-            ("Кускус с овощами", 112, 3.8, 2.0, 19.5, "lunch", ["крупа","овощи"], ["глютен"], 150, 350),
-            ("Чечевичный суп", 68, 4.5, 1.8, 9.0, "lunch", ["суп","бобовые"], [], 250, 500),
-            ("Пюре картофельное", 104, 2.1, 3.8, 15.8, "lunch", ["гарнир","картофель"], ["лактоза"], 120, 350),
-            ("Индейка с рисом", 154, 13.0, 3.5, 18.0, "lunch", ["индейка","рис"], [], 180, 380),
-            ("Гуляш из говядины", 148, 14.0, 8.0, 4.0, "lunch", ["говядина","мясо"], [], 150, 320),
-            ("Курица терияки с рисом", 165, 11.5, 3.2, 24.0, "lunch", ["курица","рис"], ["глютен"], 180, 380),
-            ("Рыбные котлеты", 156, 14.0, 8.5, 7.0, "lunch", ["рыба","котлеты"], ["яйца","глютен","морепродукты"], 100, 250),
-            ("Перловка с овощами", 109, 3.0, 1.1, 22.0, "lunch", ["крупа","овощи"], ["глютен"], 150, 350),
-            ("Лазанья мясная", 192, 10.5, 9.0, 17.0, "lunch", ["паста","говядина","сыр"], ["глютен","лактоза"], 180, 320),
-            
-            # === УЖИНЫ ===
-            ("Омлет с овощами", 130, 9.5, 9.0, 2.5, "dinner", ["яйца","овощи"], ["яйца","лактоза"], 150, 350),
-            ("Лосось на пару", 153, 20.0, 8.1, 0.0, "dinner", ["рыба","морепродукты"], ["морепродукты"], 100, 250),
-            ("Овощное рагу", 30, 0.8, 0.1, 6.5, "dinner", ["овощи","тушёное"], [], 200, 500),
-            ("Куриный стейк", 150, 27.0, 4.0, 0.5, "dinner", ["мясо","курица"], [], 100, 250),
-            ("Салат Цезарь", 74, 6.0, 4.2, 3.0, "dinner", ["салат","курица"], ["глютен","яйца","лактоза"], 150, 350),
-            ("Тефтели в соусе", 138, 11.0, 6.0, 10.0, "dinner", ["мясо"], ["глютен","яйца"], 100, 300),
-            ("Брокколи на пару", 34, 2.8, 0.4, 6.6, "dinner", ["овощи"], [], 100, 300),
-            ("Индейка запечённая", 134, 22.0, 5.0, 0.0, "dinner", ["мясо","индейка"], [], 100, 300),
-            ("Тушёная индейка с овощами", 126, 14.0, 4.5, 7.0, "dinner", ["индейка","овощи"], [], 180, 350),
-            ("Запечённая курица с картофелем", 158, 14.0, 6.0, 11.0, "dinner", ["курица","картофель"], [], 180, 380),
-            ("Паста с тунцом", 170, 12.0, 4.8, 20.0, "dinner", ["паста","рыба"], ["глютен","морепродукты"], 180, 350),
-            ("Киноа с овощами", 120, 4.2, 3.2, 18.0, "dinner", ["крупа","овощи"], [], 150, 320),
-            ("Греческий салат", 86, 3.2, 6.0, 4.0, "dinner", ["салат","сыр"], ["лактоза"], 150, 320),
-            ("Стейк из говядины", 210, 21.0, 14.0, 0.0, "dinner", ["говядина","мясо"], [], 120, 280),
-            ("Филе судака запечённое", 96, 18.5, 2.1, 0.0, "dinner", ["рыба"], ["морепродукты"], 120, 280),
-            ("Рагу с фасолью", 92, 4.8, 2.2, 12.5, "dinner", ["бобовые","овощи"], [], 180, 400),
-            ("Курица в сливочном соусе", 184, 16.0, 11.5, 3.0, "dinner", ["курица","соус"], ["лактоза"], 150, 300),
-            ("Запечённые овощи с сыром", 95, 4.5, 5.8, 7.5, "dinner", ["овощи","сыр"], ["лактоза"], 180, 350),
-            
-            # === ПЕРЕКУСЫ ===
-            ("Яблоко", 52, 0.3, 0.2, 13.8, "snack", ["фрукт"], [], 100, 250),
-            ("Орехи грецкие", 654, 15.2, 65.2, 7.0, "snack", ["орехи"], ["орехи"], 20, 60),
-            ("Кефир 1%", 40, 3.0, 1.0, 4.0, "snack", ["молочное"], ["лактоза"], 150, 400),
-            ("Протеиновый батончик", 350, 30.0, 8.0, 40.0, "snack", ["спортпит"], ["глютен","лактоза"], 30, 60),
-            ("Сухофрукты (курага)", 215, 5.2, 0.3, 51.0, "snack", ["сухофрукт"], [], 20, 80),
-            ("Хумус", 166, 7.9, 9.6, 14.3, "snack", ["бобовые"], [], 30, 100),
-            ("Морковные палочки", 35, 0.9, 0.2, 6.9, "snack", ["овощи"], [], 50, 200),
-            ("Арахисовая паста", 588, 25.0, 50.0, 20.0, "snack", ["орехи"], ["орехи"], 15, 40),
-            ("Греческий йогурт", 73, 5.5, 2.0, 8.0, "snack", ["молочное","йогурт"], ["лактоза"], 120, 250),
-            ("Творожок ягодный", 142, 10.0, 4.0, 15.0, "snack", ["молочное","творог"], ["лактоза"], 100, 200),
-            ("Финики", 282, 2.5, 0.4, 75.0, "snack", ["сухофрукт"], [], 20, 60),
-            ("Смесь орехов и сухофруктов", 490, 11.0, 29.0, 42.0, "snack", ["орехи","сухофрукты"], ["орехи"], 20, 70),
-            ("Банановый смузи", 96, 2.4, 1.8, 19.0, "snack", ["напиток","фрукт"], ["лактоза"], 150, 350),
-            ("Сыр зернёный", 98, 11.5, 4.3, 3.2, "snack", ["молочное","сыр"], ["лактоза"], 100, 220),
-            ("Овсяное печенье", 437, 6.5, 14.0, 70.0, "snack", ["выпечка","злаки"], ["глютен","яйца"], 20, 60),
-            ("Хлебцы цельнозерновые", 320, 10.0, 2.8, 62.0, "snack", ["хлебцы","злаки"], ["глютен"], 20, 60),
-            ("Тёмный шоколад", 546, 6.2, 35.0, 49.0, "snack", ["десерт"], [], 15, 40),
-            ("Протеиновый коктейль", 118, 20.0, 1.8, 5.0, "snack", ["спортпит","напиток"], ["лактоза"], 200, 400),
-            
-            # === УНИВЕРСАЛЬНЫЕ ===
-            ("Картофель отварной", 82, 2.0, 0.4, 16.7, "universal", ["гарнир","овощи"], [], 100, 350),
-            ("Сыр твёрдый", 350, 25.0, 27.0, 0.0, "universal", ["молочное","сыр"], ["лактоза"], 20, 80),
-            ("Хлеб чёрный", 201, 6.6, 1.2, 40.9, "universal", ["хлеб","злаки"], ["глютен"], 25, 100),
-            ("Авокадо", 160, 2.0, 14.7, 8.5, "universal", ["фрукт","жирное"], [], 50, 200),
-            ("Бурый рис", 123, 2.7, 1.0, 25.6, "universal", ["крупа","гарнир"], [], 120, 350),
-            ("Киноа отварная", 120, 4.4, 1.9, 21.3, "universal", ["крупа","гарнир"], [], 100, 300),
-            ("Кускус отварной", 112, 3.8, 0.2, 23.0, "universal", ["крупа","гарнир"], ["глютен"], 100, 320),
-            ("Булгур с зеленью", 118, 3.7, 0.8, 23.0, "universal", ["крупа","гарнир"], ["глютен"], 120, 320),
-            ("Нут отварной", 164, 8.9, 2.6, 27.4, "universal", ["бобовые","гарнир"], [], 80, 220),
-            ("Фасоль красная отварная", 127, 8.7, 0.5, 22.8, "universal", ["бобовые"], [], 100, 250),
-            ("Тортилья пшеничная", 310, 8.0, 7.5, 51.0, "universal", ["хлеб","лепешка"], ["глютен"], 50, 100),
-            ("Лаваш тонкий", 274, 8.1, 1.2, 56.0, "universal", ["хлеб","лепешка"], ["глютен"], 40, 120),
-            ("Моцарелла", 280, 18.0, 21.0, 3.0, "universal", ["сыр","молочное"], ["лактоза"], 30, 120),
-            ("Гуакамоле", 180, 2.0, 16.0, 8.5, "universal", ["авокадо","соус"], [], 40, 150),
-            ("Батат запечённый", 90, 1.6, 0.1, 20.7, "universal", ["гарнир","овощи"], [], 100, 300),
-            ("Кукуруза консервированная", 119, 3.4, 1.4, 22.5, "universal", ["овощи","гарнир"], [], 80, 220),
-            ("Хлеб цельнозерновой", 250, 9.0, 3.5, 43.0, "universal", ["хлеб","злаки"], ["глютен"], 30, 120),
-        ]
-        
-        sql = """INSERT INTO food_items (name, calories, protein, fat, carbs, category, tags, allergens, min_portion, max_portion) 
-                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        """Синхронизирует справочник продуктов из JSON-файлов в backend/data."""
+        items = self._load_food_seed_items()
+        if not items:
+            logger.warning("Справочник продуктов не обновлён: в backend/data не найдено валидных блюд")
+            return
+
+        insert_sql = """
+            INSERT INTO food_items (
+                name, calories, protein, fat, carbs, category, tags, allergens, min_portion, max_portion
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        update_sql = """
+            UPDATE food_items
+            SET calories = %s,
+                protein = %s,
+                fat = %s,
+                carbs = %s,
+                category = %s,
+                tags = %s,
+                allergens = %s,
+                min_portion = %s,
+                max_portion = %s
+            WHERE name = %s
+        """
 
         await cur.execute("SELECT name FROM food_items")
         existing_names = {row[0] for row in await cur.fetchall()}
 
         added_count = 0
-        skipped_count = 0
+        updated_count = 0
         for item in items:
+            serialized_tags = json.dumps(item[6], ensure_ascii=False)
+            serialized_allergens = json.dumps(item[7], ensure_ascii=False)
+
             if item[0] in existing_names:
-                skipped_count += 1
+                await cur.execute(
+                    update_sql,
+                    (
+                        item[1],
+                        item[2],
+                        item[3],
+                        item[4],
+                        item[5],
+                        serialized_tags,
+                        serialized_allergens,
+                        item[8],
+                        item[9],
+                        item[0],
+                    ),
+                )
+                updated_count += 1
                 continue
 
-            await cur.execute(sql, (
-                item[0], item[1], item[2], item[3], item[4], item[5],
-                json.dumps(item[6], ensure_ascii=False),
-                json.dumps(item[7], ensure_ascii=False),
-                item[8], item[9]
-            ))
+            await cur.execute(
+                insert_sql,
+                (
+                    item[0],
+                    item[1],
+                    item[2],
+                    item[3],
+                    item[4],
+                    item[5],
+                    serialized_tags,
+                    serialized_allergens,
+                    item[8],
+                    item[9],
+                ),
+            )
             existing_names.add(item[0])
             added_count += 1
 
         logger.info(
-            f"Справочник продуктов синхронизирован: всего шаблонов={len(items)}, "
-            f"добавлено={added_count}, пропущено={skipped_count}"
+            "Справочник продуктов синхронизирован из JSON: всего=%s, добавлено=%s, обновлено=%s",
+            len(items),
+            added_count,
+            updated_count,
         )
 
     @staticmethod
