@@ -103,7 +103,14 @@ class Candidate:
 
 
 # ─── Публичный интерфейс ─────────────────────────────────────────────────────
-
+# Главная функция оптимизатора.
+# Она не просто подбирает блюда на весь день, а сначала учитывает дневник питания:
+# из дневной нормы пользователя вычитаются уже съеденные калории и КБЖУ.
+# После этого план строится только на оставшуюся часть нормы.
+#
+# Основной метод — MILP: он математически подбирает блюда и порции.
+# Если MILP не сработал, используется greedy fallback, чтобы приложение
+# всё равно могло вернуть пользователю приемлемый план.
 def optimize_meal_plan(
     food_items: List[FoodItem],
     target_calories: float,
@@ -146,6 +153,13 @@ def optimize_meal_plan(
         "fat": max(0.0, float(already_eaten_fat)),
         "carbs": max(0.0, float(already_eaten_carbs)),
     }
+    # plan_targets — это не полная дневная норма, а остаток нормы.
+    # Например, если цель 2000 ккал, а пользователь уже съел 800 ккал,
+    # оптимизатор должен подобрать план примерно на 1200 ккал.
+    #
+    # max(0.0, ...) нужен, чтобы не получить отрицательную цель.
+    # Если пользователь уже превысил норму по какому-то показателю,
+    # этот показатель считается закрытым, и остаток принимается равным нулю.
     plan_targets = {
         "calories": max(0.0, daily_targets["calories"] - already_eaten["calories"]),
         "protein": max(0.0, daily_targets["protein"] - already_eaten["protein"]),
@@ -228,7 +242,12 @@ def _targets_are_already_met(plan_targets: Dict[str, float]) -> bool:
     """
     return all(value <= 1.0 for value in plan_targets.values())
 
-
+# Фильтрация выполняется до построения MILP-модели.
+# Это значит, что блюда с аллергенами или запрещёнными ингредиентами
+# вообще не попадают в список кандидатов.
+#
+# Такой подход проще и безопаснее, чем добавлять аллергены отдельными
+# ограничениями в математическую модель.
 def _filter_food_items(
     items: Sequence[FoodItem],
     excluded_allergens: Sequence[str],
@@ -295,7 +314,13 @@ def _item_text(item: FoodItem) -> str:
     parts.extend(item.allergens)
     return _normalize_text(" ".join(parts))
 
-
+# Здесь блюда превращаются в кандидатов.
+# Кандидат — это не просто блюдо, а пара «блюдо + приём пищи».
+# Например, универсальное блюдо может быть кандидатом для завтрака,
+# обеда, ужина и перекуса.
+#
+# Для каждого кандидата рассчитывается preference_penalty.
+# Чем меньше этот штраф, тем привлекательнее кандидат для оптимизатора.
 def _build_candidates(
     items: Sequence[FoodItem],
     favorite_ingredients: Sequence[str],
@@ -323,7 +348,12 @@ def _build_candidates(
         for meal_type, allowed_categories in MEAL_CATEGORIES.items():
             if item.category not in allowed_categories:
                 continue
-
+            # Базовый штраф нужен, чтобы оптимизатор не выбирал лишние блюда.
+            # Дальше этот штраф корректируется:
+            # - перекусы получают небольшой дополнительный штраф;
+            # - универсальные блюда тоже немного штрафуются;
+            # - любимые ингредиенты и кухни уменьшают штраф;
+            # - нежелательные ингредиенты и кухни увеличивают штраф.
             preference_penalty = BASE_SELECTION_PENALTY
             preference_penalty += SNACK_ITEM_PENALTY if meal_type == "snack" else 0.0
             preference_penalty += UNIVERSAL_ITEM_PENALTY if item.category == "universal" else 0.0
@@ -362,7 +392,13 @@ def _detect_family(text: str, category: str) -> str:
             return family
     return f"category:{category}"
 
-
+# MILP-модель состоит из нескольких групп переменных:
+# x_j — граммовка кандидата j;
+# y_j — выбран кандидат или нет;
+# deviation variables — перебор и недобор по калориям, белкам, жирам и углеводам;
+# family overuse variables — мягкий штраф за повторение продуктовой семьи.
+#
+# Все эти переменные складываются в один общий вектор, который передаётся в scipy.optimize.milp.
 def _solve_milp(
     candidates: Sequence[Candidate],
     plan_targets: Dict[str, float],
@@ -410,7 +446,13 @@ def _solve_milp(
     deviation_start = 2 * n
     family_overuse_start = deviation_start + 8
     num_vars = family_overuse_start + len(family_names)
-
+    # objective — это коэффициенты целевой функции.
+    # Решатель минимизирует сумму objective[i] * variable[i].
+    # В эту сумму входят:
+    # - штраф за граммовку;
+    # - штраф или бонус за выбор конкретного блюда;
+    # - штрафы за отклонения от целевых КБЖУ;
+    # - штраф за повторение продуктовой семьи.
     objective = [0.0] * num_vars
     lower_bounds = [0.0] * num_vars
     upper_bounds = [inf] * num_vars
@@ -443,7 +485,12 @@ def _solve_milp(
     lbs: List[float] = []
     ubs: List[float] = []
 
-    # Ограничения баланса нутриентов: Σ(x_i * нутриент_i/100) - δ_over + δ_under = цель
+    # Для каждого нутриента создаётся равенство:
+    # сумма_нутриента - перебор + недобор = цель.
+    #
+    # Если сумма больше цели, положительным становится перебор.
+    # Если сумма меньше цели, положительным становится недобор.
+    # Оба отклонения штрафуются в целевой функции.
     nutrient_specs = (
         ("calories", deviation_start + 0, deviation_start + 1, lambda item: item.calories / 100.0),
         ("protein", deviation_start + 2, deviation_start + 3, lambda item: item.protein / 100.0),
@@ -464,7 +511,10 @@ def _solve_milp(
     for candidate_idx, candidate in enumerate(candidates):
         x_idx = x_start + candidate_idx
         y_idx = y_start + candidate_idx
-
+        # Ограничение x_j <= max_portion_j * y_j.
+        # Если y_j = 0, то x_j <= 0, значит граммовка блюда равна нулю.
+        # Если y_j = 1, то x_j может быть положительным, но не больше максимальной порции.
+        # Это связывает факт выбора блюда с его граммовкой.
         upper_row = [0.0] * num_vars
         upper_row[x_idx] = 1.0
         upper_row[y_idx] = -float(candidate.item.max_portion)
@@ -474,13 +524,18 @@ def _solve_milp(
 
         min_portion = max(0.0, float(candidate.item.min_portion))
         if min_portion > 0:
+            # Ограничение x_j >= min_portion_j * y_j.
+            # Если блюдо выбрано, его порция должна быть не меньше минимальной.
+            # Если блюдо не выбрано, ограничение превращается в x_j >= 0.
             lower_row = [0.0] * num_vars
             lower_row[x_idx] = 1.0
             lower_row[y_idx] = -min_portion
             rows.append(lower_row)
             lbs.append(0.0)
             ubs.append(inf)
-
+    # Ограничение на число блюд в каждом приёме пищи.
+    # Например, на завтрак нельзя выбрать больше двух блюд.
+    # Это делает итоговый рацион реалистичным и не перегруженным.
     for meal_type, limit in MEAL_ITEM_LIMITS.items():
         row = [0.0] * num_vars
         for candidate_idx, candidate in enumerate(candidates):
@@ -496,7 +551,10 @@ def _solve_milp(
     rows.append(total_items_row)
     lbs.append(1.0)
     ubs.append(float(MAX_TOTAL_ITEMS))
-
+    # Одно и то же блюдо может быть допустимо для нескольких приёмов пищи.
+    # Это ограничение запрещает выбрать его несколько раз.
+    # Например, универсальный йогурт не должен попасть одновременно
+    # и в завтрак, и в перекус.
     grouped_by_item = _group_candidate_indices(candidates, key_getter=lambda candidate: candidate.base_key)
     for indices in grouped_by_item.values():
         row = [0.0] * num_vars
@@ -505,7 +563,12 @@ def _solve_milp(
         rows.append(row)
         lbs.append(0.0)
         ubs.append(1.0)
-
+    # Это мягкое ограничение на разнообразие.
+    # Оно не запрещает выбирать несколько блюд из одной продуктовой семьи,
+    # но добавляет штраф за повторение.
+    # Например, если выбрано несколько молочных блюд, появляется family_overuse.
+    # Решатель может оставить такое решение, если оно хорошо попадает в КБЖУ,
+    # но при равных условиях выберет более разнообразный рацион.
     grouped_by_family = _group_candidate_indices(candidates, key_getter=lambda candidate: candidate.family)
     for family_name, indices in grouped_by_family.items():
         row = [0.0] * num_vars
@@ -588,7 +651,10 @@ def _deviation_weights(plan_targets: Dict[str, float]) -> Dict[str, float]:
         "carbs_under": 0.9 / carbs,
     }
 
-
+# Greedy fallback нужен для отказоустойчивости.
+# Он используется, если MILP-решатель недоступен или не нашёл решение.
+# Алгоритм не гарантирует глобальный оптимум, но пошагово выбирает
+# блюда и порции, которые сильнее всего улучшают оценку плана.
 def _solve_greedy(
     candidates: Sequence[Candidate],
     plan_targets: Dict[str, float],
