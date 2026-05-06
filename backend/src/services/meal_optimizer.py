@@ -24,6 +24,8 @@ from src.core.models.mealplan.MealPlanModels import FoodItem, MealPlanItem, Meal
 
 logger = logging.getLogger(__name__)
 
+# ─── Константы ───────────────────────────────────────────────────────────────
+# Допустимые категории блюд для каждого типа приёма пищи
 MEAL_CATEGORIES: Dict[str, List[str]] = {
     "breakfast": ["breakfast", "universal"],
     "lunch": ["lunch", "universal"],
@@ -31,20 +33,22 @@ MEAL_CATEGORIES: Dict[str, List[str]] = {
     "snack": ["snack", "universal"],
 }
 
+# Порядок сортировки приёмов пищи в итоговом плане
 MEAL_ORDER = {"breakfast": 0, "lunch": 1, "dinner": 2, "snack": 3}
+# Максимальное число блюд на каждый приём пищи и суммарный лимит за день
 MEAL_ITEM_LIMITS = {"breakfast": 2, "lunch": 2, "dinner": 2, "snack": 2}
 MAX_TOTAL_ITEMS = 5
-PORTION_GRID_SMALL = 10.0
-PORTION_GRID_LARGE = 25.0
-ROUND_PORTION_STEP = 5.0
-MIN_VISIBLE_PORTION = 20.0
-GRAM_PENALTY = 0.00005
-FAMILY_OVERUSE_PENALTY = 0.05
-UNIVERSAL_ITEM_PENALTY = 0.006
-SNACK_ITEM_PENALTY = 0.012
-BASE_SELECTION_PENALTY = 0.028
-FAVORITE_MATCH_BONUS = 0.02
-DISLIKED_MATCH_PENALTY = 0.05
+PORTION_GRID_SMALL = 10.0      # шаг сетки порций для лёгких блюд (г)
+PORTION_GRID_LARGE = 25.0      # шаг сетки порций для тяжёлых блюд (г)
+ROUND_PORTION_STEP = 5.0       # округление итоговой порции до кратного значения (г)
+MIN_VISIBLE_PORTION = 20.0     # порции ниже этого порога не включаются в план
+GRAM_PENALTY = 0.00005         # штраф за каждый лишний грамм (стимулирует компактность)
+FAMILY_OVERUSE_PENALTY = 0.05  # штраф за повторное использование одной продуктовой семьи
+UNIVERSAL_ITEM_PENALTY = 0.006 # лёгкий штраф за блюда с категорией «universal»
+SNACK_ITEM_PENALTY = 0.012     # лёгкий штраф за перекусы (snack)
+BASE_SELECTION_PENALTY = 0.028 # базовый штраф за включение любого блюда в план
+FAVORITE_MATCH_BONUS = 0.02    # бонус (снижение штрафа) за совпадение с предпочтениями
+DISLIKED_MATCH_PENALTY = 0.05  # дополнительный штраф за нежелательные ингредиенты
 
 DIETARY_EXCLUSION_RULES: Dict[str, Tuple[str, ...]] = {
     "vegetarian": ("мяс", "куриц", "индейк", "говядин", "рыб", "лосос", "треск", "морепродукт"),
@@ -98,6 +102,8 @@ class Candidate:
     text: str
 
 
+# ─── Публичный интерфейс ─────────────────────────────────────────────────────
+
 def optimize_meal_plan(
     food_items: List[FoodItem],
     target_calories: float,
@@ -115,6 +121,12 @@ def optimize_meal_plan(
     already_eaten_fat: float = 0,
     already_eaten_carbs: float = 0,
 ) -> MealPlanResult:
+    """Основная точка входа. Строит оптимальный план питания на день.
+
+    Сначала вычитает уже съеденное из целевых значений, затем фильтрует
+    каталог блюд, формирует кандидатов и пытается решить MILP-задачу.
+    При неудаче переключается на жадный алгоритм.
+    """
     excluded_allergens = excluded_allergens or []
     excluded_ingredients = excluded_ingredients or []
     favorite_ingredients = favorite_ingredients or []
@@ -210,6 +222,10 @@ def optimize_meal_plan(
 
 
 def _targets_are_already_met(plan_targets: Dict[str, float]) -> bool:
+    """Возвращает True, если оставшиеся цели по всем нутриентам не превышают 1 г/ккал.
+
+    Используется для раннего выхода, когда пользователь уже выполнил норму.
+    """
     return all(value <= 1.0 for value in plan_targets.values())
 
 
@@ -219,6 +235,12 @@ def _filter_food_items(
     excluded_ingredients: Sequence[str],
     dietary_restrictions: Sequence[str],
 ) -> List[FoodItem]:
+    """Фильтрует каталог блюд по трём уровням ограничений:
+
+    1. Аллергены — сравниваются с полем allergens блюда.
+    2. Запрещённые ингредиенты — ищутся в тексте блюда (имя + теги).
+    3. Диетические ограничения — применяются правила из DIETARY_EXCLUSION_RULES.
+    """
     filtered: List[FoodItem] = []
     excluded_allergen_terms = [_normalize_text(value) for value in excluded_allergens if value]
     excluded_ingredient_terms = [_normalize_text(value) for value in excluded_ingredients if value]
@@ -243,15 +265,22 @@ def _filter_food_items(
 
 
 def _normalize_text(value: str) -> str:
+    """Приводит строку к нижнему регистру, заменяет «ё» на «е»,
+    убирает дефисы и подчёркивания, схлопывает пробелы.
+    """
     return " ".join(value.lower().replace("ё", "е").replace("_", " ").replace("-", " ").split())
 
 
 def _normalize_dietary_restriction(value: str) -> str:
+    """Переводит произвольное название диеты в стандартный ключ через DIETARY_ALIASES."""
     normalized = _normalize_text(value)
     return DIETARY_ALIASES.get(normalized, normalized)
 
 
 def _violates_dietary_restrictions(item_text: str, restriction_keys: Sequence[str]) -> bool:
+    """Возвращает True, если текст блюда содержит запрещённое слово
+    для хотя бы одного из активных диетических ограничений.
+    """
     for restriction in restriction_keys:
         keywords = DIETARY_EXCLUSION_RULES.get(restriction)
         if keywords and any(keyword in item_text for keyword in keywords):
@@ -260,6 +289,7 @@ def _violates_dietary_restrictions(item_text: str, restriction_keys: Sequence[st
 
 
 def _item_text(item: FoodItem) -> str:
+    """Собирает из всех полей блюда единую нормализованную строку для поиска по словам."""
     parts: List[str] = [item.name, item.category]
     parts.extend(item.tags)
     parts.extend(item.allergens)
@@ -273,6 +303,12 @@ def _build_candidates(
     favorite_cuisines: Sequence[str],
     disliked_cuisines: Sequence[str],
 ) -> List[Candidate]:
+    """Разворачивает каталог блюд в список кандидатов «блюдо × приём пищи».
+
+    Для каждой допустимой пары вычисляет штрафной коэффициент preference_penalty:
+    чем он меньше, тем охотнее оптимизатор выберет этот вариант.
+    Совпадения с любимыми ингредиентами снижают штраф, с нежелательными — повышают.
+    """
     candidates: List[Candidate] = []
     favorite_terms = [_normalize_text(value) for value in favorite_ingredients if value]
     excluded_terms = [_normalize_text(value) for value in excluded_ingredients if value]
@@ -311,10 +347,16 @@ def _build_candidates(
 
 
 def _count_matches(text: str, terms: Sequence[str]) -> int:
+    """Считает, сколько терминов из списка встречается в тексте."""
     return sum(1 for term in terms if term and term in text)
 
 
 def _detect_family(text: str, category: str) -> str:
+    """Определяет продуктовую семью блюда по ключевым словам в тексте.
+
+    Семья используется для штрафа за однообразие: если два блюда одной семьи
+    попадают в план, второе получает дополнительный FAMILY_OVERUSE_PENALTY.
+    """
     for family, keywords in FAMILY_KEYWORDS:
         if any(keyword in text for keyword in keywords):
             return family
@@ -327,6 +369,27 @@ def _solve_milp(
     daily_targets: Dict[str, float],
     already_eaten: Dict[str, float],
 ) -> Optional[MealPlanResult]:
+    """Решает задачу оптимизации рациона методом MILP через scipy.optimize.milp.
+
+    Структура вектора переменных (длина num_vars):
+      [0 .. n-1]                — x_i: граммовка блюда i (непрерывная, >= 0)
+      [n .. 2n-1]               — y_i: выбран ли кандидат i (бинарная: 0 или 1)
+      [2n .. 2n+7]              — δ: отклонения по 4 нутриентам (over/under для каждого)
+      [2n+8 .. 2n+8+F-1]       — o_f: мягкий штраф за повторение семьи f
+
+    Целевая функция минимизирует взвешенную сумму отклонений от норм + штрафы.
+
+    Ограничения:
+      - Баланс нутриентов: сумма по граммовкам = цель ± отклонения δ.
+      - Связь x и y: x_i <= max_portion * y_i (блюдо нельзя выбрать без флага).
+      - Минимальная порция: x_i >= min_portion * y_i.
+      - Лимит блюд на приём пищи: Σ y_i (meal_type=m) <= MEAL_ITEM_LIMITS[m].
+      - Суммарный лимит: 1 <= Σ y_i <= MAX_TOTAL_ITEMS.
+      - Уникальность блюда: одно блюдо не может войти в два разных приёма.
+      - Мягкий штраф за семью: o_f >= Σ y_i (family=f) - 1.
+
+    Возвращает None, если scipy недоступен или решатель не нашёл допустимого решения.
+    """
     try:
         import numpy as np
         from scipy.optimize import Bounds, LinearConstraint, milp
@@ -341,6 +404,7 @@ def _solve_milp(
     family_names = sorted({candidate.family for candidate in candidates})
     family_index = {name: idx for idx, name in enumerate(family_names)}
 
+    # Смещения блоков переменных в общем векторе
     x_start = 0
     y_start = n
     deviation_start = 2 * n
@@ -359,6 +423,7 @@ def _solve_milp(
         upper_bounds[y_start + idx] = 1.0
         integrality[y_start + idx] = 1
 
+    # Веса отклонений в целевой функции: недобор штрафуется чуть сильнее перебора
     weights = _deviation_weights(plan_targets)
     objective[deviation_start + 0] = weights["calories_over"]
     objective[deviation_start + 1] = weights["calories_under"]
@@ -378,6 +443,7 @@ def _solve_milp(
     lbs: List[float] = []
     ubs: List[float] = []
 
+    # Ограничения баланса нутриентов: Σ(x_i * нутриент_i/100) - δ_over + δ_under = цель
     nutrient_specs = (
         ("calories", deviation_start + 0, deviation_start + 1, lambda item: item.calories / 100.0),
         ("protein", deviation_start + 2, deviation_start + 3, lambda item: item.protein / 100.0),
@@ -492,6 +558,7 @@ def _solve_milp(
 
 
 def _group_candidate_indices(candidates: Sequence[Candidate], key_getter) -> Dict[str, List[int]]:
+    """Группирует индексы кандидатов по произвольному ключу (семья, базовое блюдо и т. д.)."""
     grouped: Dict[str, List[int]] = {}
     for idx, candidate in enumerate(candidates):
         grouped.setdefault(key_getter(candidate), []).append(idx)
@@ -499,6 +566,13 @@ def _group_candidate_indices(candidates: Sequence[Candidate], key_getter) -> Dic
 
 
 def _deviation_weights(plan_targets: Dict[str, float]) -> Dict[str, float]:
+    """Вычисляет нормализованные веса штрафов за отклонения от целей по нутриентам.
+
+    Веса обратно пропорциональны целевым значениям: это позволяет одинаково
+    штрафовать 10% отклонение по калориям и 10% отклонение по белку,
+    несмотря на разные абсолютные величины.
+    Недобор штрафуется чуть сильнее перебора (коэффициент 1.05–1.35).
+    """
     calories = max(plan_targets["calories"], 300.0)
     protein = max(plan_targets["protein"], 25.0)
     fat = max(plan_targets["fat"], 20.0)
@@ -521,7 +595,17 @@ def _solve_greedy(
     daily_targets: Dict[str, float],
     already_eaten: Dict[str, float],
 ) -> Optional[MealPlanResult]:
+    """Жадный резервный алгоритм — используется, если MILP недоступен или не нашёл решения.
+
+    На каждом шаге перебирает все незанятые кандидаты и все возможные порции,
+    выбирает комбинацию с наименьшим значением функции _score_selected_plan.
+    После построения плана выполняет два прохода оптимизации:
+      - _prune_selection: удаляет блюда, без которых план лучше.
+      - _tune_portions: подбирает лучшую порцию для каждого блюда.
+    """
     selected: Dict[int, float] = {}
+    # Кандидаты предварительно отсортированы по штрафу — жадный алгоритм
+    # рассматривает их в порядке убывания предпочтительности
     ordered_indices = sorted(range(len(candidates)), key=lambda idx: candidates[idx].preference_penalty)
 
     for _ in range(MAX_TOTAL_ITEMS):
@@ -575,6 +659,10 @@ def _best_single_candidate(
     candidates: Sequence[Candidate],
     plan_targets: Dict[str, float],
 ) -> Optional[Tuple[int, float]]:
+    """Находит одно блюдо с порцией, дающее минимальное отклонение от целей.
+
+    Используется как запасной вариант, если жадный алгоритм не выбрал ничего.
+    """
     best: Optional[Tuple[int, float, float]] = None
     for idx, candidate in enumerate(candidates):
         for portion in _portion_grid(candidate.item):
@@ -592,6 +680,10 @@ def _prune_selection(
     selected: Dict[int, float],
     plan_targets: Dict[str, float],
 ) -> Dict[int, float]:
+    """Удаляет из плана лишние блюда: если убрать блюдо и план стал лучше — убираем.
+
+    Повторяет проходы до тех пор, пока есть что улучшить.
+    """
     improved = True
     while improved and selected:
         improved = False
@@ -614,6 +706,12 @@ def _tune_portions(
     selected: Dict[int, float],
     plan_targets: Dict[str, float],
 ) -> Dict[int, float]:
+    """Подбирает оптимальную порцию для каждого блюда в готовом плане.
+
+    Для каждого выбранного блюда перебирает все значения из _portion_grid
+    и заменяет текущую порцию на ту, при которой функция потерь минимальна.
+    Повторяет до тех пор, пока есть улучшения.
+    """
     if not selected:
         return selected
 
@@ -641,6 +739,13 @@ def _tune_portions(
 
 
 def _can_add_candidate(candidates: Sequence[Candidate], selected: Dict[int, float], new_idx: int) -> bool:
+    """Проверяет, допустимо ли добавить кандидата new_idx в текущий план.
+
+    Отклоняет добавление, если:
+      - достигнут суммарный лимит блюд MAX_TOTAL_ITEMS;
+      - превышен лимит блюд для данного типа приёма пищи;
+      - то же базовое блюдо уже включено в план.
+    """
     new_candidate = candidates[new_idx]
     if len(selected) >= MAX_TOTAL_ITEMS:
         return False
@@ -656,6 +761,12 @@ def _can_add_candidate(candidates: Sequence[Candidate], selected: Dict[int, floa
 
 
 def _portion_grid(item: FoodItem) -> List[float]:
+    """Генерирует дискретную сетку допустимых порций для блюда.
+
+    Включает минимум, максимум, середину диапазона и равномерно распределённые
+    точки с шагом PORTION_GRID_SMALL или PORTION_GRID_LARGE.
+    Использует мелкий шаг для блюд с небольшим диапазоном порций (≤ 120 г).
+    """
     minimum = max(1.0, float(item.min_portion))
     maximum = max(minimum, float(item.max_portion))
     step = PORTION_GRID_SMALL if maximum <= 120 else PORTION_GRID_LARGE
@@ -676,6 +787,12 @@ def _score_selected_plan(
     selected: Dict[int, float],
     plan_targets: Dict[str, float],
 ) -> float:
+    """Вычисляет значение целевой функции для текущего набора блюд и порций.
+
+    Складывает взвешенные отклонения по 4 нутриентам, штрафы за выбор блюд,
+    штрафы за граммовку и штраф за повторное использование продуктовой семьи.
+    Меньше — лучше.
+    """
     totals = _totals_from_selection(candidates, selected)
     weights = _deviation_weights(plan_targets)
     score = 0.0
@@ -704,6 +821,7 @@ def _score_selected_plan(
 
 
 def _totals_from_selection(candidates: Sequence[Candidate], selected: Dict[int, float]) -> Dict[str, float]:
+    """Суммирует нутриенты всех выбранных блюд с учётом их порций."""
     totals = {"calories": 0.0, "protein": 0.0, "fat": 0.0, "carbs": 0.0}
     for idx, portion in selected.items():
         item = candidates[idx].item
@@ -715,6 +833,7 @@ def _totals_from_selection(candidates: Sequence[Candidate], selected: Dict[int, 
 
 
 def _sanitize_portion(item: FoodItem, portion: float) -> float:
+    """Обрезает порцию до допустимого диапазона и округляет до кратного ROUND_PORTION_STEP."""
     portion = max(float(item.min_portion), min(float(item.max_portion), portion))
     portion = round(portion / ROUND_PORTION_STEP) * ROUND_PORTION_STEP
     return max(float(item.min_portion), min(float(item.max_portion), portion))
@@ -724,6 +843,11 @@ def _selected_meals(
     candidates: Sequence[Candidate],
     selected_portions: Dict[int, float],
 ) -> List[MealPlanItem]:
+    """Преобразует словарь {индекс: порция} в список MealPlanItem с подсчитанными нутриентами.
+
+    Отбрасывает позиции с порцией ниже MIN_VISIBLE_PORTION и сортирует
+    результат по порядку приёмов пищи, затем по имени блюда.
+    """
     meals: List[MealPlanItem] = []
     for idx, portion in selected_portions.items():
         candidate = candidates[idx]
@@ -755,6 +879,7 @@ def _build_result(
     solver_status: str,
     solution_method: str,
 ) -> MealPlanResult:
+    """Собирает итоговый объект MealPlanResult: суммирует нутриенты, считает отклонения."""
     total_calories = round(sum(meal.calories for meal in meals), 1)
     total_protein = round(sum(meal.protein for meal in meals), 1)
     total_fat = round(sum(meal.fat for meal in meals), 1)
@@ -793,6 +918,7 @@ def _empty_result(
     already_eaten: Dict[str, float],
     status: str,
 ) -> MealPlanResult:
+    """Возвращает пустой план с нулевыми значениями и переданным статусом ошибки."""
     return MealPlanResult(
         meals=[],
         total_calories=0.0,
