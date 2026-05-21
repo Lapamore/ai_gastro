@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import logging
 
 from src.infrastructure.interfaces.IDataBase import AbstractDBService
@@ -16,6 +16,7 @@ router = APIRouter(prefix="/mealplan", tags=["Meal Plan"])
 class MealPlanRequest(BaseModel):
     """Запрос на генерацию плана питания"""
     consider_diary: bool = True  # учитывать уже съеденное
+    max_total_items: int = Field(default=5, ge=3, le=8)  # желаемое число блюд
 
 
 class MealItemResponse(BaseModel):
@@ -137,6 +138,7 @@ async def generate_meal_plan(
         already_eaten_protein=eaten_prot,
         already_eaten_fat=eaten_fat,
         already_eaten_carbs=eaten_carbs,
+        max_total_items=request.max_total_items,
     )
     
     logger.info(f"Mealplan-результат: статус={result.solver_status}, блюд={len(result.meals)}")

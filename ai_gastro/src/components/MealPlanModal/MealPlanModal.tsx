@@ -57,6 +57,7 @@ function MealPlanModal({ isOpen, onClose, api }: MealPlanModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [considerDiary, setConsiderDiary] = useState(true);
+    const [maxItems, setMaxItems] = useState(5);
 
     const generatePlan = async () => {
         setIsLoading(true);
@@ -65,6 +66,7 @@ function MealPlanModal({ isOpen, onClose, api }: MealPlanModalProps) {
         try {
             const res = await api.post('/mealplan/generate', {
                 consider_diary: considerDiary,
+                max_total_items: maxItems,
             });
             setPlan(res.data);
         } catch (err: any) {
@@ -119,6 +121,18 @@ function MealPlanModal({ isOpen, onClose, api }: MealPlanModalProps) {
                             />
                             Учесть уже съеденное сегодня
                         </label>
+                        <div className="mealplan-items-control">
+                            <label htmlFor="mealplan-max-items">Количество блюд:</label>
+                            <input
+                                id="mealplan-max-items"
+                                type="number"
+                                min={3}
+                                max={8}
+                                value={maxItems}
+                                onChange={e => setMaxItems(Math.max(3, Math.min(8, Number(e.target.value))))}
+                                className="mealplan-items-input"
+                            />
+                        </div>
                         <button
                             className="mealplan-generate-btn"
                             onClick={generatePlan}

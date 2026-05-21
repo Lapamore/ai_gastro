@@ -150,6 +150,7 @@ def optimize_meal_plan(
     already_eaten_protein: float = 0,
     already_eaten_fat: float = 0,
     already_eaten_carbs: float = 0,
+    max_total_items: int = MAX_TOTAL_ITEMS,
 ) -> MealPlanResult:
     """Основная точка входа. Строит план питания через MILP.
 
@@ -229,11 +230,14 @@ def optimize_meal_plan(
             status="infeasible_no_candidates",
         )
 
+    max_total_items = max(3, min(8, max_total_items))
+
     milp_result = _solve_milp(
         candidates=candidates,
         plan_targets=plan_targets,
         daily_targets=daily_targets,
         already_eaten=already_eaten,
+        max_total_items=max_total_items,
     )
 
     if milp_result is not None:
@@ -387,6 +391,7 @@ def _solve_milp(
     plan_targets: Dict[str, float],
     daily_targets: Dict[str, float],
     already_eaten: Dict[str, float],
+    max_total_items: int = MAX_TOTAL_ITEMS,
 ) -> Optional[MealPlanResult]:
     """Решает задачу оптимизации рациона через scipy.optimize.milp.
 
@@ -549,7 +554,7 @@ def _solve_milp(
 
     rows.append(total_items_row)
     lbs.append(1.0)
-    ubs.append(float(MAX_TOTAL_ITEMS))
+    ubs.append(float(max_total_items))
 
     # Одно и то же исходное блюдо нельзя выбрать несколько раз
     # в разные приёмы пищи.

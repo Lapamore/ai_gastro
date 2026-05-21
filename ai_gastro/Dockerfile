@@ -6,8 +6,11 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Copy local node_modules to use as offline cache
+COPY node_modules ./node_modules
+
+# Install dependencies (prefer offline, fallback to network)
+RUN npm install --prefer-offline
 
 # Copy source files
 COPY . .

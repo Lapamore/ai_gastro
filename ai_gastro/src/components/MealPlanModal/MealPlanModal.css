@@ -80,6 +80,29 @@
 }
 .mealplan-checkbox input { cursor: pointer; }
 
+.mealplan-items-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #c0c0c0;
+    font-size: 0.9em;
+}
+
+.mealplan-items-input {
+    width: 56px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+    color: #e0e0e0;
+    font-size: 0.95em;
+    text-align: center;
+    outline: none;
+}
+.mealplan-items-input:focus {
+    border-color: #6366f1;
+}
+
 .mealplan-generate-btn {
     background: linear-gradient(135deg, #6366f1, #8b5cf6);
     color: white;
