@@ -401,6 +401,7 @@ function App() {
                 isOpen={isFavoritesModalOpen} 
                 onClose={() => setIsFavoritesModalOpen(false)} 
                 api={api}
+                onDiaryEntryAdded={fetchDailyProgress}
             />
             <MealPlanModal
                 isOpen={isMealPlanModalOpen}

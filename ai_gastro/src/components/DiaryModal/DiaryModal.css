@@ -271,7 +271,7 @@
 .diary-entry-card {
     background: var(--user-message-bg);
     border-radius: var(--border-radius-sm);
-    padding: 14px 16px;
+    padding: 14px 52px 14px 16px;
     position: relative;
     transition: all 0.2s;
     border: 1px solid transparent;
@@ -287,6 +287,7 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 8px;
+    min-width: 0;
 }
 
 .diary-entry-meal {
@@ -295,17 +296,21 @@
 
 .diary-entry-name {
     flex: 1;
+    min-width: 0;
     color: var(--text-color);
     font-weight: 500;
+    word-break: break-word;
 }
 
 .diary-entry-calories {
     color: var(--accent-color);
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .diary-entry-details {
     display: flex;
+    flex-wrap: wrap;
     gap: 16px;
     color: var(--text-color-light);
     font-size: 0.85rem;
@@ -318,19 +323,27 @@
 
 .diary-entry-delete {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    background: none;
+    top: 50%;
+    right: 14px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(215, 38, 61, 0.08);
     border: none;
+    border-radius: 50%;
     cursor: pointer;
-    opacity: 0.5;
+    opacity: 0.65;
     transition: all 0.2s;
     font-size: 1rem;
+    transform: translateY(-50%);
 }
 
 .diary-entry-delete:hover {
     opacity: 1;
-    transform: scale(1.2);
+    background: rgba(215, 38, 61, 0.14);
+    transform: translateY(-50%) scale(1.08);
 }
 
 .diary-loading,

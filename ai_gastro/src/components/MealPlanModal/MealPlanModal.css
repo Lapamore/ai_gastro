@@ -1,238 +1,451 @@
 .mealplan-overlay {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6);
+    inset: 0;
+    background: rgba(38, 70, 83, 0.58);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
-    backdrop-filter: blur(4px);
+    z-index: 1050;
+    padding: 20px;
+    backdrop-filter: blur(3px);
+    animation: mealplanOverlayIn 0.25s ease-out forwards;
+}
+
+@keyframes mealplanOverlayIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .mealplan-modal {
-    background: #1e1e2e;
-    border-radius: 16px;
-    width: 90%;
-    max-width: 650px;
-    max-height: 85vh;
+    background: var(--container-bg);
+    border-radius: var(--border-radius-lg);
+    width: 100%;
+    max-width: 720px;
+    max-height: 88vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    border: 1px solid rgba(255,255,255,0.08);
+    overflow: hidden;
+    box-shadow: 0 18px 50px rgba(38, 70, 83, 0.28), 0 0 0 1px rgba(38, 70, 83, 0.06);
+    animation: mealplanModalIn 0.3s cubic-bezier(0.175, 0.885, 0.320, 1.1) forwards;
+}
+
+@keyframes mealplanModalIn {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .mealplan-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    gap: 16px;
+    padding: 20px 26px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: #fff;
+    border-bottom: 3px solid rgba(255, 255, 255, 0.22);
 }
 
 .mealplan-header h2 {
     margin: 0;
-    font-size: 1.3em;
-    color: #e0e0e0;
+    font-family: var(--font-display);
+    font-size: 1.65rem;
+    line-height: 1.15;
+    letter-spacing: 0.3px;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 }
 
 .mealplan-close {
-    background: none;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.18);
     border: none;
-    color: #888;
-    font-size: 24px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.45rem;
+    line-height: 1;
     cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 8px;
-    transition: all 0.2s;
+    border-radius: 50%;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
-.mealplan-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+.mealplan-close:hover {
+    background: rgba(255, 255, 255, 0.32);
+    color: #fff;
+    transform: rotate(90deg);
+}
 
 .mealplan-body {
-    padding: 20px 24px;
+    padding: 24px 26px 26px;
     overflow-y: auto;
     flex: 1;
+    background: var(--bg-color);
+}
+
+.mealplan-body::-webkit-scrollbar { width: 8px; }
+.mealplan-body::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.04); }
+.mealplan-body::-webkit-scrollbar-thumb {
+    background-color: var(--secondary-color);
+    border-radius: 10px;
 }
 
 .mealplan-info {
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
+    background: linear-gradient(135deg, rgba(42, 157, 143, 0.12), rgba(244, 162, 97, 0.12));
+    border: 1px solid rgba(42, 157, 143, 0.22);
+    border-radius: var(--border-radius-md);
+    padding: 14px 16px;
+    margin-bottom: 18px;
 }
-.mealplan-info p { margin: 0; color: #a0b8d8; font-size: 0.9em; line-height: 1.5; }
+
+.mealplan-info p {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
 
 .mealplan-controls {
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 20px;
+    gap: 14px;
+    margin-bottom: 22px;
     flex-wrap: wrap;
 }
 
 .mealplan-checkbox {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    color: #c0c0c0;
-    font-size: 0.9em;
+    gap: 9px;
+    min-height: 42px;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--container-bg);
+    color: var(--text-color);
+    font-size: 0.9rem;
+    font-weight: 500;
     cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
-.mealplan-checkbox input { cursor: pointer; }
+
+.mealplan-checkbox:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 12px rgba(42, 157, 143, 0.12);
+    transform: translateY(-1px);
+}
+
+.mealplan-checkbox input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--accent-color);
+}
 
 .mealplan-items-control {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    color: #c0c0c0;
-    font-size: 0.9em;
+    gap: 10px;
+    min-height: 42px;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background: var(--container-bg);
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.mealplan-items-control label {
+    color: var(--text-color-light);
+    font-weight: 500;
 }
 
 .mealplan-items-input {
-    width: 56px;
-    padding: 6px 8px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.15);
-    background: rgba(255,255,255,0.06);
-    color: #e0e0e0;
-    font-size: 0.95em;
+    width: 58px;
+    padding: 7px 8px;
+    border-radius: var(--border-radius-sm);
+    border: 1.5px solid var(--border-color);
+    background: #fff;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    font-weight: 600;
     text-align: center;
     outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+
 .mealplan-items-input:focus {
-    border-color: #6366f1;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.12);
 }
 
 .mealplan-generate-btn {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-size: 1em;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s;
+    min-height: 42px;
     margin-left: auto;
+    padding: 10px 22px;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+    color: white;
+    font-size: 0.98rem;
+    font-weight: 700;
+    font-family: var(--font-main);
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(42, 157, 143, 0.22);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
-.mealplan-generate-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(99,102,241,0.4); }
-.mealplan-generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.mealplan-generate-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(215, 38, 61, 0.22);
+}
+
+.mealplan-generate-btn:disabled {
+    opacity: 0.62;
+    cursor: not-allowed;
+    transform: none;
+}
 
 .mealplan-error {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #f87171;
+    background: #fff1ef;
+    border: 1px solid rgba(215, 38, 61, 0.22);
+    color: #b74039;
     padding: 12px 16px;
-    border-radius: 10px;
+    border-radius: var(--border-radius-sm);
     margin-bottom: 16px;
-    font-size: 0.9em;
+    font-size: 0.9rem;
+    line-height: 1.45;
 }
 
-/* === Сводка === */
 .mealplan-summary {
     margin-bottom: 20px;
 }
+
 .mealplan-summary h3 {
-    color: #e0e0e0;
+    color: var(--text-color);
     margin: 0 0 12px 0;
-    font-size: 1.1em;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    line-height: 1.2;
+}
+
+.mealplan-summary p {
+    margin: 0 0 14px;
+    color: var(--text-color-light);
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 .mealplan-targets {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
 }
 
 .mealplan-target-item {
-    background: rgba(255,255,255,0.04);
-    border-radius: 10px;
-    padding: 10px 14px;
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent-color);
+    border-radius: var(--border-radius-sm);
+    padding: 12px 14px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
+    box-shadow: 0 4px 12px rgba(38, 70, 83, 0.06);
 }
-.target-label { color: #888; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px; }
-.target-value { color: #e0e0e0; font-size: 1em; font-weight: 600; }
-.target-deviation { font-size: 0.8em; font-weight: 500; }
-.target-deviation.good { color: #4ade80; }
-.target-deviation.warn { color: #fbbf24; }
 
-/* === Меню === */
-.mealplan-meals { margin-bottom: 20px; }
+.target-label {
+    color: var(--text-color-light);
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 700;
+}
+
+.target-value {
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.target-deviation {
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.target-deviation.good { color: var(--accent-color); }
+.target-deviation.warn { color: #c47a1d; }
+
+.mealplan-meals {
+    margin-bottom: 20px;
+}
 
 .mealplan-meal-group {
     margin-bottom: 16px;
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 14px;
 }
+
 .mealplan-meal-group h4 {
-    color: #c0c0c0;
-    margin: 0 0 8px 0;
-    font-size: 1em;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    padding-bottom: 6px;
+    color: var(--primary-color);
+    margin: 0 0 10px 0;
+    font-family: var(--font-display);
+    font-size: 1.08rem;
+    line-height: 1.2;
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 8px;
 }
 
 .mealplan-meal-item {
-    background: rgba(255,255,255,0.03);
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin-bottom: 6px;
-    transition: background 0.2s;
+    background: var(--container-bg);
+    border: 1px solid rgba(224, 231, 239, 0.9);
+    border-radius: var(--border-radius-sm);
+    padding: 11px 13px;
+    margin-bottom: 8px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
-.mealplan-meal-item:hover { background: rgba(255,255,255,0.06); }
+
+.mealplan-meal-item:last-child {
+    margin-bottom: 0;
+}
+
+.mealplan-meal-item:hover {
+    border-color: rgba(42, 157, 143, 0.32);
+    box-shadow: 0 5px 14px rgba(38, 70, 83, 0.08);
+    transform: translateY(-1px);
+}
 
 .meal-item-main {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 6px;
 }
-.meal-item-name { color: #e0e0e0; font-weight: 500; }
-.meal-item-portion { color: #8b5cf6; font-weight: 600; font-size: 0.95em; }
+
+.meal-item-name {
+    color: var(--text-color);
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.meal-item-portion {
+    color: var(--accent-color);
+    font-weight: 800;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
 
 .meal-item-macros {
     display: flex;
-    gap: 12px;
-    font-size: 0.82em;
-    color: #888;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text-color-light);
 }
 
-/* === Метод === */
+.meal-item-macros span {
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--bg-color);
+    border: 1px solid rgba(224, 231, 239, 0.8);
+}
+
 .mealplan-method {
     margin-top: 16px;
 }
+
 .mealplan-method details {
-    background: rgba(255,255,255,0.03);
-    border-radius: 10px;
+    background: var(--container-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
     padding: 12px 16px;
+    box-shadow: 0 4px 12px rgba(38, 70, 83, 0.05);
 }
+
 .mealplan-method summary {
-    color: #a0a0a0;
+    color: var(--text-color);
     cursor: pointer;
-    font-size: 0.9em;
-    font-weight: 500;
+    font-size: 0.9rem;
+    font-weight: 700;
 }
+
 .mealplan-method p {
-    color: #888;
-    font-size: 0.85em;
+    color: var(--text-color-light);
+    font-size: 0.86rem;
     line-height: 1.6;
-    margin: 8px 0;
+    margin: 9px 0;
 }
+
 .mealplan-method code {
     display: block;
-    background: rgba(0,0,0,0.3);
-    padding: 10px 14px;
-    border-radius: 8px;
-    color: #8b5cf6;
-    font-size: 0.85em;
+    background: #f1f5f4;
+    border: 1px solid rgba(42, 157, 143, 0.16);
+    padding: 10px 12px;
+    border-radius: var(--border-radius-sm);
+    color: var(--accent-color);
+    font-size: 0.85rem;
     margin: 8px 0;
     white-space: pre-wrap;
     word-break: break-word;
 }
 
 @media (max-width: 600px) {
-    .mealplan-modal { width: 95%; max-height: 90vh; }
-    .mealplan-targets { grid-template-columns: 1fr; }
-    .mealplan-controls { flex-direction: column; align-items: stretch; }
-    .mealplan-generate-btn { margin-left: 0; }
+    .mealplan-overlay {
+        padding: 10px;
+        align-items: stretch;
+    }
+
+    .mealplan-modal {
+        max-height: none;
+        height: 100%;
+        border-radius: var(--border-radius-md);
+    }
+
+    .mealplan-header {
+        padding: 18px 18px;
+    }
+
+    .mealplan-header h2 {
+        font-size: 1.35rem;
+    }
+
+    .mealplan-body {
+        padding: 18px;
+    }
+
+    .mealplan-targets {
+        grid-template-columns: 1fr;
+    }
+
+    .mealplan-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mealplan-checkbox,
+    .mealplan-items-control,
+    .mealplan-generate-btn {
+        width: 100%;
+    }
+
+    .mealplan-generate-btn {
+        margin-left: 0;
+    }
+
+    .meal-item-main {
+        flex-direction: column;
+        gap: 4px;
+    }
 }

@@ -1,16 +1,13 @@
 # Build stage
-FROM node:20-alpine as build
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Copy local node_modules to use as offline cache
-COPY node_modules ./node_modules
-
-# Install dependencies (prefer offline, fallback to network)
-RUN npm install --prefer-offline
+# Install Linux dependencies inside the container
+RUN npm ci --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 
 # Copy source files
 COPY . .

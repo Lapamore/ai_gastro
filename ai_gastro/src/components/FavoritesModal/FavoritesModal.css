@@ -174,6 +174,108 @@
     margin-bottom: 0.5em;
 }
 
+.favorite-diary-form {
+    margin-top: 14px;
+    padding: 14px;
+    background: var(--bot-message-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+}
+
+.favorite-diary-title {
+    color: var(--accent-color);
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.favorite-diary-grid {
+    display: grid;
+    grid-template-columns: 1.5fr repeat(4, minmax(78px, 1fr));
+    gap: 10px;
+    align-items: end;
+}
+
+.favorite-diary-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.favorite-diary-field-wide {
+    grid-column: 1 / -1;
+}
+
+.favorite-diary-field span {
+    color: var(--text-color-light);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.favorite-diary-field input,
+.favorite-diary-field select {
+    width: 100%;
+    min-height: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--container-bg);
+    color: var(--text-color);
+    padding: 8px 10px;
+    font-size: 0.88rem;
+    font-family: var(--font-main);
+}
+
+.favorite-diary-field input:focus,
+.favorite-diary-field select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--shadow-light);
+}
+
+.favorite-recipe-add {
+    margin-top: 12px;
+    background: linear-gradient(135deg, var(--accent-color), #44a08d);
+    border: none;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    font-family: var(--font-main);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.favorite-recipe-add:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--shadow-light);
+}
+
+.favorite-recipe-add:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.favorite-diary-status {
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+}
+
+.favorite-diary-status.success {
+    background: rgba(42, 157, 143, 0.12);
+    color: var(--accent-color);
+    border: 1px solid rgba(42, 157, 143, 0.22);
+}
+
+.favorite-diary-status.error {
+    background: rgba(244, 67, 54, 0.08);
+    color: #d32f2f;
+    border: 1px solid rgba(244, 67, 54, 0.2);
+}
+
 .favorite-recipe-delete {
     margin-top: 12px;
     background: none;
@@ -207,5 +309,13 @@
 
     .favorites-modal-body {
         padding: 16px 18px;
+    }
+
+    .favorite-diary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .favorite-diary-field-wide {
+        grid-column: 1 / -1;
     }
 }
